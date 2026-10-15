@@ -113,3 +113,6 @@
 .design-bubble--right { justify-self: end; }
 .design-account { display: grid; gap: 22px; }
 @media (max-width: 760px) { .design-hero__grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* The small mark in the top bar is for phones; the sidebar shows the wordmark. */
+@media (min-width: 992px) { .shell-topbar-mark { display: none; } .ps-topbar { position: static; border-bottom-color: transparent; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; } }

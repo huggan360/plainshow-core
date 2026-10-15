@@ -19,6 +19,7 @@ export type SharedProps = {
     apps: AppLink[];
     flash: { status: string | null; error: string | null };
     errors: Record<string, string>;
+    uiVersion: string;
 };
 
 export function can(capabilities: string[], capability: string): boolean {

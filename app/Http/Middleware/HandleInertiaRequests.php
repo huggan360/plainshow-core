@@ -23,6 +23,7 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
+            'uiVersion' => substr((string) \Composer\InstalledVersions::getReference('plainshow/kit'), 0, 8) ?: 'dev',
             'auth' => [
                 'user' => $user?->summary(),
                 'capabilities' => $permissions['capabilities'],

@@ -71,7 +71,7 @@ export default function AppShell({ title, children, wide, actions, description, 
             <aside className="ps-sidebar" aria-label="Main">
                 <div className="ps-sidebar__brand">
                     <Link href="/" className="ps-brand">
-                        <img className="ps-brand__logo" src="/ui/brand/plainshow-logo.webp" alt="PlainShow" width="92" height="30" />
+                        <img className="ps-brand__logo" src={`/ui/brand/plainshow-logo.webp?v=${props.uiVersion}`} alt="PlainShow" width="92" height="30" />
                     </Link>
                 </div>
                 <nav className="ps-nav">
@@ -106,7 +106,7 @@ export default function AppShell({ title, children, wide, actions, description, 
             <div className="ps-main">
                 <header className="ps-topbar">
                     <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-menu-toggle" aria-label="Open menu" onClick={() => setMenuOpen(true)}><i className="bx bx-menu" /></button>
-                    <Link href="/" className="ps-brand shell-topbar-mark" aria-label="PlainShow"><img className="ps-brand__mark" src="/ui/brand/plainshow-icon.webp" alt="" /></Link>
+                    <Link href="/" className="ps-brand shell-topbar-mark" aria-label="PlainShow"><img className="ps-brand__mark" src={`/ui/brand/plainshow-icon.webp?v=${props.uiVersion}`} alt="" /></Link>
                     <span className="ps-topbar__spacer" />
                     <div className="ps-switcher" ref={switcherRef}>
                         <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon" aria-label="Switch service" aria-expanded={switcherOpen} onClick={() => setSwitcherOpen((open) => !open)}><i className="bx bx-grid-small" /></button>
