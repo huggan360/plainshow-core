@@ -71,7 +71,7 @@ export function GreetingWidget({ definition }: { definition: WidgetDefinition })
                     <div className="widget-greeting__inner">
                         <div>
                             <p className="ps-eyebrow">{now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-                            <h2 className="ps-title widget-greeting__title">{greetingFor(now.getHours())}, {data.firstName}</h2>
+                            <h2 className="ps-title ps-title--hero widget-greeting__title">{greetingFor(now.getHours())}, {data.firstName}</h2>
                         </div>
                         <div className="ps-inline">
                             <RoleBadge role={data.role} />

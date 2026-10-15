@@ -15,18 +15,18 @@
 .widget-greeting__title { margin-top: 6px; }
 .widget-greeting .ps-badge { text-decoration: none; }
 .widget-health { --ps-gap: 14px; }
-.widget-health__row { display: grid; gap: 7px; font-size: .875rem; }
+.widget-health__row { display: grid; gap: 7px; font-size: var(--ps-text-sm); }
 .widget-launcher { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); }
 .widget-launcher__app { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--ps-panel-border); border-radius: 14px; color: var(--ps-text); text-decoration: none; transition: background-color .15s ease, border-color .15s ease; }
 .widget-launcher__app:hover { background: var(--ps-hover); border-color: var(--ps-shell-border); }
 .widget-launcher__icon { display: inline-flex; flex: none; width: 40px; height: 40px; align-items: center; justify-content: center; border-radius: 11px; background: var(--ps-btn-bg); font-size: 1.3rem; }
 .widget-launcher__text { display: grid; min-width: 0; line-height: 1.35; }
-.widget-launcher__text span { font-size: .8125rem; color: var(--ps-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.widget-launcher__text span { font-size: var(--ps-text-sm); color: var(--ps-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .widget-launcher__go { margin-left: auto; color: var(--ps-text-faint); }
 .widget-figures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .widget-figures > div { display: grid; padding: 12px; border-radius: 12px; background: var(--ps-raised); }
-.widget-figures strong { font-size: 1.5rem; font-weight: 600; line-height: 1.1; }
-.widget-figures span { font-size: .75rem; color: var(--ps-text-muted); }
+.widget-figures strong { font-size: var(--ps-text-xl); font-weight: 600; line-height: 1.1; }
+.widget-figures span { font-size: var(--ps-text-xs); color: var(--ps-text-muted); }
 .widget-figures .is-warn strong { color: var(--ps-amber); }
 .widget-figures .is-alert strong { color: var(--ps-red); }
 
@@ -34,7 +34,7 @@
 .account { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 40px; align-items: start; }
 .account__side { position: sticky; top: calc(var(--ps-topbar) + 24px); display: grid; gap: 26px; }
 .account__who { display: flex; align-items: center; gap: 14px; }
-.account__who strong { display: block; font-size: 1.0625rem; }
+.account__who strong { display: block; font-size: var(--ps-text-lg); }
 .account__who-meta { --ps-gap: 8px; margin-top: 4px; }
 .account__stack { --ps-gap: 20px; }
 .account__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
@@ -60,11 +60,12 @@
 .admin-user > span:last-child { display: grid; line-height: 1.3; }
 .admin-user strong { font-weight: 500; }
 .admin-user:hover strong { text-decoration: underline; text-underline-offset: 3px; }
-.admin-services { display: flex; gap: 8px; font-size: 1.1rem; color: var(--ps-text-muted); }
+.admin-services { display: flex; gap: 8px; color: var(--ps-text-muted); }
+.admin-services .bx { font-size: 1.1rem; }
 .admin-actions { width: 48px; text-align: right; }
 .admin-tabs { margin-bottom: 20px; width: fit-content; }
-.admin-access { width: auto; min-height: 34px; font-size: .875rem; }
-.admin-link { margin-top: 12px; font-size: .8125rem; }
+.admin-access { width: auto; min-height: 34px; font-size: var(--ps-text-sm); }
+.admin-link { margin-top: 12px; font-size: var(--ps-text-sm); }
 .admin-intro { margin: 0 0 18px; }
 .ps-table td { vertical-align: middle; }
 @media (max-width: 900px) { .admin-hide-md { display: none; } }
@@ -76,7 +77,7 @@
 .service__body p { margin: 0; }
 .service__toggle { padding-top: 10px; }
 .service__roles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.service__role { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border: 1px solid var(--ps-panel-border); border-radius: 999px; background: none; color: var(--ps-text-muted); font: 500 .8125rem var(--ps-font-sans); cursor: pointer; }
+.service__role { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border: 1px solid var(--ps-panel-border); border-radius: 999px; background: none; color: var(--ps-text-muted); font: 500 var(--ps-text-sm) var(--ps-font-ui); cursor: pointer; }
 .service__role.is-on { border-color: transparent; background: var(--ps-btn-bg); color: var(--ps-text); }
 .service__role:disabled { cursor: default; }
 .is-off .service__icon, .is-off .service__body { opacity: .55; }
@@ -95,10 +96,10 @@
 .design-section__text { margin: -8px 0 20px; }
 .design-gap { margin-top: 20px; }
 .design-type { display: grid; gap: 10px; }
-.design-type__name { margin: 0; font-size: .8125rem; color: var(--ps-text-muted); }
-.design-type__big { margin: 0; font-size: 1.6rem; font-weight: 600; line-height: 1.2; letter-spacing: -.015em; }
-.design-type__display { margin: 0; font-size: 2rem; line-height: 1.15; letter-spacing: -.015em; }
-.design-type__body { margin: 0; font-size: 1.0625rem; line-height: 1.65; color: var(--ps-text-soft); }
+.design-type__name { margin: 0; font-size: var(--ps-text-sm); color: var(--ps-text-muted); }
+.design-type__big { margin: 0; font-size: var(--ps-text-xl); font-weight: 600; line-height: 1.2; letter-spacing: -.015em; }
+.design-type__display { margin: 0; font-size: var(--ps-text-2xl); line-height: 1.15; letter-spacing: -.015em; }
+.design-type__body { margin: 0; font-size: var(--ps-text-lg); line-height: 1.65; color: var(--ps-text-soft); }
 .design-type__w400 { font-weight: 400; }
 .design-type__w500 { font-weight: 500; }
 .design-type__w600 { font-weight: 600; }
@@ -108,7 +109,7 @@
 .design-hero__copy { display: flex; flex-direction: column; }
 .design-hero__copy .ps-frame__foot { margin-top: auto; padding-top: 28px; }
 .design-hero__art { display: grid; align-content: center; gap: 14px; }
-.design-bubble { width: fit-content; max-width: 260px; padding: 12px 16px; border: 1px solid var(--ps-shell-border); border-radius: 10px; background: var(--ps-shell); color: var(--ps-text-soft); font-size: .875rem; }
+.design-bubble { width: fit-content; max-width: 260px; padding: 12px 16px; border: 1px solid var(--ps-shell-border); border-radius: 10px; background: var(--ps-shell); color: var(--ps-text-soft); font-size: var(--ps-text-sm); }
 .design-bubble--right { justify-self: end; }
 .design-account { display: grid; gap: 22px; }
 @media (max-width: 760px) { .design-hero__grid { grid-template-columns: minmax(0, 1fr); } }

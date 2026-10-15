@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "81e56763e3ccfd4290789d2565d6c02f",
+    "content-hash": "aaf4027d01b392241ca1477118863490",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -2862,16 +2862,16 @@
         },
         {
             "name": "plainshow/kit",
-            "version": "v0.1.1",
+            "version": "v0.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/huggan360/plainshow-kit.git",
-                "reference": "dc8c0832b9cb1a8bab74b08b712ef2a6651bf8ff"
+                "reference": "f08976d1f01d324403ffae11838ca915cd077c27"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/huggan360/plainshow-kit/zipball/dc8c0832b9cb1a8bab74b08b712ef2a6651bf8ff",
-                "reference": "dc8c0832b9cb1a8bab74b08b712ef2a6651bf8ff",
+                "url": "https://api.github.com/repos/huggan360/plainshow-kit/zipball/f08976d1f01d324403ffae11838ca915cd077c27",
+                "reference": "f08976d1f01d324403ffae11838ca915cd077c27",
                 "shasum": ""
             },
             "require": {
@@ -2883,6 +2883,9 @@
             "require-dev": {
                 "phpunit/phpunit": "^11.0"
             },
+            "bin": [
+                "bin/check-type"
+            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -2898,7 +2901,7 @@
                 "proprietary"
             ],
             "description": "PlainShow shared kit: single sign-on client, token checks, permissions and the UI assets used by every PlainShow app.",
-            "time": "2026-10-15T12:57:06+00:00"
+            "time": "2026-10-15T13:11:31+00:00"
         },
         {
             "name": "pragmarx/google2fa",
