@@ -88,8 +88,9 @@ sudo -n setfacl -R -b "$BASE/shared"
 
 ln -sfn "$RELEASE" "$BASE/current.new"
 mv -Tf "$BASE/current.new" "$BASE/current"
-# mod_php caches resolved paths and opcode; a graceful reload makes every
-# worker pick up the new release without dropping requests.
+# PHP-FPM and mod_php cache resolved paths and opcode; graceful reloads make
+# every worker pick up the new release without dropping requests.
+sudo -n systemctl reload php8.5-fpm || echo "Reload php8.5-fpm to finish switching." >&2
 sudo -n systemctl reload apache2 || echo "Reload Apache to finish switching." >&2
 say "$APP is now $NAME"
 
