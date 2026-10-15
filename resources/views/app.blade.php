@@ -1,3 +1,4 @@
+@php($uiVersion = \Composer\InstalledVersions::getReference('plainshow/kit') ? substr(\Composer\InstalledVersions::getReference('plainshow/kit'), 0, 8) : 'dev')
 <!doctype html>
 <html lang="en" data-theme="dark">
 <head>
@@ -10,8 +11,8 @@
     <link rel="icon" href="/ui/brand/plainshow-icon.webp" type="image/webp">
     <link rel="apple-touch-icon" href="/ui/brand/apple-touch-icon.png">
     <link rel="preload" href="/ui/fonts/hanken-grotesk-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="/ui/css/boxicons.css">
-    <link rel="stylesheet" href="/ui/css/plainshow.css">
+    <link rel="stylesheet" href="/ui/css/boxicons.css?v={{ $uiVersion }}">
+    <link rel="stylesheet" href="/ui/css/plainshow.css?v={{ $uiVersion }}">
     <script nonce="{{ request()->attributes->get('csp_nonce') }}">
         try { var t = localStorage.getItem('plainshow-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
     </script>
