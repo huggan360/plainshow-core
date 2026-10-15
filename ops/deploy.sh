@@ -74,6 +74,7 @@ php artisan view:cache
 APP_USER="plainshow-$APP"
 ME=$(id -un)
 sudo -n setfacl -m "u:$APP_USER:x" "$ROOT"
+sudo -n chown "$ME:$APP_USER" "$BASE" "$BASE/releases"
 sudo -n chown -R "$ME:$APP_USER" "$RELEASE" "$BASE/shared"
 sudo -n chmod -R g+rX,o-rwx "$RELEASE"
 sudo -n setfacl -R -m "u:www-data:rX" "$RELEASE"
