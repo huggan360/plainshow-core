@@ -1,0 +1,16 @@
+{
+    "id": "web",
+    "name": "Web",
+    "description": "Projects, deployments and the server.",
+    "icon": "bx-server",
+    "url": "https://web.plainshow.se",
+    "api": "https://web.plainshow.se/api/v1",
+    "sort": 30,
+    "default_access": ["admin"],
+    "capabilities": [
+        { "name": "web.project.view", "label": "See projects" },
+        { "name": "web.project.create", "label": "Create projects" },
+        { "name": "web.server.moderate", "label": "Manage server accounts and services" }
+    ],
+    "widgets": []
+}

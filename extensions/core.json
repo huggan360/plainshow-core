@@ -1,0 +1,29 @@
+{
+    "id": "core",
+    "name": "Dashboard",
+    "description": "Your PlainShow home: widgets, account and administration.",
+    "icon": "bx-grid-alt",
+    "url": "https://plainshow.se",
+    "api": "https://plainshow.se/api/core/v1",
+    "system": true,
+    "sort": 0,
+    "default_access": ["admin", "moderator", "member", "guest"],
+    "capabilities": [
+        { "name": "core.dashboard.use", "label": "Use the dashboard" },
+        { "name": "core.system.view", "label": "See server health details" },
+        { "name": "core.users.manage", "label": "Create and edit accounts" },
+        { "name": "core.extensions.manage", "label": "Turn services on and off" },
+        { "name": "core.permissions.manage", "label": "Change roles and permissions" },
+        { "name": "core.updates.apply", "label": "Install updates" },
+        { "name": "core.audit.view", "label": "Read the audit log" }
+    ],
+    "widgets": [
+        { "id": "greeting", "title": "Welcome", "icon": "bx-sun", "sizes": ["l", "xl", "full"], "default": "xl" },
+        { "id": "pi-health", "title": "Server", "icon": "bx-chip", "sizes": ["m", "l"], "default": "m" },
+        { "id": "launcher", "title": "Services", "icon": "bx-grid-alt", "sizes": ["m", "l", "xl", "full"], "default": "l" },
+        { "id": "activity", "title": "Recent activity", "icon": "bx-history", "sizes": ["m", "l"], "default": "m" },
+        { "id": "admin-users", "title": "Accounts", "icon": "bx-group", "sizes": ["m", "l"], "default": "m", "capability": "core.users.manage" },
+        { "id": "admin-services", "title": "Service health", "icon": "bx-pulse", "sizes": ["m", "l"], "default": "m", "capability": "core.extensions.manage" },
+        { "id": "admin-security", "title": "Sign-in activity", "icon": "bx-shield-quarter", "sizes": ["m", "l"], "default": "m", "capability": "core.audit.view" }
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "id": "cloud",
+    "name": "Cloud",
+    "description": "Files, calendar and contacts in Nextcloud.",
+    "icon": "bx-cloud",
+    "url": "https://cloud.plainshow.se",
+    "sort": 40,
+    "default_access": ["admin", "moderator", "member"],
+    "capabilities": [
+        { "name": "cloud.files.view", "label": "Use Nextcloud" }
+    ],
+    "widgets": []
+}

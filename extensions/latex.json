@@ -1,0 +1,16 @@
+{
+    "id": "latex",
+    "name": "LaTeX",
+    "description": "Write and compile LaTeX together.",
+    "icon": "bx-code-curly",
+    "url": "https://latex.plainshow.se",
+    "api": "https://latex.plainshow.se/api/v1",
+    "sort": 20,
+    "default_access": ["admin", "moderator", "member"],
+    "capabilities": [
+        { "name": "latex.project.view", "label": "Open shared projects" },
+        { "name": "latex.project.create", "label": "Create projects" },
+        { "name": "latex.project.moderate", "label": "Open and manage every project" }
+    ],
+    "widgets": []
+}

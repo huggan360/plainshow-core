@@ -1,0 +1,21 @@
+{
+    "id": "core",
+    "name": "Dashboard",
+    "version": "0.1.0",
+    "url": "https://plainshow.se",
+    "system": true,
+    "health": "/up",
+    "update": {
+        "repository": "https://github.com/huggan360/plainshow-core.git",
+        "shared": [".env", "storage"],
+        "build": ["npm ci", "npm run build"],
+        "steps": [
+            "composer install --no-dev --optimize-autoloader --no-interaction",
+            "php artisan migrate --force",
+            "php artisan plainshow:extensions",
+            "php artisan config:cache",
+            "php artisan route:cache",
+            "php artisan view:cache"
+        ]
+    }
+}
