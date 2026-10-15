@@ -14,7 +14,6 @@ APP=${1:?app name}
 SOURCE=${2:?source checkout or --rollback}
 REF=${3:-}
 BASE="$ROOT/$APP"
-WEB_GROUP=www-data
 KEEP=3
 
 say() { printf '\033[1m%s\033[0m\n' "$*"; }
@@ -69,17 +68,22 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Web server may read code and write only storage and the bootstrap cache.
-# Files the web server created in shared storage already carry the group
-# (the directories are setgid), so only touch what the deploying user owns.
+# Each app runs in its own PHP-FPM pool as plainshow-<app>. That user reads
+# the code, its .env and keys, and writes storage. Apache (www-data) may read
+# the code to serve static files, but never .env, keys or storage.
+APP_USER="plainshow-$APP"
 ME=$(id -un)
-chgrp -R "$WEB_GROUP" "$RELEASE"
-find "$BASE/shared" -user "$ME" -exec chgrp "$WEB_GROUP" {} +
-chmod -R g+rX "$RELEASE"
-find "$BASE/shared/storage" "$RELEASE/bootstrap/cache" -user "$ME" -type d -exec chmod 2775 {} +
-find "$BASE/shared/storage" "$RELEASE/bootstrap/cache" -user "$ME" -type f -exec chmod 0664 {} +
-chmod 0640 "$BASE/shared/.env"
-find "$BASE/shared/storage" -maxdepth 1 -user "$ME" -name '*.key' -exec chmod 0640 {} +
+sudo -n setfacl -m "u:$APP_USER:x" "$ROOT"
+sudo -n chown -R "$ME:$APP_USER" "$RELEASE" "$BASE/shared"
+sudo -n chmod -R g+rX,o-rwx "$RELEASE"
+sudo -n setfacl -R -m "u:www-data:rX" "$RELEASE"
+sudo -n setfacl -m "u:www-data:x" "$BASE" "$BASE/releases"
+sudo -n chmod 0750 "$BASE" "$BASE/releases" "$BASE/shared"
+sudo -n find "$BASE/shared/storage" "$RELEASE/bootstrap/cache" -type d -exec chmod 2770 {} +
+sudo -n find "$BASE/shared/storage" "$RELEASE/bootstrap/cache" -type f -exec chmod 0660 {} +
+sudo -n chmod 0640 "$BASE/shared/.env"
+sudo -n find "$BASE/shared/storage" -maxdepth 1 -name '*.key' -exec chmod 0640 {} +
+sudo -n setfacl -R -b "$BASE/shared"
 
 ln -sfn "$RELEASE" "$BASE/current.new"
 mv -Tf "$BASE/current.new" "$BASE/current"
