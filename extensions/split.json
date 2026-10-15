@@ -1,0 +1,16 @@
+{
+    "id": "split",
+    "name": "Split",
+    "description": "Share costs in groups and settle up with Swish.",
+    "icon": "bx-wallet",
+    "url": "https://split.plainshow.se",
+    "api": "https://split.plainshow.se/api/v1",
+    "sort": 15,
+    "default_access": ["admin", "moderator", "member"],
+    "health": "https://split.plainshow.se/api/v1/health",
+    "capabilities": [
+        { "name": "split.group.create", "label": "Create groups" },
+        { "name": "split.group.moderate", "label": "Manage every group" }
+    ],
+    "widgets": []
+}
