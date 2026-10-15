@@ -56,6 +56,9 @@ class AccountController extends Controller
                 'cloud' => [
                     'available' => in_array('cloud', $services, true),
                     'url' => Extension::find('cloud')?->url,
+                    // Existing Nextcloud accounts are linked; otherwise one named after the username.
+                    'account' => DB::table('core_linked_accounts')->where(['user_id' => $user->id, 'provider' => 'nextcloud'])->value('external_id') ?? $user->username,
+                    'linked' => DB::table('core_linked_accounts')->where(['user_id' => $user->id, 'provider' => 'nextcloud'])->exists(),
                 ],
                 'pi' => [
                     'username' => $user->pi_username,

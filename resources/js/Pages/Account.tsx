@@ -7,7 +7,7 @@ type Props = {
     section: 'profile' | 'security' | 'connections';
     profile: { username: string; firstName: string; lastName: string; email: string | null; phone: string | null; avatar: string | null; initials: string; role: string };
     security: { twoFactor: boolean; recoveryCodesLeft: number; passwordChangedAt: string | null; lastLoginAt: string | null; enrollment: { secret: string; qr: string } | null; recoveryCodes: string[] | null };
-    connections: { cloud: { available: boolean; url: string | null }; pi: { username: string | null; webAccess: boolean; url: string | null } };
+    connections: { cloud: { available: boolean; url: string | null; account: string; linked: boolean }; pi: { username: string | null; webAccess: boolean; url: string | null } };
 };
 
 const SECTIONS = [
@@ -184,7 +184,11 @@ function Connections({ connections }: Props) {
                 <FrameHead title="Nextcloud" text="Files, calendar and contacts on cloud.plainshow.se." action={connections.cloud.available ? <Badge tone="green">Single sign-on</Badge> : <Badge>No access</Badge>} />
                 <div className="ps-frame__body">
                     <ul className="ps-list">
-                        <ListRow icon="bx-cloud" title={connections.cloud.available ? 'Signs in with your PlainShow account' : 'Not open to your account'} meta={connections.cloud.available ? 'Choose “Log in with PlainShow” on the Nextcloud sign-in page.' : 'An administrator can give you access.'}
+                        <ListRow icon="bx-cloud"
+                            title={connections.cloud.available ? <>Signs in as <span className="ps-mono">{connections.cloud.account}</span></> : 'Not open to your account'}
+                            meta={connections.cloud.available
+                                ? (connections.cloud.linked ? 'Your existing Nextcloud account, with all its files. The desktop and phone apps sign in with PlainShow too.' : 'Created the first time you open Nextcloud. The desktop and phone apps sign in with PlainShow too.')
+                                : 'An administrator can give you access.'}
                             action={connections.cloud.available && connections.cloud.url ? <ButtonLink href={connections.cloud.url} external size="sm">Open</ButtonLink> : undefined} />
                     </ul>
                 </div>

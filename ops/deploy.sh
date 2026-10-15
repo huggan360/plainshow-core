@@ -79,6 +79,9 @@ find "$BASE/shared/storage" -maxdepth 1 -name '*.key' -exec chmod 0640 {} +
 
 ln -sfn "$RELEASE" "$BASE/current.new"
 mv -Tf "$BASE/current.new" "$BASE/current"
+# mod_php caches resolved paths and opcode; a graceful reload makes every
+# worker pick up the new release without dropping requests.
+sudo -n systemctl reload apache2 || echo "Reload Apache to finish switching." >&2
 say "$APP is now $NAME"
 
 # Keep the last few releases for rollback.
