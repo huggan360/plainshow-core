@@ -70,12 +70,16 @@ php artisan route:cache
 php artisan view:cache
 
 # Web server may read code and write only storage and the bootstrap cache.
-chgrp -R "$WEB_GROUP" "$RELEASE" "$BASE/shared"
+# Files the web server created in shared storage already carry the group
+# (the directories are setgid), so only touch what the deploying user owns.
+ME=$(id -un)
+chgrp -R "$WEB_GROUP" "$RELEASE"
+find "$BASE/shared" -user "$ME" -exec chgrp "$WEB_GROUP" {} +
 chmod -R g+rX "$RELEASE"
-find "$BASE/shared/storage" "$RELEASE/bootstrap/cache" -type d -exec chmod 2775 {} +
-find "$BASE/shared/storage" "$RELEASE/bootstrap/cache" -type f -exec chmod 0664 {} +
+find "$BASE/shared/storage" "$RELEASE/bootstrap/cache" -user "$ME" -type d -exec chmod 2775 {} +
+find "$BASE/shared/storage" "$RELEASE/bootstrap/cache" -user "$ME" -type f -exec chmod 0664 {} +
 chmod 0640 "$BASE/shared/.env"
-find "$BASE/shared/storage" -maxdepth 1 -name '*.key' -exec chmod 0640 {} +
+find "$BASE/shared/storage" -maxdepth 1 -user "$ME" -name '*.key' -exec chmod 0640 {} +
 
 ln -sfn "$RELEASE" "$BASE/current.new"
 mv -Tf "$BASE/current.new" "$BASE/current"
