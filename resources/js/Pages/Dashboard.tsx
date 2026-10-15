@@ -8,7 +8,7 @@ export default function Dashboard({ layout, catalogue }: Props) {
     const byKey = new Map(catalogue.map((widget) => [widget.key, widget]));
 
     return (
-        <AppShell title="Dashboard" wide>
+        <AppShell title="Dashboard" wide heading={false}>
             {layout.length === 0
                 ? <Empty icon="bx-grid-alt">Your dashboard is empty.</Empty>
                 : <div className="ps-widget-grid">

@@ -122,7 +122,7 @@ function Security({ security }: Props) {
                 </form>
             </Frame>
 
-            <Frame glow={security.twoFactor ? 'green' : 'violet'}>
+            <Frame glow={security.twoFactor ? 'green' : 'accent'}>
                 <FrameHead title="Two-factor authentication" text="A code from an authenticator app on top of your password." action={security.twoFactor ? <Badge tone="green">On</Badge> : <Badge tone="amber">Off</Badge>} />
                 <div className="ps-frame__body">
                     {security.recoveryCodes && (

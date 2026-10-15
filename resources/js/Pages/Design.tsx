@@ -1,11 +1,11 @@
 import AppShell from '@/Layouts/AppShell';
 import { Avatar, Badge, Button, ButtonLink, Field, Frame, FrameHead, ListRow, Meter, Switch } from '@/Components/ui';
 import { SharedProps } from '@/types';
-import { Head, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
-const SANS = ['Hanken Grotesk', 'Geist', 'Instrument Sans'];
-const SERIF = ['Newsreader', 'Source Serif 4'];
+const SANS = ['Outfit'];
+const SERIF = ['Source Serif 4'];
 
 export default function Design() {
     const { props } = usePage<SharedProps>();
@@ -13,23 +13,22 @@ export default function Design() {
     const [switchOn, setSwitchOn] = useState(true);
 
     return (
-        <AppShell title="Design" wide>
-            <Head><link rel="stylesheet" href="/ui/css/font-candidates.css" /></Head>
-            <div className="ps-page-head">
+        <AppShell title="Design" wide heading={false}>
+                        <div className="ps-page-head">
                 <div>
                     <p className="ps-eyebrow">PlainShow UI kit</p>
-                    <h1 className="ps-title">Design specimen</h1>
+                    <h1 className="ps-page-head__title">Design specimen</h1>
                     <p className="ps-muted">Pick the typefaces and check the boxes here before every page is restyled.</p>
                 </div>
             </div>
 
             <section className="design-section">
                 <h2 className="ps-heading design-section__title">Typefaces</h2>
-                <div className="ps-frames ps-frames--3">
+                <div className="ps-frames">
                     {SANS.map((family, index) => (
-                        <Frame key={family} glow={index === 0 ? 'blue' : undefined}>
-                            <div className="design-type" style={{ fontFamily: `'Candidate ${family}'` }}>
-                                <div className="ps-between"><span className="ps-eyebrow">Interface</span>{index === 0 && <Badge tone="blue">Current</Badge>}</div>
+                        <Frame key={family} glow={index === 0 ? 'accent' : undefined}>
+                            <div className="design-type" style={{ fontFamily: 'var(--ps-font-ui)' }}>
+                                <div className="ps-between"><span className="ps-eyebrow">Interface</span>{index === 0 && <Badge tone="accent">Current</Badge>}</div>
                                 <p className="design-type__name">{family}</p>
                                 <p className="design-type__big">Hand off the work. Keep the craft.</p>
                                 <p className="ps-soft">Inlägg, gallerier och dokument. The quick brown fox jumps over the lazy dog. 0123456789</p>
@@ -41,7 +40,7 @@ export default function Design() {
                 <div className="ps-frames design-gap">
                     {SERIF.map((family, index) => (
                         <Frame key={family} glow={index === 0 ? 'warm' : undefined}>
-                            <div className="design-type" style={{ fontFamily: `'Candidate ${family}'` }}>
+                            <div className="design-type" style={{ fontFamily: 'var(--ps-font-serif)' }}>
                                 <div className="ps-between"><span className="ps-eyebrow">Headings and reading</span>{index === 0 && <Badge tone="warm">Current</Badge>}</div>
                                 <p className="design-type__name">{family}</p>
                                 <p className="design-type__display">Do more with PlainShow, everywhere you work</p>
@@ -76,7 +75,7 @@ export default function Design() {
                         <ul className="ps-list ps-frame__body">
                             <ListRow icon="bx-news" title="Blog" action={<Button size="sm">Open <i className="bx bx-right-top-arrow-circle" /></Button>} />
                             <ListRow icon="bx-code-curly" title="LaTeX" action={<Button size="sm">Open <i className="bx bx-right-top-arrow-circle" /></Button>} />
-                            <ListRow icon="bx-server" title={<>Web <Badge tone="blue">Admin</Badge></>} action={<Button size="sm">Open <i className="bx bx-right-top-arrow-circle" /></Button>} />
+                            <ListRow icon="bx-server" title={<>Web <Badge tone="accent">Admin</Badge></>} action={<Button size="sm">Open <i className="bx bx-right-top-arrow-circle" /></Button>} />
                             <ListRow icon="bx-cloud" title="Cloud" action={<Button size="sm">Open <i className="bx bx-right-top-arrow-circle" /></Button>} />
                         </ul>
                     </Frame>
@@ -98,7 +97,7 @@ export default function Design() {
                         <div className="ps-stack ps-frame__body">
                             <div className="ps-inline"><Button variant="primary">Primary</Button><Button>Secondary</Button><Button variant="ghost">Ghost</Button><Button variant="danger">Danger</Button><Button variant="gradient">Highlight</Button></div>
                             <div className="ps-inline"><Button size="sm" icon="bx-plus">Small</Button><Button iconOnly icon="bx-cog" aria-label="Settings" /><Button loading>Saving</Button></div>
-                            <div className="ps-inline"><Badge>Neutral</Badge><Badge tone="blue">Beta</Badge><Badge tone="green">Online</Badge><Badge tone="amber">Moderator</Badge><Badge tone="red">Admin</Badge><Badge tone="violet">New</Badge><Badge tone="warm">Blog</Badge></div>
+                            <div className="ps-inline"><Badge>Neutral</Badge><Badge tone="accent">Beta</Badge><Badge tone="green">Online</Badge><Badge tone="amber">Moderator</Badge><Badge tone="red">Admin</Badge><Badge tone="violet">New</Badge><Badge tone="warm">Blog</Badge></div>
                         </div>
                     </Frame>
                     <Frame>

@@ -18,13 +18,7 @@ export default function Extensions({ extensions, roles }: { extensions: Extensio
     };
 
     return (
-        <AppShell title="Services">
-            <div className="ps-page-head">
-                <div>
-                    <h1 className="ps-title">Services</h1>
-                    <p className="ps-muted">Turn services on or off, and choose which roles get them by default.</p>
-                </div>
-            </div>
+        <AppShell title="Services" description="Turn services on or off, and choose which roles get them by default.">
             <div className="ps-stack">
                 {extensions.map((extension) => {
                     const state = STATE[extension.health?.state ?? 'unknown'];

@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { ComponentProps, ReactNode, useEffect, useRef } from 'react';
 
-type Glow = 'green' | 'blue' | 'violet' | 'pink' | 'warm' | 'cyan';
+type Glow = 'accent' | 'green' | 'blue' | 'violet' | 'pink' | 'warm' | 'cyan';
 
 /** The nested box: an outer shell around an inner panel (radius minus padding). */
 export function Frame({ variant = 'soft', glow, compact, flush, className = '', panelClassName = '', children, ...rest }: {
@@ -61,7 +61,7 @@ export function ButtonLink({ href, external, variant = 'secondary', size, icon, 
         : <Link href={href} className={buttonClass(variant, size, false, false, false, className)}>{content}</Link>;
 }
 
-export function Badge({ tone, children }: { tone?: 'blue' | 'green' | 'amber' | 'red' | 'violet' | 'warm'; children: ReactNode }) {
+export function Badge({ tone, children }: { tone?: 'accent' | 'blue' | 'green' | 'amber' | 'red' | 'violet' | 'warm'; children: ReactNode }) {
     return <span className={`ps-badge${tone ? ` ps-badge--${tone}` : ''}`}>{children}</span>;
 }
 

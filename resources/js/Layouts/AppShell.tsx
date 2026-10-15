@@ -29,7 +29,11 @@ function useOutside(open: boolean, close: () => void) {
     return ref;
 }
 
-export default function AppShell({ title, children, wide, actions }: { title: string; children: ReactNode; wide?: boolean; actions?: ReactNode }) {
+/**
+ * The page title sits on the page as a heading, not in the top bar. Pages
+ * with their own heading (the dashboard greeting) pass `heading={false}`.
+ */
+export default function AppShell({ title, children, wide, actions, description, heading = true }: { title: string; children: ReactNode; wide?: boolean; actions?: ReactNode; description?: ReactNode; heading?: boolean }) {
     const { props, url } = usePage<SharedProps>();
     const user = props.auth.user!;
     const caps = props.auth.capabilities;
@@ -67,8 +71,7 @@ export default function AppShell({ title, children, wide, actions }: { title: st
             <aside className="ps-sidebar" aria-label="Main">
                 <div className="ps-sidebar__brand">
                     <Link href="/" className="ps-brand">
-                        <img className="ps-brand__icon" src="/ui/brand/plainshow-icon.webp" alt="" />
-                        <span className="ps-brand__word">plain<span className="ps-brand__show">show</span></span>
+                        <img className="ps-brand__logo" src="/ui/brand/plainshow-logo.webp" alt="PlainShow" width="92" height="30" />
                     </Link>
                 </div>
                 <nav className="ps-nav">
@@ -103,9 +106,8 @@ export default function AppShell({ title, children, wide, actions }: { title: st
             <div className="ps-main">
                 <header className="ps-topbar">
                     <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-menu-toggle" aria-label="Open menu" onClick={() => setMenuOpen(true)}><i className="bx bx-menu" /></button>
-                    <h1 className="ps-topbar__title">{title}</h1>
+                    <Link href="/" className="ps-brand shell-topbar-mark" aria-label="PlainShow"><img className="ps-brand__mark" src="/ui/brand/plainshow-icon.webp" alt="" /></Link>
                     <span className="ps-topbar__spacer" />
-                    {actions}
                     <div className="ps-switcher" ref={switcherRef}>
                         <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon" aria-label="Switch service" aria-expanded={switcherOpen} onClick={() => setSwitcherOpen((open) => !open)}><i className="bx bx-grid-small" /></button>
                         {switcherOpen && (
@@ -140,7 +142,18 @@ export default function AppShell({ title, children, wide, actions }: { title: st
                         )}
                     </div>
                 </header>
-                <main className={`ps-content${wide ? ' ps-content--wide' : ''}`}>{children}</main>
+                <main className={`ps-content${wide ? ' ps-content--wide' : ''}`}>
+                    {heading && (
+                        <div className="ps-page-head">
+                            <div>
+                                <h1 className="ps-page-head__title">{title}</h1>
+                                {description && <p className="ps-page-head__text">{description}</p>}
+                            </div>
+                            {actions && <div className="ps-page-head__actions">{actions}</div>}
+                        </div>
+                    )}
+                    {children}
+                </main>
             </div>
 
             <nav className="ps-tabbar" aria-label="Quick navigation">

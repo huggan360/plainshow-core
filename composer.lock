@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "aaf4027d01b392241ca1477118863490",
+    "content-hash": "eb36dc353248ae3769b2ea3142c10883",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -2862,16 +2862,16 @@
         },
         {
             "name": "plainshow/kit",
-            "version": "v0.2.0",
+            "version": "v0.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/huggan360/plainshow-kit.git",
-                "reference": "f08976d1f01d324403ffae11838ca915cd077c27"
+                "reference": "c2142d37011f8a7c390d13adf2db58826e4633df"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/huggan360/plainshow-kit/zipball/f08976d1f01d324403ffae11838ca915cd077c27",
-                "reference": "f08976d1f01d324403ffae11838ca915cd077c27",
+                "url": "https://api.github.com/repos/huggan360/plainshow-kit/zipball/c2142d37011f8a7c390d13adf2db58826e4633df",
+                "reference": "c2142d37011f8a7c390d13adf2db58826e4633df",
                 "shasum": ""
             },
             "require": {
@@ -2901,7 +2901,7 @@
                 "proprietary"
             ],
             "description": "PlainShow shared kit: single sign-on client, token checks, permissions and the UI assets used by every PlainShow app.",
-            "time": "2026-10-15T13:11:31+00:00"
+            "time": "2026-10-15T18:59:04+00:00"
         },
         {
             "name": "pragmarx/google2fa",

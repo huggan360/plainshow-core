@@ -13,16 +13,11 @@ export default function Audit({ events, filter }: { events: Page; filter: string
     const next = events.links[events.links.length - 1];
 
     return (
-        <AppShell title="Audit log" wide>
-            <div className="ps-page-head">
-                <div>
-                    <h1 className="ps-title">Audit log</h1>
-                    <p className="ps-muted">{events.total} events</p>
-                </div>
-                <nav className="ps-tabs" aria-label="Filter">
-                    {FILTERS.map((item) => <Link key={item.id} href={`/admin/audit${item.id === 'all' ? '' : `?filter=${item.id}`}`} className={`ps-tab${filter === item.id ? ' is-active' : ''}`} preserveState>{item.label}</Link>)}
-                </nav>
-            </div>
+        <AppShell title="Audit log" wide description={`${events.total} events`} actions={
+            <nav className="ps-tabs" aria-label="Filter">
+                {FILTERS.map((item) => <Link key={item.id} href={`/admin/audit${item.id === 'all' ? '' : `?filter=${item.id}`}`} className={`ps-tab${filter === item.id ? ' is-active' : ''}`} preserveState>{item.label}</Link>)}
+            </nav>
+        }>
             <Frame flush>
                 {events.data.length === 0 ? <Empty icon="bx-list-ul">No events.</Empty> : (
                     <div className="ps-table-wrap">

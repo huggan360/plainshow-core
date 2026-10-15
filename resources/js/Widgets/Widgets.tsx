@@ -28,14 +28,14 @@ function useWidgetData<T>(extension: string, id: string, refreshSeconds?: number
     return { ...state, reload: load };
 }
 
-export function WidgetFrame({ definition, children, glow }: { definition: WidgetDefinition; children: ReactNode; glow?: 'green' | 'blue' | 'violet' | 'pink' | 'warm' | 'cyan' }) {
+export function WidgetFrame({ definition, children, glow }: { definition: WidgetDefinition; children: ReactNode; glow?: 'accent' | 'green' | 'blue' | 'violet' | 'pink' | 'warm' | 'cyan' }) {
     return (
         <section className="ps-frame ps-widget" data-glow={glow}>
             <div className="ps-frame__panel">
                 <header className="ps-widget__head">
                     <span className="ps-widget__icon"><i className={`bx ${definition.icon}`} aria-hidden="true" /></span>
                     <h2 className="ps-widget__title">{definition.title}</h2>
-                    {definition.admin && <span className="ps-widget__source"><Badge tone="violet">Admin</Badge></span>}
+                    {definition.admin && <span className="ps-widget__source"><Badge tone="accent">Admin</Badge></span>}
                 </header>
                 <div className="ps-widget__body">{children}</div>
             </div>
@@ -65,7 +65,7 @@ export function GreetingWidget({ definition }: { definition: WidgetDefinition })
     const state = useWidgetData<GreetingData>(definition.extension, definition.id);
     const now = new Date();
     return (
-        <section className="ps-frame ps-widget widget-greeting" data-glow="violet">
+        <section className="ps-frame ps-widget widget-greeting" data-glow="accent">
             <div className="ps-frame__panel">
                 <Body state={state}>{(data) => (
                     <div className="widget-greeting__inner">

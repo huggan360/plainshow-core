@@ -24,17 +24,13 @@ export default function Users({ users, search, extensions, access, roles, resetL
     }, [query, search]);
 
     return (
-        <AppShell title="Accounts" wide actions={<Button variant="primary" size="sm" icon="bx-plus" onClick={() => setCreating(true)}>New account</Button>}>
-            <div className="ps-page-head">
-                <div>
-                    <h1 className="ps-title">Accounts</h1>
-                    <p className="ps-muted">{users.length} {users.length === 1 ? 'person' : 'people'}</p>
-                </div>
-                <div className="ps-input-wrap admin-search">
-                    <i className="bx bx-search" aria-hidden="true" />
-                    <input className="ps-input" type="search" placeholder="Search accounts" value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search accounts" />
-                </div>
+        <AppShell title="Accounts" wide description={`${users.length} ${users.length === 1 ? 'person' : 'people'}`} actions={<>
+            <div className="ps-input-wrap admin-search">
+                <i className="bx bx-search" aria-hidden="true" />
+                <input className="ps-input" type="search" placeholder="Search accounts" value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search accounts" />
             </div>
+            <Button variant="primary" icon="bx-plus" onClick={() => setCreating(true)}>New account</Button>
+        </>}>
 
             <Frame flush>
                 <div className="ps-table-wrap">

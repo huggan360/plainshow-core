@@ -123,7 +123,8 @@ try {
     $memberHome = $memberBrowser->inertia($coreBase.'/');
     $memberKeys = array_column($memberHome['page']['props']['layout'] ?? [], 'key');
     check(! in_array('core.admin-services', $memberKeys, true), 'Member gets no admin widgets');
-    check($memberBrowser->go('GET', $coreBase.'/widgets/core/admin-users', null, ['Accept: application/json'])['status'] === 404, 'Member cannot read admin widget data');
+    $adminWidget = $memberBrowser->go('GET', $coreBase.'/widgets/core/admin-users', null, ['Accept: application/json']);
+    check($adminWidget['status'] === 404, 'Member cannot read admin widget data (HTTP '.$adminWidget['status'].')');
     check($memberBrowser->inertia($coreBase.'/admin/users')['status'] === 403, 'Member is refused the accounts page');
 
     // API with a real access token from login.
