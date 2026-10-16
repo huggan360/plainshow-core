@@ -27,10 +27,15 @@ class ExtensionWidgets
             return ['type' => 'list', 'items' => [], 'empty' => $extension->name.' is not connected to the dashboard yet.'];
         }
 
-        return Cache::remember("widget:{$extension->id}:{$widget}:{$user->id}", 30, function () use ($extension, $widget, $user, $secret, $api) {
+        // Answers are cached briefly; failures are not, so a slow moment does not stick.
+        $cacheKey = "widget:{$extension->id}:{$widget}:{$user->id}";
+        if (is_array($cached = Cache::get($cacheKey))) {
+            return $cached;
+        }
+        $data = (function () use ($extension, $widget, $user, $secret, $api) {
             try {
                 $host = (string) parse_url($api, PHP_URL_HOST);
-                $response = Http::timeout(5)->connectTimeout(2)->acceptJson()
+                $response = Http::timeout(8)->connectTimeout(3)->retry(2, 200, throw: false)->acceptJson()
                     // Every extension runs on this machine: go straight there, still over checked TLS.
                     ->withOptions(['curl' => [CURLOPT_RESOLVE => ["$host:443:127.0.0.1"]]])
                     ->get("$api/widgets/$widget", Widgets::sign($user->id, $widget, $secret));
@@ -43,7 +48,12 @@ class ExtensionWidgets
             } catch (Throwable) {
                 return ['type' => 'list', 'items' => [], 'empty' => 'Could not reach '.$extension->name.'.', 'error' => true];
             }
-        });
+        })();
+        if (empty($data['error'])) {
+            Cache::put($cacheKey, $data, 30);
+        }
+
+        return $data;
     }
 
     /** Keeps only known fields and safe links, so an extension cannot inject anything odd. */

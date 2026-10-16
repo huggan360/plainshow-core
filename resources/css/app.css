@@ -173,7 +173,7 @@
 .studio-widget__tool { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border: 0; border-radius: 7px; background: none; color: var(--ps-text-muted); font-size: 1.05rem; cursor: pointer; }
 .studio-widget__tool:hover { background: var(--ps-hover); color: var(--ps-text); }
 .studio-panel { position: sticky; top: 20px; display: grid; gap: 16px; max-height: calc(100vh - 40px); overflow: auto; border-radius: var(--ps-frame-radius); }
-.studio-gallery { display: grid; gap: 18px; }
+.studio-gallery { display: grid; gap: 18px; margin-top: 18px; }
 .studio-gallery__name { margin: 0 0 4px; font: 600 var(--ps-text-xs) var(--ps-font-ui); color: var(--ps-text-muted); letter-spacing: .08em; text-transform: uppercase; }
 .studio-gallery .ps-row__meta { white-space: normal; }
 .studio-settings { display: grid; gap: 4px; }
