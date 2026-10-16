@@ -129,3 +129,6 @@
 .widget-ext__photo:hover img { transform: scale(1.04); }
 .widget-ext__more { justify-self: start; }
 .widget-figures .is-good strong { color: var(--ps-green); }
+.widget-ext a.ps-row { min-width: 0; overflow: hidden; }
+.widget-ext .ps-row__title { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.widget-ext .ps-row__title .ps-badge { float: right; margin-left: 8px; }
