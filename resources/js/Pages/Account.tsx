@@ -1,7 +1,7 @@
 import AppShell from '@/Layouts/AppShell';
 import { Avatar, Badge, Button, ButtonLink, Field, Frame, Modal, relativeTime } from '@/Components/ui';
 import { Link, router, useForm } from '@inertiajs/react';
-import { FormEvent, ReactNode, useEffect, useRef, useState } from 'react';
+import { Children, FormEvent, ReactNode, useEffect, useRef, useState } from 'react';
 
 type Props = {
     section: 'profile' | 'security' | 'connections' | 'tokens';
@@ -41,18 +41,19 @@ export default function Account(props: Props) {
 }
 
 /** One setting: icon, name, a short line, and what you can do about it, like the admin pages. */
-function Setting({ icon, title, text, action, children, off }: { icon: string; title: ReactNode; text?: ReactNode; action?: ReactNode; children?: ReactNode; off?: boolean }) {
+function Setting({ icon, lead, title, text, action, children, off }: { icon?: string; lead?: ReactNode; title: ReactNode; text?: ReactNode; action?: ReactNode; children?: ReactNode; off?: boolean }) {
+    const more = Children.toArray(children).length > 0;
     return (
         <Frame compact className={off ? 'is-off' : ''}>
             <div className="service">
-                <span className="service__icon"><i className={`bx ${icon}`} aria-hidden="true" /></span>
+                {lead ?? <span className="service__icon"><i className={`bx ${icon}`} aria-hidden="true" /></span>}
                 <div className="service__body">
                     <strong>{title}</strong>
                     {text && <p className="ps-muted ps-small">{text}</p>}
                 </div>
                 {action && <div className="account-row__action">{action}</div>}
             </div>
-            {children && <div className="account-row__more">{children}</div>}
+            {more && <div className="account-row__more">{children}</div>}
         </Frame>
     );
 }
@@ -78,15 +79,11 @@ function Profile({ profile }: Props) {
 
     return (
         <div className="ps-stack">
-            <Setting icon="bx-image" title="Profile picture" text="Shown everywhere in PlainShow. JPG, PNG, WebP or HEIC, cropped to a square."
+            <Setting lead={<Avatar src={profile.avatar} initials={profile.initials} size="lg" />} title="Profile picture" text={avatarError ?? 'Shown everywhere in PlainShow. JPG, PNG, WebP or HEIC, cropped to a square.'}
                 action={<div className="ps-inline">
                     {profile.avatar && <Button size="sm" variant="ghost" onClick={() => router.delete('/account/avatar', { preserveScroll: true })}>Remove</Button>}
                     <Button size="sm" variant="primary" icon="bx-upload" loading={uploading} onClick={() => file.current?.click()}>Upload</Button>
                 </div>}>
-                <div className="account-avatar">
-                    <Avatar src={profile.avatar} initials={profile.initials} size="xl" />
-                    {avatarError && <p className="ps-error">{avatarError}</p>}
-                </div>
                 <input ref={file} type="file" accept="image/*" className="ps-sr-only" tabIndex={-1} onChange={(event) => upload(event.target.files?.[0])} />
             </Setting>
 

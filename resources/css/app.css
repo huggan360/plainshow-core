@@ -10,7 +10,7 @@
 /* Widgets */
 
 /* Account */
-.account { max-width: 860px; }
+.account { display: block; }
 .account__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 14px; }
 .account__grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .account__enroll { display: flex; gap: 20px; align-items: flex-start; }
@@ -371,3 +371,6 @@ a.widget-row:hover { background: var(--ps-btn-bg-hover); }
 .widget-clock { margin: 0; font-family: var(--ps-font-title); font-size: clamp(40px, 6vw, 64px); font-weight: 500; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .widget-clock--side { color: var(--ps-text-soft); }
 .studio-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: var(--ps-text-sm); }
+
+/* Widgets keep their own height in a row, so short ones do not leave empty boxes. */
+.ps-widget-grid { align-items: start; }

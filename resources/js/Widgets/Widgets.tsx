@@ -237,7 +237,7 @@ export function AdminUsersWidget({ definition }: { definition: WidgetDefinition 
                     <Figures figures={[
                         { label: 'Accounts', value: data.total },
                         { label: 'Admins', value: data.byRole.admin ?? 0 },
-                        { label: 'No two-factor', value: data.withoutTwoFactor, tone: data.withoutTwoFactor > 0 ? 'warn' : undefined },
+                        { label: 'No 2FA', value: data.withoutTwoFactor, tone: data.withoutTwoFactor > 0 ? 'warn' : undefined },
                     ]} />
                     <Rows rows={data.recent.slice(0, count).map((user) => ({ key: user.id, lead: <Avatar src={user.avatar} initials={user.initials} size="xs" />, title: user.name, trail: relativeTime(user.lastLogin) }))} />
                 </div>
