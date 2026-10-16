@@ -101,6 +101,7 @@ export default function AppShell({ title, children, wide, actions, description, 
                 <div className="ps-sidebar__foot">
                     <button type="button" className="ps-nav__item" onClick={toggleTheme}><i className={`bx ${theme === 'light' ? 'bx-moon' : 'bx-sun'}`} aria-hidden="true" />{theme === 'light' ? 'Dark theme' : 'Light theme'}</button>
                     <Link href="/design" className={`ps-nav__item${active('/design') ? ' is-active' : ''}`}><i className="bx bx-palette" aria-hidden="true" />Design</Link>
+                    <Link href="/api" className={`ps-nav__item${path === '/api' ? ' is-active' : ''}`}><i className="bx bx-code-alt" aria-hidden="true" />API</Link>
                     <a href="/auth/logout" className="ps-nav__item"><i className="bx bx-log-out" aria-hidden="true" />Sign out</a>
                 </div>
             </aside>

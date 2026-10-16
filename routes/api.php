@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 // plainshow.se/api/core/v1 (bootstrap/app.php sets the prefix).
 Route::get('/health', fn () => response()->json(['status' => 'ok', 'service' => 'core']));
 
-Route::middleware([AuthenticateBearer::class, 'throttle:120,1'])->group(function () {
+Route::middleware([AuthenticateBearer::class.':core', 'throttle:120,1'])->group(function () {
     Route::get('/me', function (Request $request) {
         $user = $request->user();
 

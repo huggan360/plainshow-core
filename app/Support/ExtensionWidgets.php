@@ -89,7 +89,8 @@ class ExtensionWidgets
         ], fn ($value) => $value !== null && $value !== []);
     }
 
-    private static function secret(string $extension): ?string
+    /** The secret core shares with an extension, for widgets and the API gateway. */
+    public static function secret(string $extension): ?string
     {
         static $secrets = null;
         $secrets ??= is_file($file = storage_path('app/widget-secrets.json')) ? (json_decode((string) file_get_contents($file), true) ?: []) : [];

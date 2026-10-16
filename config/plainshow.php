@@ -5,6 +5,9 @@ return [
     'client_id' => env('PLAINSHOW_CLIENT_ID'),
     'client_secret' => env('PLAINSHOW_CLIENT_SECRET'),
 
+    // Shared with login for signed internal requests (personal API tokens).
+    'internal_secret' => env('PLAINSHOW_INTERNAL_SECRET', ''),
+
     // Installed extension releases live at <root>/<id>/current.
     'releases_root' => env('PLAINSHOW_RELEASES_ROOT', '/srv/plainshow'),
 

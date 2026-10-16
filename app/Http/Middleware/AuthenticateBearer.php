@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Support\ApiTokens;
 use App\Support\Sso;
 use Closure;
 use Illuminate\Http\Request;
@@ -18,7 +19,8 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class AuthenticateBearer
 {
-    public function handle(Request $request, Closure $next): Response
+    /** With `core`, personal tokens must carry the core scope (the gateway checks other services itself). */
+    public function handle(Request $request, Closure $next, ?string $service = null): Response
     {
         $token = $request->bearerToken();
         if (! $token) {
@@ -36,7 +38,16 @@ class AuthenticateBearer
             return $this->deny('Token is no longer valid.');
         }
         Auth::setUser($user);
-        $request->attributes->set('token_scopes', (array) ($claims['scopes'] ?? []));
+        $scopes = array_values(array_map('strval', (array) ($claims['scopes'] ?? [])));
+        $request->attributes->set('token_scopes', $scopes);
+        if ($service !== null && ApiTokens::isPersonal($scopes)) {
+            if (! in_array($service, $scopes, true)) {
+                return response()->json(['error' => 'insufficient_scope', 'message' => 'This token does not reach this service.'], 403);
+            }
+            if (in_array('read-only', $scopes, true) && ! in_array($request->method(), ['GET', 'HEAD'], true)) {
+                return response()->json(['error' => 'read_only', 'message' => 'This token can only read.'], 403);
+            }
+        }
 
         return $next($request);
     }

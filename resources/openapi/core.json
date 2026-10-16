@@ -1,0 +1,13 @@
+{
+    "openapi": "3.1.0",
+    "info": { "title": "PlainShow dashboard", "version": "1", "description": "Your account, the services you can use and the server's health." },
+    "servers": [{ "url": "https://plainshow.se/api/core/v1" }],
+    "security": [{ "bearer": [] }],
+    "components": { "securitySchemes": { "bearer": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" } } },
+    "paths": {
+        "/health": { "get": { "summary": "Whether the dashboard answers", "security": [], "responses": { "200": { "description": "`{\"status\": \"ok\"}`" } } } },
+        "/me": { "get": { "summary": "You", "description": "Your account, role, the services you can use and your capabilities.", "responses": { "200": { "description": "The account" } } } },
+        "/extensions": { "get": { "summary": "Your services", "description": "Every turned-on service you can open, with its address and version.", "responses": { "200": { "description": "A list of services" } } } },
+        "/system": { "get": { "summary": "Server health", "description": "Processor, memory, storage, temperature and uptime of the Pi.", "responses": { "200": { "description": "Current figures" } } } }
+    }
+}

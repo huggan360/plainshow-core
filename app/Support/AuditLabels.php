@@ -33,6 +33,8 @@ class AuditLabels
         'layout.role_reset' => 'Default dashboard reset',
         'permissions.role_changed' => 'Role permissions changed',
         'permissions.user_changed' => 'Personal permissions changed',
+        'api_token.created' => 'API token created',
+        'api_token.revoked' => 'API token revoked',
         'update.requested' => 'Update requested',
         'update.finished' => 'Update installed',
         'update.failed' => 'Update failed',

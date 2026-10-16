@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\ApiTokens;
 use App\Models\Extension;
 use App\Support\Audit;
 use App\Support\Avatars;
@@ -28,7 +29,7 @@ class AccountController extends Controller
 {
     public function show(Request $request, string $section = 'profile'): Response
     {
-        abort_unless(in_array($section, ['profile', 'security', 'connections'], true), 404);
+        abort_unless(in_array($section, ['profile', 'security', 'connections', 'tokens'], true), 404);
         $user = $request->user();
         $services = Permissions::for($user)['services'];
 
@@ -52,6 +53,7 @@ class AccountController extends Controller
                 'enrollment' => $request->session()->has('two_factor.pending') ? $this->enrollment($request) : null,
                 'recoveryCodes' => $request->session()->get('two_factor.codes'),
             ],
+            'tokens' => $section === 'tokens' ? $this->tokens($request) : null,
             'connections' => [
                 'cloud' => [
                     'available' => in_array('cloud', $services, true),
@@ -218,5 +220,58 @@ class AccountController extends Controller
         $svg = (new Writer(new ImageRenderer(new RendererStyle(200, 1), new SvgImageBackEnd)))->writeString($uri);
 
         return ['secret' => trim(chunk_split($secret, 4, ' ')), 'qr' => 'data:image/svg+xml;base64,'.base64_encode($svg)];
+    }
+
+    /** Personal API tokens live in login; a failure there should not break the page. */
+    private function tokens(Request $request): array
+    {
+        $services = array_values(array_intersect(ApiTokens::SERVICES, ['core', ...Permissions::for($request->user())['services']]));
+        try {
+            $list = ApiTokens::list($request->user());
+            $error = null;
+        } catch (\Throwable $failure) {
+            report($failure);
+            $list = [];
+            $error = 'Login did not answer, so your tokens cannot be shown right now.';
+        }
+
+        return ['list' => $list, 'services' => $services, 'error' => $error, 'created' => $request->session()->get('api_token')];
+    }
+
+    public function createToken(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:60'],
+            'services' => ['required', 'array', 'min:1'],
+            'services.*' => ['string', \Illuminate\Validation\Rule::in(ApiTokens::SERVICES)],
+            'readOnly' => ['boolean'],
+        ]);
+        $allowed = ['core', ...Permissions::for($request->user())['services']];
+        $scopes = array_values(array_intersect($data['services'], $allowed));
+        if (! $scopes) {
+            return back()->with('error', 'Choose a service you can use.');
+        }
+        if ($request->boolean('readOnly')) {
+            $scopes[] = 'read-only';
+        }
+        try {
+            $created = ApiTokens::create($request->user(), $data['name'], $scopes);
+        } catch (\Throwable $failure) {
+            return back()->with('error', $failure->getMessage());
+        }
+
+        return back()->with('api_token', ['token' => $created['token'], 'name' => $data['name']])->with('status', 'Token created. Copy it now.');
+    }
+
+    public function revokeToken(Request $request, string $token): RedirectResponse
+    {
+        abort_unless(preg_match('/^[a-f0-9]{80}$/', $token) === 1, 404);
+        try {
+            ApiTokens::revoke($request->user(), $token);
+        } catch (\Throwable $failure) {
+            return back()->with('error', $failure->getMessage());
+        }
+
+        return back()->with('status', 'Token revoked.');
     }
 }

@@ -1,19 +1,23 @@
 import AppShell from '@/Layouts/AppShell';
 import { Avatar, Badge, Button, ButtonLink, Field, Frame, FrameHead, ListRow, Modal, relativeTime, RoleBadge } from '@/Components/ui';
 import { Link, router, useForm } from '@inertiajs/react';
-import { FormEvent, useRef, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 
 type Props = {
-    section: 'profile' | 'security' | 'connections';
+    section: 'profile' | 'security' | 'connections' | 'tokens';
     profile: { username: string; firstName: string; lastName: string; email: string | null; phone: string | null; avatar: string | null; initials: string; role: string };
     security: { twoFactor: boolean; recoveryCodesLeft: number; passwordChangedAt: string | null; lastLoginAt: string | null; enrollment: { secret: string; qr: string } | null; recoveryCodes: string[] | null };
+    tokens: { list: ApiToken[]; services: string[]; error: string | null; created: { token: string; name: string } | null } | null;
     connections: { cloud: { available: boolean; url: string | null; account: string; linked: boolean }; pi: { username: string | null; webAccess: boolean; url: string | null } };
 };
+
+type ApiToken = { id: string; name: string; scopes: string[]; createdAt: string; expiresAt: string };
 
 const SECTIONS = [
     { id: 'profile', label: 'Profile', icon: 'bx-user' },
     { id: 'security', label: 'Security', icon: 'bx-shield-quarter' },
     { id: 'connections', label: 'Connections', icon: 'bx-link' },
+    { id: 'tokens', label: 'API tokens', icon: 'bx-key' },
 ] as const;
 
 export default function Account(props: Props) {
@@ -41,6 +45,7 @@ export default function Account(props: Props) {
                     {props.section === 'profile' && <Profile {...props} />}
                     {props.section === 'security' && <Security {...props} />}
                     {props.section === 'connections' && <Connections {...props} />}
+                    {props.section === 'tokens' && props.tokens && <Tokens tokens={props.tokens} />}
                 </div>
             </div>
         </AppShell>
@@ -203,6 +208,60 @@ function Connections({ connections }: Props) {
                     </ul>
                 </div>
             </Frame>
+        </div>
+    );
+}
+
+const SERVICE_NAMES: Record<string, string> = { core: 'Dashboard', blog: 'Blog', split: 'Split', latex: 'LaTeX' };
+
+function Tokens({ tokens }: { tokens: NonNullable<Props['tokens']> }) {
+    const form = useForm<{ name: string; services: string[]; readOnly: boolean }>({ name: '', services: [], readOnly: true });
+    const [copied, setCopied] = useState(false);
+    const [shown, setShown] = useState(tokens.created);
+    useEffect(() => { if (tokens.created) { setShown(tokens.created); setCopied(false); } }, [tokens.created]);
+    const submit = (event: FormEvent) => { event.preventDefault(); form.post('/account/tokens', { preserveScroll: true, onSuccess: () => form.reset('name', 'services') }); };
+    const toggle = (service: string) => form.setData('services', form.data.services.includes(service) ? form.data.services.filter((item) => item !== service) : [...form.data.services, service]);
+    const copy = async () => {
+        if (!shown) return;
+        try { await navigator.clipboard.writeText(shown.token); setCopied(true); } catch { setCopied(false); }
+    };
+
+    return (
+        <div className="ps-stack">
+            <Frame>
+                <FrameHead title="API tokens" text={<>Tokens let your own scripts use PlainShow as you, through <a href="/api">plainshow.se/api</a>. Each reaches only the services you pick, and lasts 90 days.</>} />
+                <form className="ps-frame__body" onSubmit={submit}>
+                    <Field label="Name" htmlFor="token-name" error={form.errors.name}>
+                        <input id="token-name" className="ps-input" value={form.data.name} maxLength={60} placeholder="Backup script" onChange={(event) => form.setData('name', event.target.value)} required />
+                    </Field>
+                    <div className="ps-field">
+                        <span className="ps-label">Services</span>
+                        <div className="token-services">
+                            {tokens.services.map((service) => (
+                                <label key={service} className="ps-check"><input type="checkbox" checked={form.data.services.includes(service)} onChange={() => toggle(service)} />{SERVICE_NAMES[service] ?? service}</label>
+                            ))}
+                        </div>
+                        {form.errors.services && <span className="ps-error">{form.errors.services}</span>}
+                    </div>
+                    <label className="ps-check"><input type="checkbox" checked={form.data.readOnly} onChange={(event) => form.setData('readOnly', event.target.checked)} />Read only</label>
+                    <div className="ps-frame__foot"><Button type="submit" variant="primary" icon="bx-plus" loading={form.processing} disabled={!form.data.name.trim() || form.data.services.length === 0}>Create token</Button></div>
+                </form>
+            </Frame>
+            <Frame>
+                <FrameHead title="Your tokens" />
+                {tokens.error && <div className="ps-alert"><i className="bx bx-error-circle" /><span>{tokens.error}</span></div>}
+                {tokens.list.length === 0
+                    ? <p className="ps-muted ps-frame__body">No tokens yet.</p>
+                    : <ul className="ps-list ps-frame__body">{tokens.list.map((token) => (
+                        <ListRow key={token.id} icon="bx-key" title={<>{token.name}{token.scopes.map((scope) => <Badge key={scope} tone={scope === 'read-only' ? undefined : 'accent'}>{scope === 'read-only' ? 'Read only' : SERVICE_NAMES[scope] ?? scope}</Badge>)}</>}
+                            meta={`Made ${relativeTime(token.createdAt)}, ends ${new Date(token.expiresAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                            action={<Button size="sm" variant="danger" icon="bx-trash" onClick={() => { if (window.confirm(`Revoke ${token.name}? Scripts using it stop working.`)) router.delete(`/account/tokens/${token.id}`, { preserveScroll: true }); }}>Revoke</Button>} />
+                    ))}</ul>}
+            </Frame>
+            <Modal open={shown !== null} title="Copy your token" onClose={() => setShown(null)} footer={<><Button onClick={copy} icon={copied ? 'bx-check' : 'bx-copy'}>{copied ? 'Copied' : 'Copy'}</Button><Button variant="primary" onClick={() => setShown(null)}>Done</Button></>}>
+                <p className="ps-muted">This is the only time {shown?.name} is shown. Keep it somewhere safe.</p>
+                <textarea className="ps-textarea token-value" readOnly rows={5} value={shown?.token ?? ''} onFocus={(event) => event.target.select()} />
+            </Modal>
         </div>
     );
 }

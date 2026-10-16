@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api/core/v1',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function () {
+            Illuminate\Support\Facades\Route::group([], base_path('routes/gateway.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [SecurityHeaders::class, EnsureActiveUser::class, HandleInertiaRequests::class]);

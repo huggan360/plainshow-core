@@ -17,6 +17,7 @@ Route::get('/auth/callback', [SsoController::class, 'callback']);
 Route::get('/auth/frontchannel', [SsoController::class, 'frontchannel']);
 Route::match(['get', 'post'], '/auth/logout', [SsoController::class, 'logout'])->name('logout');
 Route::get('/avatars/{user}', AvatarController::class)->whereNumber('user');
+Route::get('/api', App\Http\Controllers\ApiDocsController::class)->name('api.docs');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'show'])->name('dashboard');
@@ -35,6 +36,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/account/two-factor/pending', [AccountController::class, 'cancelTwoFactor']);
         Route::delete('/account/two-factor', [AccountController::class, 'disableTwoFactor']);
         Route::post('/account/recovery-codes', [AccountController::class, 'regenerateRecoveryCodes']);
+        Route::post('/account/tokens', [AccountController::class, 'createToken']);
+        Route::delete('/account/tokens/{token}', [AccountController::class, 'revokeToken']);
         Route::post('/account/sign-out-everywhere', [AccountController::class, 'signOutEverywhere']);
     });
 
