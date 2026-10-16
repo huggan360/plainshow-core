@@ -5,7 +5,7 @@
 .shell-account__who { display: grid; line-height: 1.3; }
 .shell-toast--ok { color: var(--ps-green); }
 .shell-toast--error { color: var(--ps-red); }
-.shell-tab-button { border: 0; background: none; font: inherit; }
+.shell-tab-button { border: 0; background: none; font-family: var(--ps-font-ui); line-height: inherit; cursor: pointer; }
 
 /* Widgets */
 .widget-skeleton { height: 14px; }
