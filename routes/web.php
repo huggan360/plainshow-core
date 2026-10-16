@@ -17,7 +17,6 @@ Route::get('/auth/callback', [SsoController::class, 'callback']);
 Route::get('/auth/frontchannel', [SsoController::class, 'frontchannel']);
 Route::match(['get', 'post'], '/auth/logout', [SsoController::class, 'logout'])->name('logout');
 Route::get('/avatars/{user}', AvatarController::class)->whereNumber('user');
-Route::get('/api', App\Http\Controllers\ApiDocsController::class)->name('api.docs');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'show'])->name('dashboard');
@@ -26,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/dashboard/layout', [DashboardController::class, 'resetLayout']);
 
     Route::get('/account/{section?}', [AccountController::class, 'show'])->name('account');
+    Route::post('/account/nextcloud/poll', [AccountController::class, 'pollNextcloud'])->middleware('throttle:60,1');
     Route::put('/account/profile', [AccountController::class, 'updateProfile']);
     Route::post('/account/avatar', [AccountController::class, 'updateAvatar']);
     Route::delete('/account/avatar', [AccountController::class, 'removeAvatar']);
@@ -36,12 +36,15 @@ Route::middleware('auth')->group(function () {
         Route::delete('/account/two-factor/pending', [AccountController::class, 'cancelTwoFactor']);
         Route::delete('/account/two-factor', [AccountController::class, 'disableTwoFactor']);
         Route::post('/account/recovery-codes', [AccountController::class, 'regenerateRecoveryCodes']);
-        Route::post('/account/tokens', [AccountController::class, 'createToken']);
+        Route::post('/account/tokens', [AccountController::class, 'createToken'])->middleware('can.do:core.api.use');
         Route::delete('/account/tokens/{token}', [AccountController::class, 'revokeToken']);
+        Route::post('/account/nextcloud', [AccountController::class, 'connectNextcloud']);
+        Route::delete('/account/nextcloud', [AccountController::class, 'disconnectNextcloud']);
         Route::post('/account/sign-out-everywhere', [AccountController::class, 'signOutEverywhere']);
     });
 
     Route::get('/design', [DashboardController::class, 'studio'])->name('design');
+    Route::get('/api', App\Http\Controllers\ApiDocsController::class)->middleware('can.do:core.api.use')->name('api.docs');
     Route::put('/dashboard/layout/roles/{role}', [DashboardController::class, 'saveRoleLayout'])->middleware('can.do:core.permissions.manage');
     Route::delete('/dashboard/layout/roles/{role}', [DashboardController::class, 'resetRoleLayout'])->middleware('can.do:core.permissions.manage');
 

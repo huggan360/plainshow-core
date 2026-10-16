@@ -33,6 +33,8 @@ class AuditLabels
         'layout.role_reset' => 'Default dashboard reset',
         'permissions.role_changed' => 'Role permissions changed',
         'permissions.user_changed' => 'Personal permissions changed',
+        'nextcloud.connected' => 'Connected Nextcloud to the dashboard',
+        'nextcloud.disconnected' => 'Disconnected Nextcloud from the dashboard',
         'api_token.created' => 'API token created',
         'api_token.revoked' => 'API token revoked',
         'update.requested' => 'Update requested',

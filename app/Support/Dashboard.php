@@ -55,13 +55,26 @@ class Dashboard
                     'icon' => $widget['icon'] ?? $extension->icon,
                     'sizes' => array_values(array_intersect($widget['sizes'] ?? ['m'], self::SIZES)),
                     'default' => $widget['default'] ?? 'm',
-                    'settings' => $widget['settings'] ?? [],
+                    'settings' => $widget['settings'] ?? ($extension->id === 'core' ? [] : self::rowsSetting($widget)),
                     'admin' => isset($widget['capability']),
                 ];
             }
         }
 
         return $widgets;
+    }
+
+    /** Widgets from other services get a row count unless they declare their own settings. */
+    private static function rowsSetting(array $widget): array
+    {
+        $gallery = str_contains((string) ($widget['id'] ?? ''), 'photo');
+        $options = $gallery ? ['6', '9', '12'] : ['3', '5', '8'];
+
+        return [[
+            'name' => 'count', 'type' => 'select', 'label' => $gallery ? 'Photos' : 'Rows',
+            'options' => array_map(fn ($value) => ['value' => $value, 'label' => $value], $options),
+            'default' => $gallery ? '9' : '5',
+        ]];
     }
 
     /** @return list<array<string, mixed>> */
@@ -148,6 +161,15 @@ class Dashboard
                     }
                     $clean[$name] = $links;
                     break;
+                case 'toggle':
+                    $clean[$name] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                    break;
+                case 'select':
+                    $options = array_map('strval', array_column($field['options'] ?? [], 'value'));
+                    if (in_array((string) $value, $options, true)) {
+                        $clean[$name] = (string) $value;
+                    }
+                    break;
                 case 'choices':
                     $options = array_column($field['options'] ?? [], 'value');
                     $clean[$name] = array_values(array_intersect(is_array($value) ? array_map('strval', $value) : [], $options));
@@ -164,7 +186,7 @@ class Dashboard
             ['core.greeting', 'full'], ['core.launcher', 'xl'], ['core.pi-health', 'm'],
             ['core.admin-services', 'm'], ['core.admin-users', 'm'], ['core.admin-security', 'm'], ['core.admin-updates', 'm'],
             ['blog.latest-posts', 'm'], ['split.balances', 'm'], ['latex.recent-projects', 'm'],
-            ['core.activity', 'm'], ['blog.new-photos', 'l'],
+            ['cloud.calendar', 'm'], ['core.activity', 'm'], ['blog.new-photos', 'l'],
         ];
 
         return array_map(fn ($entry) => ['key' => $entry[0], 'size' => $entry[1]], $order);

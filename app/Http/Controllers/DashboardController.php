@@ -59,9 +59,11 @@ class DashboardController extends Controller
         $user = $request->user();
         $allowed = collect(Dashboard::catalogue($user))->firstWhere('key', $extension.'.'.$widget);
         abort_unless($allowed, 404);
-        $data = $extension === 'core'
-            ? CoreWidgets::data($widget, $user)
-            : ExtensionWidgets::data(Extension::findOrFail($extension), $widget, $user);
+        $data = match ($extension) {
+            'core' => CoreWidgets::data($widget, $user),
+            'cloud' => \App\Support\NextcloudWidgets::data($widget, $user),
+            default => ExtensionWidgets::data(Extension::findOrFail($extension), $widget, $user),
+        };
         abort_if($data === null, 404);
 
         return response()->json($data)->header('Cache-Control', 'no-store');

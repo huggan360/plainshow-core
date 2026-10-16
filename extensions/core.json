@@ -41,6 +41,14 @@
         {
             "name": "core.audit.view",
             "label": "Read the audit log"
+        },
+        {
+            "name": "core.api.use",
+            "label": "Use the API and make API tokens"
+        },
+        {
+            "name": "core.design.tokens",
+            "label": "See the design tokens"
         }
     ],
     "widgets": [
@@ -54,7 +62,47 @@
                 "full"
             ],
             "default": "xl",
-            "description": "Date, greeting and your account at a glance."
+            "description": "Date, greeting and your account at a glance.",
+            "settings": [
+                {
+                    "name": "display",
+                    "type": "select",
+                    "label": "Show",
+                    "options": [
+                        {
+                            "value": "greeting",
+                            "label": "Greeting"
+                        },
+                        {
+                            "value": "clock",
+                            "label": "Clock"
+                        },
+                        {
+                            "value": "both",
+                            "label": "Greeting and clock"
+                        }
+                    ],
+                    "default": "greeting"
+                },
+                {
+                    "name": "date",
+                    "type": "toggle",
+                    "label": "Date",
+                    "default": true
+                },
+                {
+                    "name": "seconds",
+                    "type": "toggle",
+                    "label": "Seconds on the clock",
+                    "default": false
+                },
+                {
+                    "name": "role",
+                    "type": "toggle",
+                    "label": "Role and services",
+                    "default": false
+                }
+            ]
         },
         {
             "id": "pi-health",
@@ -65,7 +113,43 @@
                 "l"
             ],
             "default": "m",
-            "description": "Processor, memory, storage and temperature of the Pi."
+            "description": "Processor, memory, storage and temperature of the Pi.",
+            "settings": [
+                {
+                    "name": "metrics",
+                    "type": "choices",
+                    "label": "Bars",
+                    "options": [
+                        {
+                            "value": "memory",
+                            "label": "Memory"
+                        },
+                        {
+                            "value": "disk",
+                            "label": "Storage"
+                        },
+                        {
+                            "value": "cpu",
+                            "label": "Processor"
+                        },
+                        {
+                            "value": "temperature",
+                            "label": "Temperature"
+                        }
+                    ],
+                    "default": [
+                        "memory",
+                        "disk",
+                        "cpu"
+                    ]
+                },
+                {
+                    "name": "details",
+                    "type": "toggle",
+                    "label": "Uptime and load",
+                    "default": true
+                }
+            ]
         },
         {
             "id": "launcher",
@@ -78,7 +162,43 @@
                 "full"
             ],
             "default": "l",
-            "description": "Open every service you can use."
+            "description": "Open every service you can use.",
+            "settings": [
+                {
+                    "name": "descriptions",
+                    "type": "toggle",
+                    "label": "Descriptions",
+                    "default": false
+                },
+                {
+                    "name": "hidden",
+                    "type": "choices",
+                    "label": "Hide",
+                    "options": [
+                        {
+                            "value": "blog",
+                            "label": "Blog"
+                        },
+                        {
+                            "value": "split",
+                            "label": "Split"
+                        },
+                        {
+                            "value": "latex",
+                            "label": "LaTeX"
+                        },
+                        {
+                            "value": "web",
+                            "label": "Web"
+                        },
+                        {
+                            "value": "cloud",
+                            "label": "Cloud"
+                        }
+                    ],
+                    "default": []
+                }
+            ]
         },
         {
             "id": "activity",
@@ -89,7 +209,29 @@
                 "l"
             ],
             "default": "m",
-            "description": "Your latest sign-ins and account changes."
+            "description": "Your latest sign-ins and account changes.",
+            "settings": [
+                {
+                    "name": "count",
+                    "type": "select",
+                    "label": "Rows",
+                    "options": [
+                        {
+                            "value": "3",
+                            "label": "3"
+                        },
+                        {
+                            "value": "5",
+                            "label": "5"
+                        },
+                        {
+                            "value": "8",
+                            "label": "8"
+                        }
+                    ],
+                    "default": "5"
+                }
+            ]
         },
         {
             "id": "admin-users",
@@ -101,7 +243,29 @@
             ],
             "default": "m",
             "capability": "core.users.manage",
-            "description": "Accounts, roles and two-factor coverage."
+            "description": "Accounts, roles and two-factor coverage.",
+            "settings": [
+                {
+                    "name": "count",
+                    "type": "select",
+                    "label": "Rows",
+                    "options": [
+                        {
+                            "value": "3",
+                            "label": "3"
+                        },
+                        {
+                            "value": "5",
+                            "label": "5"
+                        },
+                        {
+                            "value": "8",
+                            "label": "8"
+                        }
+                    ],
+                    "default": "3"
+                }
+            ]
         },
         {
             "id": "admin-services",
@@ -113,7 +277,15 @@
             ],
             "default": "m",
             "capability": "core.extensions.manage",
-            "description": "Whether each service answers, and how fast."
+            "description": "Whether each service answers, and how fast.",
+            "settings": [
+                {
+                    "name": "problems",
+                    "type": "toggle",
+                    "label": "Only services with problems",
+                    "default": false
+                }
+            ]
         },
         {
             "id": "admin-security",
@@ -125,7 +297,29 @@
             ],
             "default": "m",
             "capability": "core.audit.view",
-            "description": "Sign-ins, failures and lockouts today."
+            "description": "Sign-ins, failures and lockouts today.",
+            "settings": [
+                {
+                    "name": "count",
+                    "type": "select",
+                    "label": "Rows",
+                    "options": [
+                        {
+                            "value": "3",
+                            "label": "3"
+                        },
+                        {
+                            "value": "5",
+                            "label": "5"
+                        },
+                        {
+                            "value": "8",
+                            "label": "8"
+                        }
+                    ],
+                    "default": "3"
+                }
+            ]
         },
         {
             "id": "admin-updates",
@@ -138,7 +332,8 @@
                 "l"
             ],
             "default": "m",
-            "capability": "core.updates.apply"
+            "capability": "core.updates.apply",
+            "settings": []
         },
         {
             "id": "notes",

@@ -5,9 +5,142 @@
     "icon": "bx-cloud",
     "url": "https://cloud.plainshow.se",
     "sort": 40,
-    "default_access": ["admin", "moderator", "member"],
-    "capabilities": [
-        { "name": "cloud.files.view", "label": "Use Nextcloud" }
+    "default_access": [
+        "admin",
+        "moderator",
+        "member"
     ],
-    "widgets": []
+    "capabilities": [
+        {
+            "name": "cloud.files.view",
+            "label": "Use Nextcloud"
+        }
+    ],
+    "widgets": [
+        {
+            "id": "calendar",
+            "title": "Calendar",
+            "icon": "bx-calendar",
+            "description": "What is coming up in your Nextcloud calendars.",
+            "sizes": [
+                "m",
+                "l"
+            ],
+            "default": "m",
+            "settings": [
+                {
+                    "name": "days",
+                    "type": "select",
+                    "label": "Look ahead",
+                    "options": [
+                        {
+                            "value": "7",
+                            "label": "A week"
+                        },
+                        {
+                            "value": "14",
+                            "label": "Two weeks"
+                        },
+                        {
+                            "value": "30",
+                            "label": "A month"
+                        }
+                    ],
+                    "default": "14"
+                },
+                {
+                    "name": "count",
+                    "type": "select",
+                    "label": "Rows",
+                    "options": [
+                        {
+                            "value": "3",
+                            "label": "3"
+                        },
+                        {
+                            "value": "5",
+                            "label": "5"
+                        },
+                        {
+                            "value": "8",
+                            "label": "8"
+                        }
+                    ],
+                    "default": "5"
+                }
+            ]
+        },
+        {
+            "id": "files",
+            "title": "Recent files",
+            "icon": "bx-folder",
+            "description": "Files you changed lately in Nextcloud.",
+            "sizes": [
+                "m",
+                "l"
+            ],
+            "default": "m",
+            "settings": [
+                {
+                    "name": "count",
+                    "type": "select",
+                    "label": "Rows",
+                    "options": [
+                        {
+                            "value": "3",
+                            "label": "3"
+                        },
+                        {
+                            "value": "5",
+                            "label": "5"
+                        },
+                        {
+                            "value": "8",
+                            "label": "8"
+                        }
+                    ],
+                    "default": "5"
+                }
+            ]
+        },
+        {
+            "id": "talk",
+            "title": "Talk",
+            "icon": "bx-chat",
+            "description": "Your Nextcloud Talk conversations, unread first.",
+            "sizes": [
+                "m",
+                "l"
+            ],
+            "default": "m",
+            "settings": [
+                {
+                    "name": "unread",
+                    "type": "toggle",
+                    "label": "Only unread",
+                    "default": false
+                },
+                {
+                    "name": "count",
+                    "type": "select",
+                    "label": "Rows",
+                    "options": [
+                        {
+                            "value": "3",
+                            "label": "3"
+                        },
+                        {
+                            "value": "5",
+                            "label": "5"
+                        },
+                        {
+                            "value": "8",
+                            "label": "8"
+                        }
+                    ],
+                    "default": "5"
+                }
+            ]
+        }
+    ]
 }

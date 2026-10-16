@@ -14,6 +14,7 @@
     <link rel="preload" href="/ui/fonts/outfit-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/ui/css/boxicons.css?v={{ $uiVersion }}">
     <link rel="stylesheet" href="/ui/css/plainshow.css?v={{ $uiVersion }}">
+    <script src="/ui/js/backdrop.js?v={{ $uiVersion }}" defer></script>
     <script nonce="{{ request()->attributes->get('csp_nonce') }}">
         try { var t = localStorage.getItem('plainshow-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
     </script>
@@ -22,6 +23,7 @@
     @inertiaHead
 </head>
 <body class="ps">
+    <canvas class="ps-backdrop" aria-hidden="true"></canvas>
     @inertia
 </body>
 </html>

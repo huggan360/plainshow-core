@@ -30,6 +30,7 @@ class AccountController extends Controller
     public function show(Request $request, string $section = 'profile'): Response
     {
         abort_unless(in_array($section, ['profile', 'security', 'connections', 'tokens'], true), 404);
+        abort_if($section === 'tokens' && ! Permissions::can($request->user(), 'core.api.use'), 404);
         $user = $request->user();
         $services = Permissions::for($user)['services'];
 
@@ -53,9 +54,11 @@ class AccountController extends Controller
                 'enrollment' => $request->session()->has('two_factor.pending') ? $this->enrollment($request) : null,
                 'recoveryCodes' => $request->session()->get('two_factor.codes'),
             ],
+            'apiAccess' => Permissions::can($user, 'core.api.use'),
             'tokens' => $section === 'tokens' ? $this->tokens($request) : null,
             'connections' => [
                 'cloud' => [
+                    'widgets' => DB::table('core_nextcloud_links')->where('user_id', $user->id)->exists(),
                     'available' => in_array('cloud', $services, true),
                     'url' => Extension::find('cloud')?->url,
                     // Existing Nextcloud accounts are linked; otherwise one named after the username.
@@ -273,5 +276,48 @@ class AccountController extends Controller
         }
 
         return back()->with('status', 'Token revoked.');
+    }
+
+    /** Starts connecting Nextcloud for the dashboard widgets (Login Flow v2). */
+    public function connectNextcloud(Request $request): \Illuminate\Http\JsonResponse
+    {
+        try {
+            $flow = \App\Support\Nextcloud::startFlow();
+        } catch (\Throwable $failure) {
+            return response()->json(['message' => $failure->getMessage()], 502);
+        }
+        $request->session()->put('nextcloud_flow', ['token' => $flow['token'], 'endpoint' => $flow['endpoint'], 'until' => now()->addMinutes(20)->timestamp]);
+
+        return response()->json(['login' => $flow['login']]);
+    }
+
+    public function pollNextcloud(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $flow = $request->session()->get('nextcloud_flow');
+        if (! is_array($flow) || ($flow['until'] ?? 0) < time()) {
+            return response()->json(['connected' => false, 'expired' => true]);
+        }
+        try {
+            $done = \App\Support\Nextcloud::pollFlow($request->user(), $flow);
+        } catch (\Throwable $failure) {
+            return response()->json(['connected' => false, 'message' => $failure->getMessage()], 502);
+        }
+        if ($done) {
+            $request->session()->forget('nextcloud_flow');
+            Audit::record('nextcloud.connected');
+        }
+
+        return response()->json(['connected' => $done]);
+    }
+
+    public function disconnectNextcloud(Request $request): RedirectResponse
+    {
+        \App\Support\Nextcloud::disconnect($request->user());
+        foreach (['calendar', 'files', 'talk'] as $widget) {
+            \Illuminate\Support\Facades\Cache::forget("nextcloud:$widget:{$request->user()->id}");
+        }
+        Audit::record('nextcloud.disconnected');
+
+        return back()->with('status', 'Nextcloud is no longer on your dashboard.');
     }
 }

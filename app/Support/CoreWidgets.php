@@ -34,7 +34,6 @@ class CoreWidgets
             'firstName' => $user->first_name ?: $user->username,
             'role' => $user->role,
             'services' => count(Permissions::for($user)['services']),
-            'twoFactor' => $user->hasTwoFactor(),
         ];
     }
 

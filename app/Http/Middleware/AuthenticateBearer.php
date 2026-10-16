@@ -40,6 +40,9 @@ class AuthenticateBearer
         Auth::setUser($user);
         $scopes = array_values(array_map('strval', (array) ($claims['scopes'] ?? [])));
         $request->attributes->set('token_scopes', $scopes);
+        if (ApiTokens::isPersonal($scopes) && ! \App\Support\Permissions::can($user, 'core.api.use')) {
+            return response()->json(['error' => 'forbidden', 'message' => 'Your account may not use the API.'], 403);
+        }
         if ($service !== null && ApiTokens::isPersonal($scopes)) {
             if (! in_array($service, $scopes, true)) {
                 return response()->json(['error' => 'insufficient_scope', 'message' => 'This token does not reach this service.'], 403);

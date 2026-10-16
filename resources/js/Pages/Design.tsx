@@ -1,6 +1,6 @@
 import AppShell from '@/Layouts/AppShell';
 import { Avatar, Badge, Button, ButtonLink, Empty, Field, Frame, FrameHead, ListRow, Meter, Switch } from '@/Components/ui';
-import { SharedProps } from '@/types';
+import { can, SharedProps } from '@/types';
 import { Bookmark, Glow, LayoutItem, PlacedWidget, SettingField, WidgetDefinition } from '@/Widgets/Widgets';
 import { closestCenter, DndContext, DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
@@ -28,15 +28,17 @@ const ZoomContext = createContext(1);
 const ROLE_LABELS: Record<RoleName, string> = { admin: 'admins', moderator: 'moderators', member: 'members', guest: 'guests' };
 
 export default function Design(props: Props) {
-    const [tab, setTab] = useState<'dashboard' | 'tokens'>(() => (window.location.hash === '#tokens' ? 'tokens' : 'dashboard'));
+    const { props: shared } = usePage<SharedProps>();
+    const tokens = can(shared.auth.capabilities, 'core.design.tokens');
+    const [tab, setTab] = useState<'dashboard' | 'tokens'>(() => (tokens && window.location.hash === '#tokens' ? 'tokens' : 'dashboard'));
     const choose = (next: 'dashboard' | 'tokens') => {
         setTab(next);
         window.history.replaceState(null, '', next === 'tokens' ? '#tokens' : window.location.pathname);
     };
 
     return (
-        <AppShell title="Design" wide description="Arrange your dashboard, and see the type, colours and boxes every page is built from."
-            actions={<div className="ps-tabs" role="tablist">
+        <AppShell title="Design" wide description={tokens ? 'Arrange your dashboard, and see the type, colours and boxes every page is built from.' : 'Arrange your dashboard: drag widgets into place, size them and change their settings.'}
+            actions={tokens && <div className="ps-tabs" role="tablist">
                 <button type="button" role="tab" aria-selected={tab === 'dashboard'} className={`ps-tab${tab === 'dashboard' ? ' is-active' : ''}`} onClick={() => choose('dashboard')}>Dashboard</button>
                 <button type="button" role="tab" aria-selected={tab === 'tokens'} className={`ps-tab${tab === 'tokens' ? ' is-active' : ''}`} onClick={() => choose('tokens')}>Tokens</button>
             </div>}>
@@ -304,6 +306,27 @@ function WidgetSettings({ item, definition, onChange, onRemove, onClose }: {
 
 function SettingInput({ field, value, onChange }: { field: SettingField; value: unknown; onChange: (value: unknown) => void }) {
     const id = `studio-setting-${field.name}`;
+    const current = value === undefined ? field.default : value;
+    if (field.type === 'toggle') {
+        return (
+            <div className="studio-toggle">
+                <span>{field.label}</span>
+                <Switch checked={Boolean(current)} onChange={(checked) => onChange(checked)} label={field.label} />
+            </div>
+        );
+    }
+    if (field.type === 'select') {
+        return (
+            <div className="ps-field">
+                <span className="ps-label">{field.label}</span>
+                <div className="studio-choices">
+                    {(field.options ?? []).map((option) => (
+                        <button key={option.value} type="button" className={`studio-choice${String(current) === option.value ? ' is-active' : ''}`} aria-pressed={String(current) === option.value} onClick={() => onChange(option.value)}>{option.label}</button>
+                    ))}
+                </div>
+            </div>
+        );
+    }
     if (field.type === 'text') {
         return (
             <Field label={field.label} htmlFor={id}>
@@ -330,7 +353,7 @@ function SettingInput({ field, value, onChange }: { field: SettingField; value: 
             </div>
         );
     }
-    const chosen = Array.isArray(value) ? (value as string[]) : [];
+    const chosen = Array.isArray(current) ? (current as string[]) : [];
     return (
         <div className="ps-field">
             <span className="ps-label">{field.label}</span>

@@ -99,10 +99,25 @@ export default function AppShell({ title, children, wide, actions, description, 
                     </div>
                 )}
                 <div className="ps-sidebar__foot">
-                    <button type="button" className="ps-nav__item" onClick={toggleTheme}><i className={`bx ${theme === 'light' ? 'bx-moon' : 'bx-sun'}`} aria-hidden="true" />{theme === 'light' ? 'Dark theme' : 'Light theme'}</button>
                     <Link href="/design" className={`ps-nav__item${active('/design') ? ' is-active' : ''}`}><i className="bx bx-palette" aria-hidden="true" />Design</Link>
-                    <Link href="/api" className={`ps-nav__item${path === '/api' ? ' is-active' : ''}`}><i className="bx bx-code-alt" aria-hidden="true" />API</Link>
-                    <a href="/auth/logout" className="ps-nav__item"><i className="bx bx-log-out" aria-hidden="true" />Sign out</a>
+                    {can(caps, 'core.api.use') && <Link href="/api" className={`ps-nav__item${path === '/api' ? ' is-active' : ''}`}><i className="bx bx-code-alt" aria-hidden="true" />API</Link>}
+                    <div className={`ps-dropdown ps-me${accountOpen ? ' is-open' : ''}`} ref={accountRef}>
+                        <button type="button" className="ps-me__button" aria-expanded={accountOpen} aria-label="Account menu" onClick={() => setAccountOpen((open) => !open)}>
+                            <Avatar src={user.avatar} initials={user.initials} size="sm" />
+                            <span className="ps-me__text"><span className="ps-me__name">{user.name}</span><span className="ps-me__meta">@{user.username}</span></span>
+                            <i className={`bx ${accountOpen ? 'bx-chevron-down' : 'bx-chevron-up'} ps-me__chevron`} aria-hidden="true" />
+                        </button>
+                        {accountOpen && (
+                            <div className="ps-dropdown__menu ps-dropdown__menu--up">
+                                <Link href="/account" className="ps-dropdown__item"><i className="bx bx-user" />Profile</Link>
+                                <Link href="/account/security" className="ps-dropdown__item"><i className="bx bx-shield-quarter" />Security</Link>
+                                <Link href="/account/connections" className="ps-dropdown__item"><i className="bx bx-link" />Connections</Link>
+                                <button type="button" className="ps-dropdown__item" onClick={toggleTheme}><i className={`bx ${theme === 'light' ? 'bx-moon' : 'bx-sun'}`} />{theme === 'light' ? 'Dark theme' : 'Light theme'}</button>
+                                <div className="ps-dropdown__sep" />
+                                <a href="/auth/logout" className="ps-dropdown__item"><i className="bx bx-log-out" />Sign out</a>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </aside>
 
@@ -112,7 +127,7 @@ export default function AppShell({ title, children, wide, actions, description, 
                     <Link href="/" className="ps-brand shell-topbar-mark" aria-label="PlainShow"><img className="ps-brand__mark" src={`/ui/brand/plainshow-icon.webp?v=${props.uiVersion}`} alt="" /></Link>
                     <span className="ps-topbar__spacer" />
                     <div className="ps-switcher" ref={switcherRef}>
-                        <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon" aria-label="Switch service" aria-expanded={switcherOpen} onClick={() => setSwitcherOpen((open) => !open)}><i className="bx bx-grid-small" /></button>
+                        <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-switcher__trigger" aria-label="Switch service" aria-expanded={switcherOpen} onClick={() => setSwitcherOpen((open) => !open)}><i className="bx bx-grid" /></button>
                         {switcherOpen && (
                             <div className="ps-switcher__panel">
                                 <div className="ps-switcher__grid">
@@ -122,25 +137,6 @@ export default function AppShell({ title, children, wide, actions, description, 
                                         </a>
                                     ))}
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                    <div className="ps-dropdown" ref={accountRef}>
-                        <button type="button" className="ps-btn ps-btn--ghost shell-account" aria-expanded={accountOpen} aria-label="Account menu" onClick={() => setAccountOpen((open) => !open)}>
-                            <Avatar src={user.avatar} initials={user.initials} size="sm" />
-                        </button>
-                        {accountOpen && (
-                            <div className="ps-dropdown__menu">
-                                <div className="ps-dropdown__head">
-                                    <Avatar src={user.avatar} initials={user.initials} />
-                                    <div className="shell-account__who"><strong>{user.name}</strong><span className="ps-muted ps-small">@{user.username}</span></div>
-                                </div>
-                                <div className="ps-dropdown__sep" />
-                                <Link href="/account" className="ps-dropdown__item"><i className="bx bx-user" />Profile</Link>
-                                <Link href="/account/security" className="ps-dropdown__item"><i className="bx bx-shield-quarter" />Security</Link>
-                                <Link href="/account/connections" className="ps-dropdown__item"><i className="bx bx-link" />Connections</Link>
-                                <div className="ps-dropdown__sep" />
-                                <a href="/auth/logout" className="ps-dropdown__item"><i className="bx bx-log-out" />Sign out</a>
                             </div>
                         )}
                     </div>
@@ -161,7 +157,7 @@ export default function AppShell({ title, children, wide, actions, description, 
 
             <nav className="ps-tabbar" aria-label="Quick navigation">
                 <Link href="/" className={`ps-tabbar__item${active('/') ? ' is-active' : ''}`}><i className="bx bx-grid-alt" />Home</Link>
-                <button type="button" className="ps-tabbar__item shell-tab-button" onClick={() => setSwitcherOpen(true)}><i className="bx bx-grid-small" />Services</button>
+                <Link href="/design" className={`ps-tabbar__item${active('/design') ? ' is-active' : ''}`}><i className="bx bx-palette" />Design</Link>
                 <Link href="/account" className={`ps-tabbar__item${active('/account') ? ' is-active' : ''}`}><i className="bx bx-user-circle" />Account</Link>
                 {admin.length > 0 && <Link href={admin[0].href} className={`ps-tabbar__item${active('/admin') ? ' is-active' : ''}`}><i className="bx bx-cog" />Admin</Link>}
             </nav>
