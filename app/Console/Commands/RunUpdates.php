@@ -180,7 +180,8 @@ class RunUpdates extends Command
             throw new RuntimeException('Updates go to a version tag.');
         }
         $source = $component['source'];
-        $this->git($source, ['fetch', '--tags', '--quiet', $component['remote'] ?? 'origin'], 90);
+        // Tags made on this machine count too, so a remote that cannot be reached is not fatal.
+        $this->git($source, ['fetch', '--tags', '--quiet', $component['remote'] ?? 'origin'], 90, false);
         if (trim($this->git($source, ['tag', '-l', $target])) !== $target) {
             throw new RuntimeException("$target does not exist.");
         }
