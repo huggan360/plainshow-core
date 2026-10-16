@@ -194,3 +194,48 @@
 .widget-notes { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ps-text-soft); }
 @media (max-width: 1100px) { .studio-body { grid-template-columns: minmax(0, 1fr); } .studio-panel { position: static; max-height: none; } }
 @media (max-width: 600px) { .studio-bar__label { display: none; } .studio-stage { padding: 8px; } .studio-canvas { padding: 12px; } }
+
+/* Permissions */
+.perm { display: grid; gap: 16px; }
+.perm-bar { position: sticky; top: 12px; z-index: 5; display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 16px; border: 1px solid var(--ps-shell-border); border-radius: 14px; background: color-mix(in srgb, var(--ps-shell) 92%, transparent); backdrop-filter: blur(14px); }
+.perm-bar.is-dirty { border-color: rgba(var(--ps-accent-rgb), .5); }
+.perm-bar__spacer { flex: 1; }
+.perm-table th[scope='row'] { font-weight: 400; }
+.perm-table thead th { white-space: nowrap; }
+.perm-table td, .perm-table th { vertical-align: middle; }
+.perm-col { width: 96px; text-align: center !important; }
+.perm-ext { display: inline-flex; align-items: center; gap: 8px; font: 600 var(--ps-text-md) var(--ps-font-title); color: var(--ps-text); text-transform: none; letter-spacing: 0; }
+.perm-ext i { font-size: 1.15rem; color: var(--ps-text-muted); }
+.perm-cap { display: grid; gap: 1px; }
+.perm-cap code { font-family: var(--ps-font-mono); font-size: var(--ps-text-xs); }
+.perm-row--access { background: var(--ps-raised); }
+.perm-check { position: relative; display: inline-flex; width: 26px; height: 26px; align-items: center; justify-content: center; border: 1px solid var(--ps-input-border); border-radius: 8px; background: var(--ps-input-bg); color: #fff; cursor: pointer; transition: background-color .12s ease, border-color .12s ease; }
+.perm-check input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: inherit; }
+.perm-check.is-on { border-color: var(--ps-accent); background: var(--ps-accent); }
+.perm-check:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--ps-focus); }
+.perm-check:has(input:disabled) { cursor: default; opacity: .55; }
+.perm-check.is-muted { opacity: .4; }
+.perm-people { display: grid; gap: 20px; grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
+.perm-people__list { position: sticky; top: 20px; }
+.perm-people__names { max-height: calc(100vh - 200px); overflow: auto; margin-top: 10px; }
+.perm-person { display: flex; width: 100%; align-items: center; gap: 10px; padding: 8px; border: 0; border-radius: 12px; background: none; color: var(--ps-text); text-align: left; cursor: pointer; }
+.perm-person:hover { background: var(--ps-hover); }
+.perm-person.is-active { background: var(--ps-accent-bg); }
+.perm-person__text { display: grid; flex: 1; min-width: 0; line-height: 1.3; }
+.perm-person__text strong, .perm-person__text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.perm-person-editor { display: grid; gap: 16px; }
+.perm-person-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.perm-person-head__text { display: grid; }
+.perm-person-note { margin: 10px 0 0; }
+.perm-now { width: 90px; }
+.perm-verdict { display: inline-flex; align-items: center; gap: 4px; color: var(--ps-text-muted); font-size: var(--ps-text-sm); }
+.perm-verdict.is-yes { color: var(--ps-green); }
+.perm-tri { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--ps-shell-border); border-radius: 9px; background: var(--ps-input-bg); }
+.perm-tri__option { padding: 5px 10px; border: 0; border-radius: 7px; background: none; color: var(--ps-text-muted); font: 500 var(--ps-text-xs)/1 var(--ps-font-ui); cursor: pointer; }
+.perm-tri__option:hover:not(:disabled) { color: var(--ps-text); }
+.perm-tri__option:disabled { cursor: default; opacity: .5; }
+.perm-tri__option--default.is-active { background: var(--ps-btn-bg); color: var(--ps-text); }
+.perm-tri__option--allow.is-active { background: var(--ps-green-bg); color: var(--ps-green); }
+.perm-tri__option--deny.is-active { background: var(--ps-red-bg); color: var(--ps-red); }
+@media (max-width: 900px) { .perm-people { grid-template-columns: minmax(0, 1fr); } .perm-people__list { position: static; } .perm-people__names { max-height: 260px; } }
+@media (max-width: 600px) { .perm-col { width: 64px; } .perm-table th[scope='row'] code { display: none; } }

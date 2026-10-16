@@ -62,6 +62,7 @@ export default function AppShell({ title, children, wide, actions, description, 
     const admin = [
         can(caps, 'core.users.manage') && { href: '/admin/users', icon: 'bx-group', label: 'Accounts' },
         can(caps, 'core.extensions.manage') && { href: '/admin/services', icon: 'bx-extension', label: 'Services' },
+        can(caps, 'core.permissions.manage') && { href: '/admin/permissions', icon: 'bx-key', label: 'Permissions' },
         can(caps, 'core.audit.view') && { href: '/admin/audit', icon: 'bx-list-ul', label: 'Audit log' },
     ].filter(Boolean) as { href: string; icon: string; label: string }[];
 
