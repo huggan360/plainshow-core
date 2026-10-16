@@ -242,20 +242,26 @@ function Gallery({ catalogue, placed, onAdd }: { catalogue: WidgetDefinition[]; 
 
     return (
         <Frame compact>
-            <FrameHead title="Widgets" text="Click a widget on the dashboard to change it, or drag it to move it." />
+            <div className="studio-gallery__head">
+                <h2 className="ps-frame__title">Widgets</h2>
+                <p className="ps-small ps-muted">Click one on the dashboard to change it; drag to move.</p>
+            </div>
             <div className="studio-gallery">
                 {groups.map(([name, widgets]) => (
                     <section key={name} className="studio-gallery__group">
                         <h3 className="studio-gallery__name">{name}</h3>
-                        <ul className="ps-list">
-                            {widgets.map((widget) => (
-                                <ListRow key={widget.key} icon={widget.icon}
-                                    title={<>{widget.title}{widget.admin && <Badge tone="accent">Admin</Badge>}</>}
-                                    meta={widget.description}
-                                    action={placed.has(widget.key)
-                                        ? <span className="ps-small ps-muted">Added</span>
-                                        : <Button size="sm" icon="bx-plus" onClick={() => onAdd(widget)} aria-label={`Add ${widget.title}`}>Add</Button>} />
-                            ))}
+                        <ul className="ps-chain">
+                            {widgets.map((widget) => {
+                                const added = placed.has(widget.key);
+                                return (
+                                    <li key={widget.key}>
+                                        <button type="button" className={`studio-pick${added ? ' is-added' : ''}`} disabled={added} onClick={() => onAdd(widget)} title={widget.description} aria-label={added ? `${widget.title} is on the dashboard` : `Add ${widget.title}`}>
+                                            <span className="studio-pick__name">{widget.title}{widget.admin && <span className="studio-pick__admin">Admin</span>}</span>
+                                            <i className={`bx ${added ? 'bx-check' : 'bx-plus'}`} aria-hidden="true" />
+                                        </button>
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </section>
                 ))}

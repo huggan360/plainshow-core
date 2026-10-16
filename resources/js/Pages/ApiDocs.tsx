@@ -1,8 +1,8 @@
 import AppShell from '@/Layouts/AppShell';
-import { Badge, Frame, FrameHead } from '@/Components/ui';
+import { Badge, Frame } from '@/Components/ui';
 import { SharedProps } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
-import { ReactNode, useState } from 'react';
+import { useState } from 'react';
 
 type Field = { name: string; type?: string; in?: string; required: boolean; description: string };
 type Endpoint = { method: string; path: string; summary: string; description: string; capability: string | null; public: boolean; parameters: Field[]; body: { type: string; fields: Field[] } | null };
@@ -13,7 +13,7 @@ export default function ApiDocs({ services }: { services: Service[] }) {
     const content = <Docs services={services} signedIn={!!props.auth.user} />;
 
     if (props.auth.user) {
-        return <AppShell title="API" wide description="Use PlainShow from your own scripts: one address, one token, every service.">{content}</AppShell>;
+        return <AppShell title="API" wide description="Call PlainShow from your own scripts: one address and one token for every service.">{content}</AppShell>;
     }
 
     return (
@@ -34,58 +34,46 @@ export default function ApiDocs({ services }: { services: Service[] }) {
 function Docs({ services, signedIn }: { services: Service[]; signedIn: boolean }) {
     return (
         <div className="docs">
-            <nav className="docs__nav" aria-label="Services">
-                <a href="#start" className="docs__link">Getting started</a>
-                {services.map((service) => <a key={service.id} href={`#${service.id}`} className="docs__link"><i className={`bx ${service.icon}`} aria-hidden="true" />{service.name}</a>)}
-            </nav>
-            <div className="docs__main">
-                <Frame id="start">
-                    <FrameHead title="Getting started" />
-                    <div className="ps-frame__body docs-prose">
-                        <Step n={1} title="Make a token">
-                            <p>Open <a href={signedIn ? '/account/tokens' : '/auth/login?return=%2Faccount%2Ftokens'}>Account, API tokens</a>, choose the services it may reach and whether it may only read. It is shown once and lasts 90 days. Revoke it there whenever you like.</p>
-                        </Step>
-                        <Step n={2} title="Send it with every request">
-                            <pre className="docs-code">{'curl https://plainshow.se/api/core/v1/me \\\n  -H "Authorization: Bearer $PLAINSHOW_TOKEN"'}</pre>
-                            <p>Every service lives under <code>https://plainshow.se/api/&lt;service&gt;/v1</code>. Calls act as you, with your role and permissions, so a token can never do more than you can.</p>
-                        </Step>
-                        <Step n={3} title="Read the answers">
-                            <p>Answers are JSON. Mistakes come back with a status and a message:</p>
-                            <dl className="docs-errors">
-                                <div><dt>401</dt><dd>No token, or it expired or was revoked.</dd></div>
-                                <div><dt>403</dt><dd>You may not do that, or the token does not reach that service (<code>insufficient_scope</code>) or can only read (<code>read_only</code>).</dd></div>
-                                <div><dt>404</dt><dd>Nothing there.</dd></div>
-                                <div><dt>422</dt><dd>Something in what you sent is wrong; the message says what.</dd></div>
-                                <div><dt>429</dt><dd>More than 120 calls a minute. Wait a little.</dd></div>
-                                <div><dt>503</dt><dd>The service is turned off.</dd></div>
-                            </dl>
-                            <p>Send changes as JSON, or as a form when they include files. Each service also describes itself as OpenAPI, linked below.</p>
-                        </Step>
+            <Frame>
+                <div className="docs-start">
+                    <div className="docs-start__steps">
+                        <h2 className="ps-frame__title">Getting started</h2>
+                        <ol className="docs-steps">
+                            <li><strong>Make a token</strong> in <a href={signedIn ? '/account/tokens' : '/auth/login?return=%2Faccount%2Ftokens'}>Account, API tokens</a>. Pick what it reaches; it lasts 90 days.</li>
+                            <li><strong>Send it</strong> with every call. Calls act as you, so a token never does more than you can.</li>
+                            <li><strong>Read the answer:</strong> JSON, or one of the statuses on the right.</li>
+                        </ol>
+                        <pre className="docs-code">{'curl https://plainshow.se/api/core/v1/me \
+  -H "Authorization: Bearer $PLAINSHOW_TOKEN"'}</pre>
                     </div>
-                </Frame>
-                {services.map((service) => <ServiceDocs key={service.id} service={service} />)}
-            </div>
+                    <ul className="ps-chain docs-errors">
+                        {[['401', 'No token, or it expired or was revoked'], ['403', 'Not allowed, or the token does not reach this'], ['404', 'Nothing there'], ['422', 'Something you sent is wrong'], ['429', 'Over 120 calls a minute'], ['503', 'The service is turned off']].map(([code, text]) => (
+                            <li key={code}><code>{code}</code><span>{text}</span></li>
+                        ))}
+                    </ul>
+                </div>
+            </Frame>
+            {services.map((service) => <ServiceDocs key={service.id} service={service} />)}
         </div>
     );
 }
 
-function Step({ n, title, children }: { n: number; title: string; children: ReactNode }) {
-    return <section className="docs-step"><span className="docs-step__n">{n}</span><div><h3 className="docs-step__title">{title}</h3>{children}</div></section>;
-}
-
 function ServiceDocs({ service }: { service: Service }) {
+    const [open, setOpen] = useState(false);
     return (
-        <Frame id={service.id} flush>
-            <div className="docs-service__head">
-                <span className="docs-service__icon"><i className={`bx ${service.icon}`} aria-hidden="true" /></span>
+        <Frame compact id={service.id}>
+            <div className="docs-service">
+                <span className="service__icon"><i className={`bx ${service.icon}`} aria-hidden="true" /></span>
                 <div className="docs-service__text">
-                    <h2 className="ps-frame__title">{service.name}</h2>
-                    <p className="ps-muted ps-small">{service.description}</p>
+                    <strong>{service.name}</strong>
                     <code className="docs-service__base">{service.base}</code>
                 </div>
-                <a className="ps-btn ps-btn--sm" href={service.spec} target="_blank" rel="noreferrer">OpenAPI<i className="bx bx-right-top-arrow-circle" aria-hidden="true" /></a>
+                <a className="ps-btn ps-btn--sm ps-btn--ghost" href={service.spec} target="_blank" rel="noreferrer">OpenAPI</a>
+                <button type="button" className="ps-btn ps-btn--sm" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+                    {service.endpoints.length} endpoints<i className={`bx ${open ? 'bx-chevron-up' : 'bx-chevron-down'}`} aria-hidden="true" />
+                </button>
             </div>
-            <ul className="docs-endpoints">{service.endpoints.map((endpoint) => <EndpointRow key={endpoint.method + endpoint.path} endpoint={endpoint} />)}</ul>
+            {open && <ul className="ps-chain docs-endpoints">{service.endpoints.map((endpoint) => <EndpointRow key={endpoint.method + endpoint.path} endpoint={endpoint} />)}</ul>}
         </Frame>
     );
 }
@@ -100,7 +88,6 @@ function EndpointRow({ endpoint }: { endpoint: Endpoint }) {
                 <code className="docs-endpoint__path">{endpoint.path}</code>
                 <span className="docs-endpoint__summary">{endpoint.summary}</span>
                 {endpoint.public && <Badge>No token</Badge>}
-                {detail && <i className={`bx ${open ? 'bx-chevron-up' : 'bx-chevron-down'} docs-endpoint__chevron`} aria-hidden="true" />}
             </button>
             {open && (
                 <div className="docs-endpoint__detail">
