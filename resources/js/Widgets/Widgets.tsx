@@ -477,7 +477,8 @@ export function ExtensionWidget({ definition }: { definition: WidgetDefinition }
             <Body state={state} height={height}>{(data) => {
                 if (data.type === 'gallery' && data.images && data.images.length > 0) {
                     const rows = { short: 1, normal: 2, tall: 3 }[height];
-                    const columns = PHOTO_COLUMNS[item?.size ?? definition.default] ?? 4;
+                    // As many columns as the width allows, but never more than the photos can fill.
+                    const columns = Math.max(1, Math.min(PHOTO_COLUMNS[item?.size ?? definition.default] ?? 4, Math.floor(data.images.length / rows) || 1));
                     return (
                         <div className="widget-gallery" style={{ '--rows': rows, '--columns': columns } as CSSProperties}>
                             {data.images.slice(0, rows * columns).map((image, index) => (
