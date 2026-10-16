@@ -8,16 +8,16 @@ use PHPUnit\Framework\TestCase;
 class DashboardLayoutTest extends TestCase
 {
     private const CATALOGUE = [
-        ['key' => 'core.greeting', 'sizes' => ['l', 'full'], 'default' => 'full', 'settings' => []],
-        ['key' => 'core.notes', 'sizes' => ['s', 'm'], 'default' => 'm', 'settings' => [['name' => 'text', 'type' => 'text', 'max' => 20]]],
-        ['key' => 'core.bookmarks', 'sizes' => ['m'], 'default' => 'm', 'settings' => [['name' => 'links', 'type' => 'links']]],
+        ['key' => 'core.greeting', 'sizes' => ['l', 'full'], 'default' => 'full', 'height' => 'short', 'settings' => []],
+        ['key' => 'core.notes', 'sizes' => ['s', 'm'], 'default' => 'm', 'height' => 'normal', 'settings' => [['name' => 'text', 'type' => 'text', 'max' => 20]]],
+        ['key' => 'core.bookmarks', 'sizes' => ['m'], 'default' => 'm', 'height' => 'normal', 'settings' => [['name' => 'links', 'type' => 'links']]],
     ];
 
     public function test_unknown_and_repeated_widgets_are_dropped(): void
     {
         $layout = Dashboard::sanitize([['key' => 'core.greeting', 'size' => 'full'], ['key' => 'blog.secret', 'size' => 'm'], ['key' => 'core.greeting', 'size' => 'l']], self::CATALOGUE);
 
-        $this->assertSame([['key' => 'core.greeting', 'size' => 'full']], $layout);
+        $this->assertSame([['key' => 'core.greeting', 'size' => 'full', 'height' => 'short']], $layout);
     }
 
     public function test_a_size_the_widget_lacks_falls_back_to_its_default(): void

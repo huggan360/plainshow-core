@@ -1,7 +1,7 @@
 import AppShell from '@/Layouts/AppShell';
 import { Avatar, Badge, Button, ButtonLink, Empty, Field, Frame, FrameHead, ListRow, Meter, Switch } from '@/Components/ui';
 import { can, SharedProps } from '@/types';
-import { Bookmark, Glow, LayoutItem, PlacedWidget, SettingField, WidgetDefinition } from '@/Widgets/Widgets';
+import { Bookmark, Glow, Height, LayoutItem, PlacedWidget, SettingField, WidgetDefinition } from '@/Widgets/Widgets';
 import { closestCenter, DndContext, DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
 import { router, usePage } from '@inertiajs/react';
@@ -19,6 +19,7 @@ const WIDTHS: Record<Width, { px: number; label: string; icon: string }> = {
     phone: { px: 390, label: 'Phone', icon: 'bx-mobile' },
 };
 const SIZE_LABELS: Record<string, string> = { s: 'Small', m: 'Medium', l: 'Large', xl: 'Wide', full: 'Full width' };
+const HEIGHTS: { value: Height; label: string }[] = [{ value: 'short', label: 'Short' }, { value: 'normal', label: 'Normal' }, { value: 'tall', label: 'Tall' }];
 const GLOWS: { value: Glow | undefined; label: string }[] = [
     { value: undefined, label: 'Default' }, { value: 'none', label: 'None' }, { value: 'accent', label: 'Orange' }, { value: 'warm', label: 'Warm' },
     { value: 'green', label: 'Green' }, { value: 'blue', label: 'Blue' }, { value: 'violet', label: 'Violet' }, { value: 'pink', label: 'Pink' }, { value: 'cyan', label: 'Cyan' },
@@ -74,7 +75,7 @@ function Studio({ layout, catalogue, customised, roles }: Props) {
     const update = (key: string, patch: Partial<LayoutItem>) => change(items.map((item) => (item.key === key ? clean({ ...item, ...patch }) : item)));
     const remove = (key: string) => { change(items.filter((item) => item.key !== key)); if (selected === key) setSelected(null); };
     const add = (definition: WidgetDefinition) => {
-        change([...items, { key: definition.key, size: definition.sizes.includes(definition.default) ? definition.default : definition.sizes[0] }]);
+        change([...items, { key: definition.key, size: definition.sizes.includes(definition.default) ? definition.default : definition.sizes[0], height: definition.height ?? 'normal' }]);
         setSelected(definition.key);
     };
 
@@ -151,7 +152,7 @@ function Studio({ layout, catalogue, customised, roles }: Props) {
 
 /** Drops empty optional fields so saved layouts stay small. */
 function clean(item: LayoutItem): LayoutItem {
-    const next: LayoutItem = { key: item.key, size: item.size };
+    const next: LayoutItem = { key: item.key, size: item.size, height: item.height };
     if (item.title?.trim()) next.title = item.title;
     if (item.glow) next.glow = item.glow;
     if (item.settings && Object.keys(item.settings).length) next.settings = item.settings;
@@ -215,7 +216,7 @@ function SortableWidget({ item, definition, selected, onSelect, onRemove, onSize
     const stop = { onPointerDown: (event: PointerEvent) => event.stopPropagation(), onKeyDown: (event: KeyboardEvent) => event.stopPropagation() };
 
     return (
-        <div ref={setNodeRef} data-size={item.size} style={style} className={`studio-widget${selected ? ' is-selected' : ''}${isDragging ? ' is-dragging' : ''}`}
+        <div ref={setNodeRef} data-size={item.size} data-height={item.height ?? definition.height ?? 'normal'} style={style} className={`studio-widget${selected ? ' is-selected' : ''}${isDragging ? ' is-dragging' : ''}`}
             {...attributes} {...listeners} aria-label={`${item.title || definition.title}, ${SIZE_LABELS[item.size]}. Drag to move, Enter to edit.`}
             onClick={onSelect} onKeyDown={(event) => { if (event.key === 'Enter') onSelect(); listeners?.onKeyDown?.(event); }}>
             <div className="studio-widget__tools" {...stop}>
@@ -289,6 +290,15 @@ function WidgetSettings({ item, definition, onChange, onRemove, onClose }: {
                         {definition.sizes.map((size) => (
                             <button key={size} type="button" className={`studio-choice${item.size === size ? ' is-active' : ''}`} aria-pressed={item.size === size} onClick={() => onChange({ size })}>{SIZE_LABELS[size] ?? size}</button>
                         ))}
+                    </div>
+                </div>
+                <div className="ps-field">
+                    <span className="ps-label">Height</span>
+                    <div className="studio-choices">
+                        {HEIGHTS.map((height) => {
+                            const current = item.height ?? definition.height ?? 'normal';
+                            return <button key={height.value} type="button" className={`studio-choice${current === height.value ? ' is-active' : ''}`} aria-pressed={current === height.value} onClick={() => onChange({ height: height.value })}>{height.label}</button>;
+                        })}
                     </div>
                 </div>
                 <div className="ps-field">

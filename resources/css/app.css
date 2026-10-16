@@ -127,7 +127,8 @@
     .studio-canvas .ps-widget-grid > [data-size='l'], .studio-canvas .ps-widget-grid > [data-size='xl'] { grid-column: 1 / -1; }
 }
 @container studio (max-width: 640px) {
-    .studio-canvas .ps-widget-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .studio-canvas .ps-widget-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; grid-auto-rows: auto; }
+    .studio-canvas .ps-widget-grid > [data-height] { grid-row: auto; }
     .studio-canvas .ps-widget-grid > [data-size] { grid-column: 1 / -1 !important; }
 }
 .studio-widget { position: relative; border-radius: var(--ps-frame-radius); cursor: grab; touch-action: manipulation; outline: none; }
@@ -362,8 +363,24 @@ a.widget-row:hover { background: var(--ps-btn-bg-hover); }
 .widget-clock--side { color: var(--ps-text-soft); }
 .studio-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: var(--ps-text-sm); }
 
-/* Widgets keep their own height in a row, so short ones do not leave empty boxes. */
-.ps-widget-grid { align-items: start; }
+/* Widgets sit on a fixed rhythm: rows of one height, and a widget is one
+   (short), two (normal) or three (tall) rows tall, so every normal widget
+   matches. What does not fit scrolls inside the widget. Phones stack them
+   at their natural height. */
+.ps-widget-grid { --ps-widget-row: 186px; grid-auto-rows: var(--ps-widget-row); align-items: stretch; }
+.ps-widget-grid > [data-height='short'] { grid-row: span 1; }
+.ps-widget-grid > [data-height='normal'] { grid-row: span 2; }
+.ps-widget-grid > [data-height='tall'] { grid-row: span 3; }
+.ps-widget-grid > * { min-height: 0; }
+.ps-widget { height: 100%; }
+.ps-widget > .ps-frame__panel { display: flex; flex-direction: column; min-height: 0; }
+.ps-widget__body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ps-shell-border) transparent; }
+.widget-greeting > .ps-frame__panel { justify-content: flex-end; }
+@media (max-width: 700px) {
+    .ps-widget-grid { grid-auto-rows: auto; }
+    .ps-widget-grid > [data-height] { grid-row: auto; }
+    .ps-widget__body { overflow: visible; }
+}
 .studio-gallery__head { display: grid; gap: 4px; }
 .studio-gallery__head p { margin: 0; }
 .studio-pick { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border: 0; border-radius: inherit; background: none; color: var(--ps-text); font: 500 var(--ps-text-sm) var(--ps-font-ui); text-align: left; cursor: pointer; }

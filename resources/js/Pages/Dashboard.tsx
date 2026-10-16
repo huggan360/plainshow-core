@@ -14,7 +14,7 @@ export default function Dashboard({ layout, catalogue }: Props) {
                 : <div className="ps-widget-grid">
                     {layout.map((item) => {
                         const definition = byKey.get(item.key);
-                        return definition ? <div key={item.key} data-size={item.size}><PlacedWidget item={item} definition={definition} /></div> : null;
+                        return definition ? <div key={item.key} data-size={item.size} data-height={item.height ?? definition.height ?? 'normal'}><PlacedWidget item={item} definition={definition} /></div> : null;
                     })}
                 </div>}
             <div className="dash-foot"><ButtonLink href="/design" size="sm" icon="bx-customize">Customize dashboard</ButtonLink></div>

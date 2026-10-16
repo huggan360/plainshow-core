@@ -14,6 +14,9 @@ class Dashboard
 {
     public const SIZES = ['s', 'm', 'l', 'xl', 'full'];
 
+    /** Heights in grid rows: short is one, normal two, tall three. */
+    public const HEIGHTS = ['short', 'normal', 'tall'];
+
     public const GLOWS = ['accent', 'green', 'blue', 'violet', 'pink', 'warm', 'cyan', 'none'];
 
     public const ROLES = ['admin', 'moderator', 'member', 'guest'];
@@ -55,6 +58,7 @@ class Dashboard
                     'icon' => $widget['icon'] ?? $extension->icon,
                     'sizes' => array_values(array_intersect($widget['sizes'] ?? ['m'], self::SIZES)),
                     'default' => $widget['default'] ?? 'm',
+                    'height' => in_array($widget['height'] ?? null, self::HEIGHTS, true) ? $widget['height'] : 'normal',
                     'settings' => $widget['settings'] ?? ($extension->id === 'core' ? [] : self::rowsSetting($widget)),
                     'admin' => isset($widget['capability']),
                 ];
@@ -117,7 +121,7 @@ class Dashboard
             if (! in_array($size, $definition['sizes'], true)) {
                 $size = in_array($definition['default'], $definition['sizes'], true) ? $definition['default'] : $definition['sizes'][0];
             }
-            $entry = ['key' => $key, 'size' => $size];
+            $entry = ['key' => $key, 'size' => $size, 'height' => in_array($item['height'] ?? null, self::HEIGHTS, true) ? $item['height'] : $definition['height']];
             $title = trim(strip_tags((string) ($item['title'] ?? '')));
             if ($title !== '') {
                 $entry['title'] = mb_substr($title, 0, 60);
@@ -182,11 +186,13 @@ class Dashboard
 
     public static function defaults(): array
     {
+        // Rows of twelve columns: the welcome and services across, then three to a row.
         $order = [
-            ['core.greeting', 'full'], ['core.launcher', 'xl'], ['core.pi-health', 'm'],
-            ['core.admin-services', 'm'], ['core.admin-users', 'm'], ['core.admin-security', 'm'], ['core.admin-updates', 'm'],
-            ['blog.latest-posts', 'm'], ['split.balances', 'm'], ['latex.recent-projects', 'm'],
-            ['cloud.calendar', 'm'], ['core.activity', 'm'], ['blog.new-photos', 'l'],
+            ['core.greeting', 'full'], ['core.launcher', 'full'],
+            ['core.pi-health', 'm'], ['core.admin-services', 'm'], ['core.admin-users', 'm'],
+            ['core.admin-security', 'm'], ['blog.latest-posts', 'm'], ['split.balances', 'm'],
+            ['cloud.calendar', 'm'], ['latex.recent-projects', 'm'], ['core.admin-updates', 'm'],
+            ['core.activity', 'm'], ['blog.new-photos', 'xl'],
         ];
 
         return array_map(fn ($entry) => ['key' => $entry[0], 'size' => $entry[1]], $order);

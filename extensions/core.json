@@ -102,7 +102,8 @@
                     "label": "Role and services",
                     "default": false
                 }
-            ]
+            ],
+            "height": "short"
         },
         {
             "id": "pi-health",
@@ -149,7 +150,8 @@
                     "label": "Uptime and load",
                     "default": true
                 }
-            ]
+            ],
+            "height": "normal"
         },
         {
             "id": "launcher",
@@ -198,7 +200,8 @@
                     ],
                     "default": []
                 }
-            ]
+            ],
+            "height": "short"
         },
         {
             "id": "activity",
@@ -231,7 +234,8 @@
                     ],
                     "default": "5"
                 }
-            ]
+            ],
+            "height": "normal"
         },
         {
             "id": "admin-users",
@@ -265,7 +269,8 @@
                     ],
                     "default": "3"
                 }
-            ]
+            ],
+            "height": "normal"
         },
         {
             "id": "admin-services",
@@ -285,7 +290,8 @@
                     "label": "Only services with problems",
                     "default": false
                 }
-            ]
+            ],
+            "height": "normal"
         },
         {
             "id": "admin-security",
@@ -319,7 +325,8 @@
                     ],
                     "default": "3"
                 }
-            ]
+            ],
+            "height": "normal"
         },
         {
             "id": "admin-updates",
@@ -333,7 +340,8 @@
             ],
             "default": "m",
             "capability": "core.updates.apply",
-            "settings": []
+            "settings": [],
+            "height": "normal"
         },
         {
             "id": "notes",
@@ -353,7 +361,8 @@
                     "label": "Note",
                     "max": 2000
                 }
-            ]
+            ],
+            "height": "normal"
         },
         {
             "id": "bookmarks",
@@ -372,7 +381,8 @@
                     "type": "links",
                     "label": "Links"
                 }
-            ]
+            ],
+            "height": "normal"
         }
     ],
     "version": "1.0.0"

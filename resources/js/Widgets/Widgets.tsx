@@ -6,10 +6,11 @@ export type SettingField = {
     name: string; type: 'text' | 'links' | 'choices' | 'toggle' | 'select'; label: string; max?: number;
     options?: { value: string; label: string }[]; default?: unknown;
 };
-export type WidgetDefinition = { key: string; extension: string; extensionName: string; id: string; title: string; description?: string; icon: string; sizes: string[]; default: string; settings?: SettingField[]; admin: boolean };
+export type WidgetDefinition = { key: string; extension: string; extensionName: string; id: string; title: string; description?: string; icon: string; sizes: string[]; default: string; height?: Height; settings?: SettingField[]; admin: boolean };
+export type Height = 'short' | 'normal' | 'tall';
 export type Glow = 'accent' | 'green' | 'blue' | 'violet' | 'pink' | 'warm' | 'cyan' | 'none';
 export type Bookmark = { label: string; url: string };
-export type LayoutItem = { key: string; size: string; title?: string; glow?: Glow; settings?: { text?: string; links?: Bookmark[]; [name: string]: unknown } };
+export type LayoutItem = { key: string; size: string; height?: Height; title?: string; glow?: Glow; settings?: { text?: string; links?: Bookmark[]; [name: string]: unknown } };
 
 /** The placed widget's own title, glow and settings, from the saved layout. */
 export const WidgetItem = createContext<LayoutItem | null>(null);

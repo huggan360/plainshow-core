@@ -109,6 +109,7 @@ class DashboardController extends Controller
             'widgets' => ['present', 'array', 'max:40'],
             'widgets.*.key' => ['required', 'string', 'max:80'],
             'widgets.*.size' => ['required', 'string', 'in:'.implode(',', Dashboard::SIZES)],
+            'widgets.*.height' => ['nullable', 'string', 'in:'.implode(',', Dashboard::HEIGHTS)],
             'widgets.*.title' => ['nullable', 'string', 'max:60'],
             'widgets.*.glow' => ['nullable', 'string', 'in:'.implode(',', Dashboard::GLOWS)],
             'widgets.*.settings' => ['nullable', 'array'],
