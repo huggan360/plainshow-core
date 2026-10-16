@@ -1,6 +1,6 @@
 import AppShell from '@/Layouts/AppShell';
 import { Empty } from '@/Components/ui';
-import { WidgetDefinition, WIDGETS } from '@/Widgets/Widgets';
+import { ExtensionWidget, WidgetDefinition, WIDGETS } from '@/Widgets/Widgets';
 
 type Props = { layout: { key: string; size: string }[]; catalogue: WidgetDefinition[] };
 
@@ -14,7 +14,7 @@ export default function Dashboard({ layout, catalogue }: Props) {
                 : <div className="ps-widget-grid">
                     {layout.map((item) => {
                         const definition = byKey.get(item.key);
-                        const Component = WIDGETS[item.key];
+                        const Component = WIDGETS[item.key] ?? (definition && definition.extension !== 'core' ? ExtensionWidget : undefined);
                         if (!definition || !Component) return null;
                         return <div key={item.key} data-size={item.size}><Component definition={definition} /></div>;
                     })}

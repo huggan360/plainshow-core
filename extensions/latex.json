@@ -6,11 +6,35 @@
     "url": "https://latex.plainshow.se",
     "api": "https://latex.plainshow.se/api/v1",
     "sort": 20,
-    "default_access": ["admin", "moderator", "member"],
-    "capabilities": [
-        { "name": "latex.project.view", "label": "Open shared projects" },
-        { "name": "latex.project.create", "label": "Create projects" },
-        { "name": "latex.project.moderate", "label": "Open and manage every project" }
+    "default_access": [
+        "admin",
+        "moderator",
+        "member"
     ],
-    "widgets": []
+    "capabilities": [
+        {
+            "name": "latex.project.view",
+            "label": "Open shared projects"
+        },
+        {
+            "name": "latex.project.create",
+            "label": "Create projects"
+        },
+        {
+            "name": "latex.project.moderate",
+            "label": "Open and manage every project"
+        }
+    ],
+    "widgets": [
+        {
+            "id": "recent-projects",
+            "title": "Recent LaTeX projects",
+            "icon": "bx-code-curly",
+            "sizes": [
+                "m",
+                "l"
+            ],
+            "default": "m"
+        }
+    ]
 }

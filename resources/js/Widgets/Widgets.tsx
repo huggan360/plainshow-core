@@ -208,6 +208,50 @@ export function AdminSecurityWidget({ definition }: { definition: WidgetDefiniti
     );
 }
 
+/* ---------- Extension widgets: typed data from Blog, LaTeX, Split and others ---------- */
+type ExtItem = { title?: string; meta?: string; url?: string; icon?: string; image?: string; avatar?: string; initials?: string; badge?: string; tone?: 'plus' | 'minus' | 'accent' };
+type ExtData = {
+    type: 'list' | 'metrics' | 'gallery';
+    items?: ExtItem[];
+    metrics?: { label: string; value: string; tone?: 'plus' | 'minus' | 'accent' }[];
+    images?: { src: string; url?: string; alt?: string }[];
+    more?: { label: string; url: string };
+    empty?: string;
+    error?: boolean;
+};
+function ExtRow({ item }: { item: ExtItem }) {
+    const lead = item.image
+        ? <span className="widget-ext__thumb"><img src={item.image} alt="" loading="lazy" /></span>
+        : item.avatar || item.initials
+            ? <Avatar src={item.avatar ?? null} initials={item.initials ?? '?'} size="sm" />
+            : item.icon;
+    return <ListRow href={item.url} icon={lead} title={<>{item.title}{item.badge && <Badge tone={item.tone === 'minus' ? 'red' : item.tone === 'plus' ? 'green' : undefined}>{item.badge}</Badge>}</>} meta={item.meta} />;
+}
+export function ExtensionWidget({ definition }: { definition: WidgetDefinition }) {
+    const state = useWidgetData<ExtData>(definition.extension, definition.id, 120);
+    return (
+        <WidgetFrame definition={definition}>
+            <Body state={state}>{(data) => (
+                <div className="widget-ext">
+                    {data.metrics && data.metrics.length > 0 && (
+                        <div className="widget-figures">{data.metrics.map((metric) => (
+                            <div key={metric.label} className={metric.tone === 'minus' ? 'is-alert' : metric.tone === 'plus' ? 'is-good' : ''}><strong>{metric.value}</strong><span>{metric.label}</span></div>
+                        ))}</div>
+                    )}
+                    {data.type === 'gallery' && data.images && data.images.length > 0 && (
+                        <div className="widget-ext__gallery">{data.images.map((image, index) => (
+                            <a key={image.src + index} href={image.url ?? image.src} className="widget-ext__photo"><img src={image.src} alt={image.alt ?? ''} loading="lazy" /></a>
+                        ))}</div>
+                    )}
+                    {data.items && data.items.length > 0 && <ul className="ps-list">{data.items.map((item, index) => <ExtRow key={index} item={item} />)}</ul>}
+                    {!data.items?.length && !data.images?.length && !data.metrics?.length && <Empty icon={data.error ? 'bx-error-circle' : definition.icon}>{data.empty ?? 'Nothing here yet.'}</Empty>}
+                    {data.more && <a className="ps-btn ps-btn--sm widget-ext__more" href={data.more.url}>{data.more.label}<i className="bx bx-right-arrow-alt" aria-hidden="true" /></a>}
+                </div>
+            )}</Body>
+        </WidgetFrame>
+    );
+}
+
 export const WIDGETS: Record<string, (props: { definition: WidgetDefinition }) => ReactNode> = {
     'core.greeting': GreetingWidget,
     'core.pi-health': PiHealthWidget,

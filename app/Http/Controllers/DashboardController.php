@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Extension;
 use App\Models\DashboardLayout;
 use App\Support\CoreWidgets;
+use App\Support\ExtensionWidgets;
 use App\Support\Dashboard;
 use App\Support\Permissions;
 use Illuminate\Http\JsonResponse;
@@ -29,8 +31,9 @@ class DashboardController extends Controller
         $user = $request->user();
         $allowed = collect(Dashboard::catalogue($user))->firstWhere('key', $extension.'.'.$widget);
         abort_unless($allowed, 404);
-        abort_unless($extension === 'core', 404); // Extension widgets arrive in pass 2.
-        $data = CoreWidgets::data($widget, $user);
+        $data = $extension === 'core'
+            ? CoreWidgets::data($widget, $user)
+            : ExtensionWidgets::data(Extension::findOrFail($extension), $widget, $user);
         abort_if($data === null, 404);
 
         return response()->json($data)->header('Cache-Control', 'no-store');

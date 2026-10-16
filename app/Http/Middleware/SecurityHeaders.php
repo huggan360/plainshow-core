@@ -26,7 +26,7 @@ class SecurityHeaders
             "script-src 'self' 'nonce-$nonce'",
             // React sets inline style attributes (widths of meters and the like).
             "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' data: blob:",
+            "img-src 'self' data: blob: https://*.plainshow.se",
             "font-src 'self'",
             "connect-src 'self'",
             "frame-ancestors 'none'",

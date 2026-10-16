@@ -6,19 +6,76 @@
     "url": "https://blog.plainshow.se",
     "api": "https://blog.plainshow.se/api/v1",
     "sort": 10,
-    "default_access": ["admin", "moderator", "member"],
+    "default_access": [
+        "admin",
+        "moderator",
+        "member"
+    ],
     "health": "https://blog.plainshow.se/api/v1/health",
     "capabilities": [
-        { "name": "blog.post.view", "label": "Read posts" },
-        { "name": "blog.post.create", "label": "Write posts" },
-        { "name": "blog.post.moderate", "label": "Edit and remove anyone's posts" },
-        { "name": "blog.comment.create", "label": "Comment" },
-        { "name": "blog.comment.moderate", "label": "Remove comments" },
-        { "name": "blog.gallery.view", "label": "View galleries" },
-        { "name": "blog.gallery.create", "label": "Upload to galleries" },
-        { "name": "blog.gallery.moderate", "label": "Manage every gallery" },
-        { "name": "blog.story.create", "label": "Post stories" },
-        { "name": "blog.notice.moderate", "label": "Publish notices" }
+        {
+            "name": "blog.post.view",
+            "label": "Read posts"
+        },
+        {
+            "name": "blog.post.create",
+            "label": "Write posts"
+        },
+        {
+            "name": "blog.post.moderate",
+            "label": "Edit and remove anyone's posts"
+        },
+        {
+            "name": "blog.comment.create",
+            "label": "Comment"
+        },
+        {
+            "name": "blog.comment.moderate",
+            "label": "Remove comments"
+        },
+        {
+            "name": "blog.gallery.view",
+            "label": "View galleries"
+        },
+        {
+            "name": "blog.gallery.create",
+            "label": "Upload to galleries"
+        },
+        {
+            "name": "blog.gallery.moderate",
+            "label": "Manage every gallery"
+        },
+        {
+            "name": "blog.story.create",
+            "label": "Post stories"
+        },
+        {
+            "name": "blog.notice.moderate",
+            "label": "Publish notices"
+        }
     ],
-    "widgets": []
+    "widgets": [
+        {
+            "id": "latest-posts",
+            "title": "Latest posts",
+            "icon": "bx-news",
+            "sizes": [
+                "m",
+                "l",
+                "xl"
+            ],
+            "default": "m"
+        },
+        {
+            "id": "new-photos",
+            "title": "New photos",
+            "icon": "bx-photo-album",
+            "sizes": [
+                "m",
+                "l",
+                "xl"
+            ],
+            "default": "l"
+        }
+    ]
 }

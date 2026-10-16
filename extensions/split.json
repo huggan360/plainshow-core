@@ -6,11 +6,32 @@
     "url": "https://split.plainshow.se",
     "api": "https://split.plainshow.se/api/v1",
     "sort": 15,
-    "default_access": ["admin", "moderator", "member"],
+    "default_access": [
+        "admin",
+        "moderator",
+        "member"
+    ],
     "health": "https://split.plainshow.se/api/v1/health",
     "capabilities": [
-        { "name": "split.group.create", "label": "Create groups" },
-        { "name": "split.group.moderate", "label": "Manage every group" }
+        {
+            "name": "split.group.create",
+            "label": "Create groups"
+        },
+        {
+            "name": "split.group.moderate",
+            "label": "Manage every group"
+        }
     ],
-    "widgets": []
+    "widgets": [
+        {
+            "id": "balances",
+            "title": "Split",
+            "icon": "bx-wallet",
+            "sizes": [
+                "m",
+                "l"
+            ],
+            "default": "m"
+        }
+    ]
 }
