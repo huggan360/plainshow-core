@@ -1,8 +1,15 @@
 import { Avatar, Badge, ButtonLink, Empty, ListRow, Meter, relativeTime, RoleBadge } from '@/Components/ui';
 import { Link } from '@inertiajs/react';
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
-export type WidgetDefinition = { key: string; extension: string; extensionName: string; id: string; title: string; icon: string; sizes: string[]; default: string; admin: boolean };
+export type SettingField = { name: string; type: 'text' | 'links' | 'choices'; label: string; max?: number; options?: { value: string; label: string }[] };
+export type WidgetDefinition = { key: string; extension: string; extensionName: string; id: string; title: string; description?: string; icon: string; sizes: string[]; default: string; settings?: SettingField[]; admin: boolean };
+export type Glow = 'accent' | 'green' | 'blue' | 'violet' | 'pink' | 'warm' | 'cyan' | 'none';
+export type Bookmark = { label: string; url: string };
+export type LayoutItem = { key: string; size: string; title?: string; glow?: Glow; settings?: { text?: string; links?: Bookmark[]; [name: string]: unknown } };
+
+/** The placed widget's own title, glow and settings, from the saved layout. */
+export const WidgetItem = createContext<LayoutItem | null>(null);
 
 type State<T> = { data: T | null; error: string | null; loading: boolean };
 
@@ -28,13 +35,15 @@ function useWidgetData<T>(extension: string, id: string, refreshSeconds?: number
     return { ...state, reload: load };
 }
 
-export function WidgetFrame({ definition, children, glow }: { definition: WidgetDefinition; children: ReactNode; glow?: 'accent' | 'green' | 'blue' | 'violet' | 'pink' | 'warm' | 'cyan' }) {
+export function WidgetFrame({ definition, children, glow }: { definition: WidgetDefinition; children: ReactNode; glow?: Glow }) {
+    const item = useContext(WidgetItem);
+    const tone = item?.glow ?? glow;
     return (
-        <section className="ps-frame ps-widget" data-glow={glow}>
+        <section className="ps-frame ps-widget" data-glow={tone === 'none' ? undefined : tone}>
             <div className="ps-frame__panel">
                 <header className="ps-widget__head">
                     <span className="ps-widget__icon"><i className={`bx ${definition.icon}`} aria-hidden="true" /></span>
-                    <h2 className="ps-widget__title">{definition.title}</h2>
+                    <h2 className="ps-widget__title">{item?.title || definition.title}</h2>
                     {definition.admin && <span className="ps-widget__source"><Badge tone="accent">Admin</Badge></span>}
                 </header>
                 <div className="ps-widget__body">{children}</div>
@@ -63,9 +72,11 @@ function greetingFor(hour: number) {
 }
 export function GreetingWidget({ definition }: { definition: WidgetDefinition }) {
     const state = useWidgetData<GreetingData>(definition.extension, definition.id);
+    const item = useContext(WidgetItem);
+    const glow = item?.glow ?? 'accent';
     const now = new Date();
     return (
-        <section className="ps-frame ps-widget widget-greeting" data-glow="accent">
+        <section className="ps-frame ps-widget widget-greeting" data-glow={glow === 'none' ? undefined : glow}>
             <div className="ps-frame__panel">
                 <Body state={state}>{(data) => (
                     <div className="widget-greeting__inner">
@@ -252,6 +263,31 @@ export function ExtensionWidget({ definition }: { definition: WidgetDefinition }
     );
 }
 
+/* ---------- Notes and bookmarks: kept in the widget's own settings ---------- */
+export function NotesWidget({ definition }: { definition: WidgetDefinition }) {
+    const text = (useContext(WidgetItem)?.settings?.text ?? '').trim();
+    return (
+        <WidgetFrame definition={definition} glow="warm">
+            {text
+                ? <div className="widget-notes">{text}</div>
+                : <Empty icon="bx-note">Write a note in the <Link href="/design">Design studio</Link>.</Empty>}
+        </WidgetFrame>
+    );
+}
+export function BookmarksWidget({ definition }: { definition: WidgetDefinition }) {
+    const links = useContext(WidgetItem)?.settings?.links ?? [];
+    return (
+        <WidgetFrame definition={definition}>
+            {links.length
+                ? <ul className="ps-list">{links.map((link, index) => <ListRow key={index} href={link.url} icon="bx-link-external" title={link.label} meta={hostOf(link.url)} />)}</ul>
+                : <Empty icon="bx-bookmark">Add links in the <Link href="/design">Design studio</Link>.</Empty>}
+        </WidgetFrame>
+    );
+}
+function hostOf(url: string) {
+    try { return new URL(url).host; } catch { return url; }
+}
+
 export const WIDGETS: Record<string, (props: { definition: WidgetDefinition }) => ReactNode> = {
     'core.greeting': GreetingWidget,
     'core.pi-health': PiHealthWidget,
@@ -260,4 +296,13 @@ export const WIDGETS: Record<string, (props: { definition: WidgetDefinition }) =
     'core.admin-users': AdminUsersWidget,
     'core.admin-services': AdminServicesWidget,
     'core.admin-security': AdminSecurityWidget,
+    'core.notes': NotesWidget,
+    'core.bookmarks': BookmarksWidget,
 };
+
+/** Renders one placed widget with its own title, glow and settings. */
+export function PlacedWidget({ item, definition }: { item: LayoutItem; definition: WidgetDefinition }) {
+    const Component = WIDGETS[item.key] ?? (definition.extension !== 'core' ? ExtensionWidget : undefined);
+    if (!Component) return null;
+    return <WidgetItem.Provider value={item}><Component definition={definition} /></WidgetItem.Provider>;
+}

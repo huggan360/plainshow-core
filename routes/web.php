@@ -36,7 +36,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/account/sign-out-everywhere', [AccountController::class, 'signOutEverywhere']);
     });
 
-    Route::get('/design', fn () => Inertia::render('Design'))->name('design');
+    Route::get('/design', [DashboardController::class, 'studio'])->name('design');
+    Route::put('/dashboard/layout/roles/{role}', [DashboardController::class, 'saveRoleLayout'])->middleware('can.do:core.permissions.manage');
+    Route::delete('/dashboard/layout/roles/{role}', [DashboardController::class, 'resetRoleLayout'])->middleware('can.do:core.permissions.manage');
 
     Route::prefix('admin')->group(function () {
         Route::middleware('can.do:core.users.manage')->group(function () {

@@ -7,23 +7,164 @@
     "api": "https://plainshow.se/api/core/v1",
     "system": true,
     "sort": 0,
-    "default_access": ["admin", "moderator", "member", "guest"],
+    "default_access": [
+        "admin",
+        "moderator",
+        "member",
+        "guest"
+    ],
     "capabilities": [
-        { "name": "core.dashboard.use", "label": "Use the dashboard" },
-        { "name": "core.system.view", "label": "See server health details" },
-        { "name": "core.users.manage", "label": "Create and edit accounts" },
-        { "name": "core.extensions.manage", "label": "Turn services on and off" },
-        { "name": "core.permissions.manage", "label": "Change roles and permissions" },
-        { "name": "core.updates.apply", "label": "Install updates" },
-        { "name": "core.audit.view", "label": "Read the audit log" }
+        {
+            "name": "core.dashboard.use",
+            "label": "Use the dashboard"
+        },
+        {
+            "name": "core.system.view",
+            "label": "See server health details"
+        },
+        {
+            "name": "core.users.manage",
+            "label": "Create and edit accounts"
+        },
+        {
+            "name": "core.extensions.manage",
+            "label": "Turn services on and off"
+        },
+        {
+            "name": "core.permissions.manage",
+            "label": "Change roles and permissions"
+        },
+        {
+            "name": "core.updates.apply",
+            "label": "Install updates"
+        },
+        {
+            "name": "core.audit.view",
+            "label": "Read the audit log"
+        }
     ],
     "widgets": [
-        { "id": "greeting", "title": "Welcome", "icon": "bx-sun", "sizes": ["l", "xl", "full"], "default": "xl" },
-        { "id": "pi-health", "title": "Server", "icon": "bx-chip", "sizes": ["m", "l"], "default": "m" },
-        { "id": "launcher", "title": "Services", "icon": "bx-grid-alt", "sizes": ["m", "l", "xl", "full"], "default": "l" },
-        { "id": "activity", "title": "Recent activity", "icon": "bx-history", "sizes": ["m", "l"], "default": "m" },
-        { "id": "admin-users", "title": "Accounts", "icon": "bx-group", "sizes": ["m", "l"], "default": "m", "capability": "core.users.manage" },
-        { "id": "admin-services", "title": "Service health", "icon": "bx-pulse", "sizes": ["m", "l"], "default": "m", "capability": "core.extensions.manage" },
-        { "id": "admin-security", "title": "Sign-in activity", "icon": "bx-shield-quarter", "sizes": ["m", "l"], "default": "m", "capability": "core.audit.view" }
+        {
+            "id": "greeting",
+            "title": "Welcome",
+            "icon": "bx-sun",
+            "sizes": [
+                "l",
+                "xl",
+                "full"
+            ],
+            "default": "xl",
+            "description": "Date, greeting and your account at a glance."
+        },
+        {
+            "id": "pi-health",
+            "title": "Server",
+            "icon": "bx-chip",
+            "sizes": [
+                "m",
+                "l"
+            ],
+            "default": "m",
+            "description": "Processor, memory, storage and temperature of the Pi."
+        },
+        {
+            "id": "launcher",
+            "title": "Services",
+            "icon": "bx-grid-alt",
+            "sizes": [
+                "m",
+                "l",
+                "xl",
+                "full"
+            ],
+            "default": "l",
+            "description": "Open every service you can use."
+        },
+        {
+            "id": "activity",
+            "title": "Recent activity",
+            "icon": "bx-history",
+            "sizes": [
+                "m",
+                "l"
+            ],
+            "default": "m",
+            "description": "Your latest sign-ins and account changes."
+        },
+        {
+            "id": "admin-users",
+            "title": "Accounts",
+            "icon": "bx-group",
+            "sizes": [
+                "m",
+                "l"
+            ],
+            "default": "m",
+            "capability": "core.users.manage",
+            "description": "Accounts, roles and two-factor coverage."
+        },
+        {
+            "id": "admin-services",
+            "title": "Service health",
+            "icon": "bx-pulse",
+            "sizes": [
+                "m",
+                "l"
+            ],
+            "default": "m",
+            "capability": "core.extensions.manage",
+            "description": "Whether each service answers, and how fast."
+        },
+        {
+            "id": "admin-security",
+            "title": "Sign-in activity",
+            "icon": "bx-shield-quarter",
+            "sizes": [
+                "m",
+                "l"
+            ],
+            "default": "m",
+            "capability": "core.audit.view",
+            "description": "Sign-ins, failures and lockouts today."
+        },
+        {
+            "id": "notes",
+            "title": "Notes",
+            "icon": "bx-note",
+            "description": "A note to yourself, kept on your dashboard.",
+            "sizes": [
+                "s",
+                "m",
+                "l"
+            ],
+            "default": "m",
+            "settings": [
+                {
+                    "name": "text",
+                    "type": "text",
+                    "label": "Note",
+                    "max": 2000
+                }
+            ]
+        },
+        {
+            "id": "bookmarks",
+            "title": "Bookmarks",
+            "icon": "bx-bookmark",
+            "description": "Links you open often.",
+            "sizes": [
+                "s",
+                "m",
+                "l"
+            ],
+            "default": "m",
+            "settings": [
+                {
+                    "name": "links",
+                    "type": "links",
+                    "label": "Links"
+                }
+            ]
+        }
     ]
 }

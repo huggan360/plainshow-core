@@ -48,13 +48,29 @@ class Permissions
         }
     }
 
-    private static function resolve(User $user): array
+    /** What a role gets with no per-user overrides. */
+    public static function forRole(string $role): array
     {
-        $extensions = Extension::orderBy('sort')->get()->map(fn (Extension $extension) => [
+        $resolved = Access::resolve($role, self::extensions(), [], DB::table('core_role_capabilities')->where('role', $role)->pluck('capability')->all(), []);
+        if ($resolved['capabilities'] !== ['*']) {
+            $resolved['capabilities'] = Access::expand($resolved['capabilities'], DB::table('core_capabilities')->pluck('name')->all());
+        }
+
+        return $resolved;
+    }
+
+    private static function extensions(): array
+    {
+        return Extension::orderBy('sort')->get()->map(fn (Extension $extension) => [
             'id' => $extension->id,
             'enabled' => $extension->enabled,
             'default_access' => $extension->default_access ?? [],
         ])->all();
+    }
+
+    private static function resolve(User $user): array
+    {
+        $extensions = self::extensions();
         $patterns = DB::table('core_role_capabilities')->where('role', $user->role)->pluck('capability')->all();
         $resolved = Access::resolve(
             $user->role,

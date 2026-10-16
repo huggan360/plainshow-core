@@ -29,6 +29,14 @@ class AuditLabels
         'user.updated' => 'Account changed',
         'user.access_changed' => 'Service access changed',
         'extension.updated' => 'Service settings changed',
+        'layout.role_saved' => 'Default dashboard saved',
+        'layout.role_reset' => 'Default dashboard reset',
+        'permissions.role_changed' => 'Role permissions changed',
+        'permissions.user_changed' => 'Personal permissions changed',
+        'update.requested' => 'Update requested',
+        'update.finished' => 'Update installed',
+        'update.failed' => 'Update failed',
+        'update.rollback' => 'Rolled back',
     ];
 
     public static function label(string $event): string
