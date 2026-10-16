@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0
+
+- Design studio at `/design`: drag widgets into place on a live preview at desktop, tablet or phone width in either theme; size, rename and give them a glow; save for yourself or, for admins, as a role's default. Tokens (type, colour, boxes) on their own tab.
+- Notes, bookmarks and an updates widget for admins; extension widgets from Blog, LaTeX and Split.
+- Permissions manager: the role matrix per service, and allows and denies for single people. Every change is audited.
+- Updates: installed and latest versions of every part with changelogs; one-step installs that switch back by themselves when the health check fails; switching to any kept release.
+- API: personal tokens on the account page, `plainshow.se/api/{service}/v1` for every service behind one token, and documentation at `plainshow.se/api`.
+- Security: wildcard role rules no longer grant core's own capabilities (members could read the audit log).
+- Outfit for text and Source Serif 4 for titles; the orange brand; page titles on the page.
+
 ## 0.1.0
 
 - plainshow.se becomes the PlainShow dashboard. It signs in through login.plainshow.se like every other app.
