@@ -422,3 +422,11 @@ a.widget-row:hover { background: var(--ps-btn-bg-hover); }
     .studio-canvas .ps-widget-grid > [data-height] .widget-gallery { grid-auto-flow: row; grid-template-rows: none; grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .studio-canvas .ps-widget-grid > [data-height] .widget-gallery__photo { aspect-ratio: 1; }
 }
+.ps-widget-grid > [data-height] .widget-stack:has(> .widget-gallery) { flex: 1 1 0; min-height: 0; }
+.ps-widget-grid > [data-height] .widget-gallery { flex: 1 1 0; min-height: 0; }
+.ps-widget-grid > [data-height] .widget-gallery__photo { position: relative; }
+.ps-widget-grid > [data-height] .widget-gallery__photo img { position: absolute; inset: 0; }
+@media (max-width: 700px) {
+    .ps-widget-grid > [data-height] .widget-gallery__photo img { position: static; }
+    .ps-widget-grid > [data-height] .widget-stack:has(> .widget-gallery), .ps-widget-grid > [data-height] .widget-gallery { flex: none; }
+}
