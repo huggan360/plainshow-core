@@ -43,8 +43,7 @@ function Docs({ services, signedIn }: { services: Service[]; signedIn: boolean }
                             <li><strong>Send it</strong> with every call. Calls act as you, so a token never does more than you can.</li>
                             <li><strong>Read the answer:</strong> JSON, or one of the statuses on the right.</li>
                         </ol>
-                        <pre className="docs-code">{'curl https://plainshow.se/api/core/v1/me \
-  -H "Authorization: Bearer $PLAINSHOW_TOKEN"'}</pre>
+                        <pre className="docs-code">{'curl https://plainshow.se/api/core/v1/me \\\n  -H "Authorization: Bearer $PLAINSHOW_TOKEN"'}</pre>
                     </div>
                     <ul className="ps-chain docs-errors">
                         {[['401', 'No token, or it expired or was revoked'], ['403', 'Not allowed, or the token does not reach this'], ['404', 'Nothing there'], ['422', 'Something you sent is wrong'], ['429', 'Over 120 calls a minute'], ['503', 'The service is turned off']].map(([code, text]) => (
