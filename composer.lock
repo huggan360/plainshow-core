@@ -2862,16 +2862,16 @@
         },
         {
             "name": "plainshow/kit",
-            "version": "v0.5.0",
+            "version": "v0.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/huggan360/plainshow-kit.git",
-                "reference": "4f1b0b4f1fec580da0ebae8f7a0cca87a7cf65e2"
+                "reference": "57eb1c3159629bcc83237c111efe627e16e54dc1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/huggan360/plainshow-kit/zipball/4f1b0b4f1fec580da0ebae8f7a0cca87a7cf65e2",
-                "reference": "4f1b0b4f1fec580da0ebae8f7a0cca87a7cf65e2",
+                "url": "https://api.github.com/repos/huggan360/plainshow-kit/zipball/57eb1c3159629bcc83237c111efe627e16e54dc1",
+                "reference": "57eb1c3159629bcc83237c111efe627e16e54dc1",
                 "shasum": ""
             },
             "require": {
@@ -2901,7 +2901,7 @@
                 "proprietary"
             ],
             "description": "PlainShow shared kit: single sign-on client, token checks, permissions and the UI assets used by every PlainShow app.",
-            "time": "2026-10-16T06:40:07+00:00"
+            "time": "2026-10-16T06:58:23+00:00"
         },
         {
             "name": "pragmarx/google2fa",
