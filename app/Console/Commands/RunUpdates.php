@@ -327,7 +327,7 @@ class RunUpdates extends Command
 
     private function log(string $line, bool $stamp = true): void
     {
-        $text = ($stamp ? '['.now()->format('H:i:s').'] ' : '').preg_replace('/\e\[[0-9;]*m/', '', $line);
+        $text = ($stamp ? '['.now()->setTimezone('Europe/Stockholm')->format('H:i:s').'] ' : '').preg_replace('/\e\[[0-9;]*m/', '', $line);
         $this->line($text);
         if ($this->jobId !== null) {
             DB::table('core_update_jobs')->where('id', $this->jobId)
