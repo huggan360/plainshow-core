@@ -86,7 +86,10 @@ class CoreWidgets
                 } elseif ($url) {
                     $start = microtime(true);
                     try {
-                        $response = Http::timeout(4)->withOptions(['allow_redirects' => false])->get($url);
+                        // Every service runs on this machine: ask it directly, over checked TLS,
+                        // rather than out through Cloudflare and back.
+                        $host = (string) parse_url($url, PHP_URL_HOST);
+                        $response = Http::timeout(6)->connectTimeout(3)->withOptions(['allow_redirects' => false, 'curl' => [CURLOPT_RESOLVE => ["$host:443:127.0.0.1"]]])->get($url);
                         $state = $response->status() < 500 ? 'online' : 'error';
                     } catch (Throwable) {
                         $state = 'offline';
