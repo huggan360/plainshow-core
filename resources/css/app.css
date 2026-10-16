@@ -238,7 +238,16 @@
 .perm-tri__option--allow.is-active { background: var(--ps-green-bg); color: var(--ps-green); }
 .perm-tri__option--deny.is-active { background: var(--ps-red-bg); color: var(--ps-red); }
 @media (max-width: 900px) { .perm-people { grid-template-columns: minmax(0, 1fr); } .perm-people__list { position: static; } .perm-people__names { max-height: 260px; } }
-@media (max-width: 600px) { .perm-col { width: 64px; } .perm-table th[scope='row'] code { display: none; } }
+.perm-col__short { display: none; }
+@media (max-width: 600px) {
+    .perm-table th, .perm-table td { padding-left: 8px; padding-right: 8px; }
+    .perm-col { width: 44px; padding-left: 2px !important; padding-right: 2px !important; }
+    .perm-col__full { display: none; }
+    .perm-col__short { display: inline; }
+    .perm-table th[scope='row'] code { display: none; }
+    .perm-check { width: 24px; height: 24px; }
+    .perm-table--person .perm-tri__option { padding: 5px 7px; }
+}
 
 /* Updates */
 .updates { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) 380px; align-items: start; }

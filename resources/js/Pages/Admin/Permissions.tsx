@@ -18,6 +18,7 @@ type Props = {
 const ROLES: Role[] = ['admin', 'moderator', 'member', 'guest'];
 const EDITABLE: Role[] = ['moderator', 'member', 'guest'];
 const ROLE_LABEL: Record<Role, string> = { admin: 'Admin', moderator: 'Moderator', member: 'Member', guest: 'Guest' };
+const ROLE_SHORT: Record<Role, string> = { admin: 'Adm', moderator: 'Mod', member: 'Mem', guest: 'Gst' };
 
 export default function Permissions(props: Props) {
     const [tab, setTab] = useState<'roles' | 'people'>(() => (new URLSearchParams(window.location.search).get('person') ? 'people' : 'roles'));
@@ -73,7 +74,7 @@ function RoleMatrix({ extensions, roles }: Props) {
                             <thead>
                                 <tr>
                                     <th scope="col"><span className="perm-ext"><i className={`bx ${extension.icon}`} aria-hidden="true" />{extension.name}{!extension.enabled && <Badge>Off</Badge>}</span></th>
-                                    {ROLES.map((role) => <th key={role} scope="col" className="perm-col">{ROLE_LABEL[role]}</th>)}
+                                    {ROLES.map((role) => <th key={role} scope="col" className="perm-col" title={ROLE_LABEL[role]}><span className="perm-col__full">{ROLE_LABEL[role]}</span><span className="perm-col__short" aria-hidden="true">{ROLE_SHORT[role]}</span></th>)}
                                 </tr>
                             </thead>
                             <tbody>
