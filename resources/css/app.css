@@ -391,3 +391,18 @@ a.widget-row:hover { background: var(--ps-btn-bg-hover); }
 .studio-pick__name { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .studio-pick__admin { padding: 1px 6px; border-radius: 999px; background: var(--ps-accent-bg); color: var(--ps-accent-text); font-size: 11px; }
 .studio-gallery__group .ps-chain > li { overflow: hidden; }
+
+/* Inside the fixed heights: empty states sit in the middle, rows a touch tighter,
+   the server bars and the services fill the space they have. */
+.ps-widget__body { display: flex; flex-direction: column; }
+.ps-widget__body > * { flex: none; }
+.widget-empty { display: grid; place-items: center; flex: 1 0 auto !important; min-height: 72px; padding: 16px; background: none; border: 1px dashed var(--ps-shell-border); text-align: center; }
+.widget-stack { flex: 1 0 auto !important; grid-template-rows: auto; align-content: start; }
+.widget-stack > .widget-empty { min-height: 110px; }
+.widget-connect { flex: 1 0 auto !important; align-content: center; justify-items: center; text-align: center; }
+.widget-row { min-height: 44px; padding: 7px 14px; }
+.widget-stack--fill { grid-template-rows: 1fr auto; align-content: stretch; }
+.widget-stack--fill > .ps-chain { grid-auto-rows: 1fr; }
+.widget-stack--fill .ps-gauge { min-height: 44px; }
+.widget-apps { grid-template-columns: repeat(auto-fit, minmax(min(100%, 112px), 1fr)); flex: 1 0 auto !important; align-content: stretch; grid-auto-rows: minmax(74px, 1fr); }
+.widget-app { align-content: center; }

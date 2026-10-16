@@ -177,7 +177,7 @@ export function PiHealthWidget({ definition }: { definition: WidgetDefinition })
     return (
         <WidgetFrame definition={definition}>
             <Body state={state}>{({ system }) => (
-                <div className="widget-stack">
+                <div className="widget-stack widget-stack--fill">
                     <div className="ps-chain">
                         {metrics.includes('memory') && <Gauge tone="red" label="RAM used" value={system.memoryPercent} display={`${system.memoryPercent}%`} />}
                         {metrics.includes('disk') && <Gauge tone="orange" label="Disk used" value={system.diskPercent} display={`${system.diskPercent}%`} />}
@@ -427,7 +427,7 @@ type ExtData = {
 };
 export function ExtensionWidget({ definition }: { definition: WidgetDefinition }) {
     const state = useWidgetData<ExtData>(definition.extension, definition.id, 120);
-    const count = useCount(definition, definition.id.includes('photo') ? 9 : 5);
+    const count = useCount(definition, definition.id.includes('photo') ? 8 : 5);
     const more = state.data?.more;
     return (
         <WidgetFrame definition={definition} action={more ? <More href={more.url}>{more.label}</More> : undefined}>

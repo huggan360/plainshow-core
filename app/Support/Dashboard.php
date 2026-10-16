@@ -72,12 +72,12 @@ class Dashboard
     private static function rowsSetting(array $widget): array
     {
         $gallery = str_contains((string) ($widget['id'] ?? ''), 'photo');
-        $options = $gallery ? ['6', '9', '12'] : ['3', '5', '8'];
+        $options = $gallery ? ['4', '8', '12'] : ['3', '5', '8'];
 
         return [[
             'name' => 'count', 'type' => 'select', 'label' => $gallery ? 'Photos' : 'Rows',
             'options' => array_map(fn ($value) => ['value' => $value, 'label' => $value], $options),
-            'default' => $gallery ? '9' : '5',
+            'default' => $gallery ? '8' : '5',
         ]];
     }
 
