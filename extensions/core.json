@@ -213,28 +213,7 @@
             ],
             "default": "m",
             "description": "Your latest sign-ins and account changes.",
-            "settings": [
-                {
-                    "name": "count",
-                    "type": "select",
-                    "label": "Rows",
-                    "options": [
-                        {
-                            "value": "3",
-                            "label": "3"
-                        },
-                        {
-                            "value": "5",
-                            "label": "5"
-                        },
-                        {
-                            "value": "8",
-                            "label": "8"
-                        }
-                    ],
-                    "default": "5"
-                }
-            ],
+            "settings": [],
             "height": "normal"
         },
         {
@@ -248,28 +227,7 @@
             "default": "m",
             "capability": "core.users.manage",
             "description": "Accounts, roles and two-factor coverage.",
-            "settings": [
-                {
-                    "name": "count",
-                    "type": "select",
-                    "label": "Rows",
-                    "options": [
-                        {
-                            "value": "3",
-                            "label": "3"
-                        },
-                        {
-                            "value": "5",
-                            "label": "5"
-                        },
-                        {
-                            "value": "8",
-                            "label": "8"
-                        }
-                    ],
-                    "default": "3"
-                }
-            ],
+            "settings": [],
             "height": "normal"
         },
         {
@@ -304,28 +262,7 @@
             "default": "m",
             "capability": "core.audit.view",
             "description": "Sign-ins, failures and lockouts today.",
-            "settings": [
-                {
-                    "name": "count",
-                    "type": "select",
-                    "label": "Rows",
-                    "options": [
-                        {
-                            "value": "3",
-                            "label": "3"
-                        },
-                        {
-                            "value": "5",
-                            "label": "5"
-                        },
-                        {
-                            "value": "8",
-                            "label": "8"
-                        }
-                    ],
-                    "default": "3"
-                }
-            ],
+            "settings": [],
             "height": "normal"
         },
         {

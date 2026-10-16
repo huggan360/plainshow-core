@@ -59,26 +59,13 @@ class Dashboard
                     'sizes' => array_values(array_intersect($widget['sizes'] ?? ['m'], self::SIZES)),
                     'default' => $widget['default'] ?? 'm',
                     'height' => in_array($widget['height'] ?? null, self::HEIGHTS, true) ? $widget['height'] : 'normal',
-                    'settings' => $widget['settings'] ?? ($extension->id === 'core' ? [] : self::rowsSetting($widget)),
+                    'settings' => $widget['settings'] ?? [],
                     'admin' => isset($widget['capability']),
                 ];
             }
         }
 
         return $widgets;
-    }
-
-    /** Widgets from other services get a row count unless they declare their own settings. */
-    private static function rowsSetting(array $widget): array
-    {
-        $gallery = str_contains((string) ($widget['id'] ?? ''), 'photo');
-        $options = $gallery ? ['4', '8', '12'] : ['3', '5', '8'];
-
-        return [[
-            'name' => 'count', 'type' => 'select', 'label' => $gallery ? 'Photos' : 'Rows',
-            'options' => array_map(fn ($value) => ['value' => $value, 'label' => $value], $options),
-            'default' => $gallery ? '8' : '5',
-        ]];
     }
 
     /** @return list<array<string, mixed>> */

@@ -47,26 +47,6 @@
                         }
                     ],
                     "default": "14"
-                },
-                {
-                    "name": "count",
-                    "type": "select",
-                    "label": "Rows",
-                    "options": [
-                        {
-                            "value": "3",
-                            "label": "3"
-                        },
-                        {
-                            "value": "5",
-                            "label": "5"
-                        },
-                        {
-                            "value": "8",
-                            "label": "8"
-                        }
-                    ],
-                    "default": "5"
                 }
             ]
         },
@@ -80,28 +60,7 @@
                 "l"
             ],
             "default": "m",
-            "settings": [
-                {
-                    "name": "count",
-                    "type": "select",
-                    "label": "Rows",
-                    "options": [
-                        {
-                            "value": "3",
-                            "label": "3"
-                        },
-                        {
-                            "value": "5",
-                            "label": "5"
-                        },
-                        {
-                            "value": "8",
-                            "label": "8"
-                        }
-                    ],
-                    "default": "5"
-                }
-            ]
+            "settings": []
         },
         {
             "id": "talk",
@@ -119,26 +78,6 @@
                     "type": "toggle",
                     "label": "Only unread",
                     "default": false
-                },
-                {
-                    "name": "count",
-                    "type": "select",
-                    "label": "Rows",
-                    "options": [
-                        {
-                            "value": "3",
-                            "label": "3"
-                        },
-                        {
-                            "value": "5",
-                            "label": "5"
-                        },
-                        {
-                            "value": "8",
-                            "label": "8"
-                        }
-                    ],
-                    "default": "5"
                 }
             ]
         }
