@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\ExtensionsController;
 use App\Http\Controllers\Admin\PermissionsController;
+use App\Http\Controllers\Admin\UpdatesController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Auth\SsoController;
 use App\Http\Controllers\AvatarController;
@@ -57,6 +58,10 @@ Route::middleware('auth')->group(function () {
             Route::get('/permissions', [PermissionsController::class, 'index'])->name('admin.permissions');
             Route::put('/permissions/roles', [PermissionsController::class, 'updateRoles']);
             Route::put('/permissions/users/{user}', [PermissionsController::class, 'updateUser']);
+        });
+        Route::middleware('can.do:core.updates.apply')->group(function () {
+            Route::get('/updates', [UpdatesController::class, 'index'])->name('admin.updates');
+            Route::post('/updates', [UpdatesController::class, 'store'])->middleware('throttle:20,1');
         });
         Route::get('/audit', [AuditController::class, 'index'])->middleware('can.do:core.audit.view')->name('admin.audit');
     });

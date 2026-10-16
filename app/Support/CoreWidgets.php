@@ -23,6 +23,7 @@ class CoreWidgets
             'admin-users' => self::users(),
             'admin-services' => ['services' => self::services()],
             'admin-security' => self::security(),
+            'admin-updates' => self::updates(),
             default => null,
         };
     }
@@ -108,6 +109,17 @@ class CoreWidgets
             'locked' => AuditEvent::where('event', 'login.locked')->where('created_at', '>=', $since)->count(),
             'signIns' => AuditEvent::where('event', 'login.success')->where('created_at', '>=', $since)->count(),
             'events' => self::events(AuditEvent::where('source', 'login')),
+        ];
+    }
+
+    private static function updates(): array
+    {
+        $rows = DB::table('core_components')->orderBy('name')->get();
+
+        return [
+            'checkedAt' => $rows->max('checked_at') ? \Illuminate\Support\Carbon::parse($rows->max('checked_at'))->toIso8601String() : null,
+            'available' => $rows->where('update_available', true)->map(fn ($row) => ['id' => $row->id, 'name' => $row->name, 'installed' => $row->installed, 'latest' => $row->latest])->values(),
+            'failed' => DB::table('core_update_jobs')->where('status', 'failed')->where('created_at', '>', now()->subDays(7))->count(),
         ];
     }
 }

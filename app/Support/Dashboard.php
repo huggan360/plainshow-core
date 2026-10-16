@@ -162,7 +162,7 @@ class Dashboard
     {
         $order = [
             ['core.greeting', 'full'], ['core.launcher', 'xl'], ['core.pi-health', 'm'],
-            ['core.admin-services', 'm'], ['core.admin-users', 'm'], ['core.admin-security', 'm'],
+            ['core.admin-services', 'm'], ['core.admin-users', 'm'], ['core.admin-security', 'm'], ['core.admin-updates', 'm'],
             ['blog.latest-posts', 'm'], ['split.balances', 'm'], ['latex.recent-projects', 'm'],
             ['core.activity', 'm'], ['blog.new-photos', 'l'],
         ];

@@ -263,6 +263,25 @@ export function ExtensionWidget({ definition }: { definition: WidgetDefinition }
     );
 }
 
+/* ---------- Admin: updates ---------- */
+type UpdatesData = { checkedAt: string | null; available: { id: string; name: string; installed: string | null; latest: string }[]; failed: number };
+export function AdminUpdatesWidget({ definition }: { definition: WidgetDefinition }) {
+    const state = useWidgetData<UpdatesData>(definition.extension, definition.id, 300);
+    return (
+        <WidgetFrame definition={definition}>
+            <Body state={state}>{(data) => (
+                <div className="ps-stack">
+                    {data.available.length === 0
+                        ? <Empty icon="bx-check-circle">{data.checkedAt ? `Everything is up to date. Checked ${relativeTime(data.checkedAt)}.` : 'Not checked yet.'}</Empty>
+                        : <ul className="ps-list">{data.available.map((item) => <ListRow key={item.id} icon="bx-download" title={`${item.name} ${item.latest}`} meta={`Installed ${item.installed ?? 'unknown'}`} />)}</ul>}
+                    {data.failed > 0 && <div className="ps-alert"><i className="bx bx-error-circle" /><span>{data.failed === 1 ? 'One update failed' : `${data.failed} updates failed`} this week.</span></div>}
+                    <ButtonLink href="/admin/updates" size="sm" icon="bx-refresh">Open updates</ButtonLink>
+                </div>
+            )}</Body>
+        </WidgetFrame>
+    );
+}
+
 /* ---------- Notes and bookmarks: kept in the widget's own settings ---------- */
 export function NotesWidget({ definition }: { definition: WidgetDefinition }) {
     const text = (useContext(WidgetItem)?.settings?.text ?? '').trim();
@@ -296,6 +315,7 @@ export const WIDGETS: Record<string, (props: { definition: WidgetDefinition }) =
     'core.admin-users': AdminUsersWidget,
     'core.admin-services': AdminServicesWidget,
     'core.admin-security': AdminSecurityWidget,
+    'core.admin-updates': AdminUpdatesWidget,
     'core.notes': NotesWidget,
     'core.bookmarks': BookmarksWidget,
 };

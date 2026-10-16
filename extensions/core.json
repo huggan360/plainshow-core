@@ -128,6 +128,19 @@
             "description": "Sign-ins, failures and lockouts today."
         },
         {
+            "id": "admin-updates",
+            "title": "Updates",
+            "icon": "bx-refresh",
+            "description": "New versions waiting to be installed.",
+            "sizes": [
+                "s",
+                "m",
+                "l"
+            ],
+            "default": "m",
+            "capability": "core.updates.apply"
+        },
+        {
             "id": "notes",
             "title": "Notes",
             "icon": "bx-note",

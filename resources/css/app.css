@@ -239,3 +239,31 @@
 .perm-tri__option--deny.is-active { background: var(--ps-red-bg); color: var(--ps-red); }
 @media (max-width: 900px) { .perm-people { grid-template-columns: minmax(0, 1fr); } .perm-people__list { position: static; } .perm-people__names { max-height: 260px; } }
 @media (max-width: 600px) { .perm-col { width: 64px; } .perm-table th[scope='row'] code { display: none; } }
+
+/* Updates */
+.updates { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) 380px; align-items: start; }
+.updates__list { display: grid; gap: 16px; }
+.updates__jobs { position: sticky; top: 20px; }
+.update-card { display: grid; gap: 14px; }
+.update-card__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.update-card__title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.update-card__facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.update-card__facts > div { padding: 10px 12px; border-radius: 12px; background: var(--ps-raised); min-width: 0; }
+.update-card__facts dt { color: var(--ps-text-muted); font-size: var(--ps-text-xs); }
+.update-card__facts dd { margin: 2px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ps-text-sm); }
+.update-card__notes summary, .update-card__toggle { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: var(--ps-text-soft); font: 500 var(--ps-text-sm) var(--ps-font-ui); cursor: pointer; }
+.update-notes { margin-top: 10px; padding: 14px 16px; border-radius: 12px; background: var(--ps-raised); font-size: var(--ps-text-sm); }
+.update-notes__version { margin: 12px 0 4px; font-size: var(--ps-text-md); }
+.update-notes__version:first-child { margin-top: 0; }
+.update-notes ul { margin: 0; padding-left: 18px; }
+.update-notes li + li { margin-top: 4px; }
+.update-notes code { font-family: var(--ps-font-mono); font-size: .92em; }
+.updates-jobs { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.updates-job details { border-radius: 12px; background: var(--ps-raised); }
+.updates-job summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; padding: 10px 12px; cursor: pointer; list-style: none; }
+.updates-job summary::-webkit-details-marker { display: none; }
+.updates-job__what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ps-text-sm); font-weight: 500; }
+.updates-job__when { grid-column: 1 / -1; }
+.updates-job__log { max-height: 320px; margin: 0; padding: 0 12px 12px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ps-text-soft); font: var(--ps-text-xs)/1.55 var(--ps-font-mono); }
+@media (max-width: 1100px) { .updates { grid-template-columns: minmax(0, 1fr); } .updates__jobs { position: static; } }
+@media (max-width: 560px) { .update-card__facts { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
