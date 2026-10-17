@@ -19,7 +19,7 @@ class ExtensionWidgets
 {
     private const TYPES = ['list', 'metrics', 'gallery'];
 
-    public static function data(Extension $extension, string $widget, User $user): ?array
+    public static function data(Extension $extension, string $widget, User $user, ?string $account = null): ?array
     {
         $secret = self::secret($extension->id);
         $api = rtrim((string) ($extension->manifest['api'] ?? ''), '/');
@@ -32,13 +32,13 @@ class ExtensionWidgets
         if (is_array($cached = Cache::get($cacheKey))) {
             return $cached;
         }
-        $data = (function () use ($extension, $widget, $user, $secret, $api) {
+        $data = (function () use ($extension, $widget, $user, $secret, $api, $account) {
             try {
                 $host = (string) parse_url($api, PHP_URL_HOST);
                 $response = Http::timeout(8)->connectTimeout(3)->retry(2, 200, throw: false)->acceptJson()
                     // Every extension runs on this machine: go straight there, still over checked TLS.
                     ->withOptions(['curl' => [CURLOPT_RESOLVE => ["$host:443:127.0.0.1"]]])
-                    ->get("$api/widgets/$widget", Widgets::sign($user->id, $widget, $secret));
+                    ->get("$api/widgets/$widget", Widgets::sign($user->id, $widget, $secret, null, $account));
                 $data = $response->json();
                 if (! $response->ok() || ! is_array($data) || ! in_array($data['type'] ?? null, self::TYPES, true)) {
                     return ['type' => 'list', 'items' => [], 'empty' => 'Could not reach '.$extension->name.'.', 'error' => true];

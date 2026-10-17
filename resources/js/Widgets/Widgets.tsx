@@ -371,10 +371,10 @@ function hostOf(url: string) {
     try { return new URL(url).host.replace(/^www\./, ''); } catch { return url; }
 }
 
-/* ---------- Cloud: calendar, files and Talk from Nextcloud ---------- */
+/* ---------- Cloud: calendar and files (photos is a gallery) ---------- */
 type CloudState = { connected: boolean; error?: string };
 function NotConnected() {
-    return <Fill icon="bx-cloud"><p>Show your Nextcloud here.</p><Link href="/account/connections" className="ps-btn ps-btn--sm">Connect Nextcloud</Link></Fill>;
+    return <Fill icon="bx-cloud"><p>You have no Cloud account yet. An administrator can give you access.</p></Fill>;
 }
 type CalendarEvent = { title: string; place: string; start: string; end: string; allDay: boolean; calendar: string; color: string | null };
 function dayLabel(date: Date): string {
@@ -390,13 +390,13 @@ export function CalendarWidget({ definition }: { definition: WidgetDefinition })
     const height = useHeight(definition);
     const days = Number(useSetting<string>(definition, 'days') ?? 14);
     return (
-        <WidgetFrame definition={definition} action={<More href="https://cloud.plainshow.se/apps/calendar">Calendar</More>}>
+        <WidgetFrame definition={definition} action={<More href="https://cloud.plainshow.se/calendar">Calendar</More>}>
             <Body state={state} height={height}>{(data) => {
                 if (!data.connected) return <NotConnected />;
                 if (data.error) return <Fill icon="bx-error-circle">{data.error}</Fill>;
                 const until = Date.now() + days * 86400000;
                 const events = (data.events ?? []).filter((event) => new Date(event.start).getTime() < until);
-                return <Slots height={height} more={{ href: 'https://cloud.plainshow.se/apps/calendar' }} empty="Nothing planned." rows={events.map((event, index) => {
+                return <Slots height={height} more={{ href: 'https://cloud.plainshow.se/calendar' }} empty="Nothing planned." rows={events.map((event, index) => {
                     const start = new Date(event.start);
                     return {
                         key: index,
@@ -422,9 +422,9 @@ export function FilesWidget({ definition }: { definition: WidgetDefinition }) {
     const state = useWidgetData<CloudState & { files?: CloudFile[] }>(definition.extension, definition.id, 300);
     const height = useHeight(definition);
     return (
-        <WidgetFrame definition={definition} action={<More href="https://cloud.plainshow.se/apps/files">Files</More>}>
+        <WidgetFrame definition={definition} action={<More href="https://cloud.plainshow.se/">Files</More>}>
             <Body state={state} height={height}>{(data) => !data.connected ? <NotConnected /> : data.error ? <Fill icon="bx-error-circle">{data.error}</Fill> : (
-                <Slots height={height} more={{ href: 'https://cloud.plainshow.se/apps/files' }} empty="No files yet." rows={(data.files ?? []).map((file, index) => ({
+                <Slots height={height} more={{ href: 'https://cloud.plainshow.se/' }} empty="No files yet." rows={(data.files ?? []).map((file, index) => ({
                     key: index, href: file.url,
                     lead: <i className={`bx ${fileIcon(file.type, file.name)} widget-row__icon`} aria-hidden="true" />,
                     title: file.name,
@@ -435,27 +435,6 @@ export function FilesWidget({ definition }: { definition: WidgetDefinition }) {
         </WidgetFrame>
     );
 }
-type TalkRoom = { name: string; unread: number; mention: boolean; last: string | null; by: string | null; at: string | null; url: string };
-export function TalkWidget({ definition }: { definition: WidgetDefinition }) {
-    const state = useWidgetData<CloudState & { rooms?: TalkRoom[] }>(definition.extension, definition.id, 120);
-    const height = useHeight(definition);
-    const unreadOnly = useSetting<boolean>(definition, 'unread') ?? false;
-    return (
-        <WidgetFrame definition={definition} action={<More href="https://cloud.plainshow.se/apps/spreed">Talk</More>}>
-            <Body state={state} height={height}>{(data) => {
-                if (!data.connected) return <NotConnected />;
-                if (data.error) return <Fill icon="bx-error-circle">{data.error}</Fill>;
-                const rooms = (data.rooms ?? []).filter((room) => !unreadOnly || room.unread > 0);
-                return <Slots height={height} more={{ href: 'https://cloud.plainshow.se/apps/spreed' }} empty={unreadOnly ? 'Nothing unread.' : 'No conversations yet.'} rows={rooms.map((room, index) => ({
-                    key: index, href: room.url, title: room.name,
-                    meta: room.last ? `${room.by ? `${room.by}: ` : ''}${room.last}` : undefined,
-                    trail: room.unread > 0 ? <span className={`widget-unread${room.mention ? ' is-mention' : ''}`}>{room.unread}</span> : room.at ? relativeTime(room.at) : undefined,
-                }))} />;
-            }}</Body>
-        </WidgetFrame>
-    );
-}
-
 /* ---------- Extension widgets: typed data from Blog, LaTeX, Split and others ---------- */
 type ExtItem = { title?: string; meta?: string; url?: string; icon?: string; image?: string; avatar?: string; initials?: string; badge?: string; tone?: 'plus' | 'minus' | 'accent' };
 type ExtData = {
@@ -513,12 +492,11 @@ export const WIDGETS: Record<string, (props: { definition: WidgetDefinition }) =
     'core.bookmarks': BookmarksWidget,
     'cloud.calendar': CalendarWidget,
     'cloud.files': FilesWidget,
-    'cloud.talk': TalkWidget,
 };
 
 /** Renders one placed widget with its own title, glow and settings. */
 export function PlacedWidget({ item, definition }: { item: LayoutItem; definition: WidgetDefinition }) {
-    const Component = WIDGETS[item.key] ?? (definition.extension !== 'core' && definition.extension !== 'cloud' ? ExtensionWidget : undefined);
+    const Component = WIDGETS[item.key] ?? (definition.extension !== 'core' ? ExtensionWidget : undefined);
     if (!Component) return null;
     return <WidgetItem.Provider value={item}><Component definition={definition} /></WidgetItem.Provider>;
 }

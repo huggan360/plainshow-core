@@ -1,7 +1,7 @@
 {
     "id": "cloud",
     "name": "Cloud",
-    "description": "Files, calendar and contacts in Nextcloud.",
+    "description": "Your files, photos and calendar.",
     "icon": "bx-cloud",
     "url": "https://cloud.plainshow.se",
     "sort": 40,
@@ -13,7 +13,7 @@
     "capabilities": [
         {
             "name": "cloud.files.view",
-            "label": "Use Nextcloud"
+            "label": "Use Cloud"
         }
     ],
     "widgets": [
@@ -21,7 +21,7 @@
             "id": "calendar",
             "title": "Calendar",
             "icon": "bx-calendar",
-            "description": "What is coming up in your Nextcloud calendars.",
+            "description": "What is coming up in your calendars.",
             "sizes": [
                 "m",
                 "l"
@@ -54,7 +54,7 @@
             "id": "files",
             "title": "Recent files",
             "icon": "bx-folder",
-            "description": "Files you changed lately in Nextcloud.",
+            "description": "Files you changed lately.",
             "sizes": [
                 "m",
                 "l"
@@ -63,23 +63,17 @@
             "settings": []
         },
         {
-            "id": "talk",
-            "title": "Talk",
-            "icon": "bx-chat",
-            "description": "Your Nextcloud Talk conversations, unread first.",
+            "id": "photos",
+            "title": "Photos",
+            "icon": "bx-images",
+            "description": "Your latest photos and videos.",
             "sizes": [
                 "m",
                 "l"
             ],
             "default": "m",
-            "settings": [
-                {
-                    "name": "unread",
-                    "type": "toggle",
-                    "label": "Only unread",
-                    "default": false
-                }
-            ]
+            "settings": []
         }
-    ]
+    ],
+    "api": "https://cloud.plainshow.se/index.php/apps/plainshow/api/v1"
 }

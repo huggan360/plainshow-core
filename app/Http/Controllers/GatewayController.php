@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Extension;
 use App\Support\ApiTokens;
+use App\Support\CloudAccount;
 use App\Support\ExtensionWidgets;
 use App\Support\Permissions;
 use Illuminate\Http\Request;
@@ -64,6 +65,8 @@ class GatewayController extends Controller
             'ps_services' => $permissions['services'],
             'ps_caps' => $permissions['capabilities'],
             'ps_pi_user' => $user->pi_username,
+            // Cloud acts as the Nextcloud user the person is linked to.
+            'ps_cloud_uid' => $service === 'cloud' ? CloudAccount::for($user) : null,
             'scopes' => $scopes,
         ];
         $headers = Signed::headers($request->method(), $signedPath, $raw, $user->id, $context, $secret);

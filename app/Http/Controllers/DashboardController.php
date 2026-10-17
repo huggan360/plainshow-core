@@ -61,7 +61,7 @@ class DashboardController extends Controller
         abort_unless($allowed, 404);
         $data = match ($extension) {
             'core' => CoreWidgets::data($widget, $user),
-            'cloud' => \App\Support\NextcloudWidgets::data($widget, $user),
+            'cloud' => \App\Support\CloudWidgets::data($widget, $user),
             default => ExtensionWidgets::data(Extension::findOrFail($extension), $widget, $user),
         };
         abort_if($data === null, 404);

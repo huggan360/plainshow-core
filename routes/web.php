@@ -25,7 +25,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/dashboard/layout', [DashboardController::class, 'resetLayout']);
 
     Route::get('/account/{section?}', [AccountController::class, 'show'])->name('account');
-    Route::post('/account/nextcloud/poll', [AccountController::class, 'pollNextcloud'])->middleware('throttle:60,1');
     Route::put('/account/profile', [AccountController::class, 'updateProfile']);
     Route::post('/account/avatar', [AccountController::class, 'updateAvatar']);
     Route::delete('/account/avatar', [AccountController::class, 'removeAvatar']);
@@ -38,8 +37,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/account/recovery-codes', [AccountController::class, 'regenerateRecoveryCodes']);
         Route::post('/account/tokens', [AccountController::class, 'createToken'])->middleware('can.do:core.api.use');
         Route::delete('/account/tokens/{token}', [AccountController::class, 'revokeToken']);
-        Route::post('/account/nextcloud', [AccountController::class, 'connectNextcloud']);
-        Route::delete('/account/nextcloud', [AccountController::class, 'disconnectNextcloud']);
         Route::post('/account/sign-out-everywhere', [AccountController::class, 'signOutEverywhere']);
     });
 

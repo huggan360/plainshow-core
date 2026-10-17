@@ -9,7 +9,7 @@ type Props = {
     security: { twoFactor: boolean; recoveryCodesLeft: number; passwordChangedAt: string | null; lastLoginAt: string | null; enrollment: { secret: string; qr: string } | null; recoveryCodes: string[] | null };
     apiAccess: boolean;
     tokens: { list: ApiToken[]; services: string[]; error: string | null; created: { token: string; name: string } | null } | null;
-    connections: { cloud: { widgets: boolean; available: boolean; url: string | null; account: string; linked: boolean }; pi: { username: string | null; webAccess: boolean; url: string | null } };
+    connections: { cloud: { available: boolean; url: string | null; account: string; linked: boolean }; pi: { username: string | null; webAccess: boolean; url: string | null } };
 };
 
 type ApiToken = { id: string; name: string; scopes: string[]; createdAt: string; expiresAt: string };
@@ -172,46 +172,12 @@ function Security({ security }: Props) {
 
 function Connections({ connections }: Props) {
     const cloud = connections.cloud;
-    const [connecting, setConnecting] = useState<'idle' | 'waiting' | 'failed'>('idle');
-
-    const connect = async () => {
-        const popup = window.open('', '_blank');
-        setConnecting('waiting');
-        try {
-            const start = await fetch('/account/nextcloud', { method: 'POST', headers: { Accept: 'application/json', 'X-XSRF-TOKEN': xsrf() }, credentials: 'same-origin' });
-            const { login } = await start.json();
-            if (!start.ok || !login) throw new Error();
-            if (popup) popup.location.href = login; else window.open(login, '_blank');
-            for (let i = 0; i < 300; i++) {
-                await new Promise((resolve) => window.setTimeout(resolve, 2000));
-                const poll = await fetch('/account/nextcloud/poll', { method: 'POST', headers: { Accept: 'application/json', 'X-XSRF-TOKEN': xsrf() }, credentials: 'same-origin' });
-                const state = await poll.json();
-                if (state.connected) { popup?.close(); router.reload(); setConnecting('idle'); return; }
-                if (state.expired || !poll.ok) break;
-            }
-            setConnecting('failed');
-        } catch {
-            popup?.close();
-            setConnecting('failed');
-        }
-    };
 
     return (
         <div className="ps-stack">
-            <Setting icon="bx-cloud" off={!cloud.available} title={<>Nextcloud {cloud.available ? <Badge tone="green">Single sign-on</Badge> : <Badge>No access</Badge>}</>}
-                text={cloud.available ? <>Signs in as <span className="ps-mono">{cloud.account}</span>. The desktop and phone apps sign in with PlainShow too.</> : 'An administrator can give you access.'}
+            <Setting icon="bx-cloud" off={!cloud.available} title={<>Cloud {cloud.available ? <Badge tone="green">Single sign-on</Badge> : <Badge>No access</Badge>}</>}
+                text={cloud.available ? <>Your files, photos and calendar, as <span className="ps-mono">{cloud.account}</span>. The desktop and phone apps sign in with PlainShow too, and the dashboard can show your calendar, recent files and photos.</> : 'An administrator can give you access.'}
                 action={cloud.available && cloud.url ? <ButtonLink href={cloud.url} external size="sm">Open</ButtonLink> : undefined} />
-            {cloud.available && (
-                <Setting icon="bx-calendar" title={<>Nextcloud on the dashboard {cloud.widgets && <Badge tone="green">Connected</Badge>}</>}
-                    text={cloud.widgets
-                        ? 'Your calendar, recent files and Talk can be added in the Design studio.'
-                        : connecting === 'waiting' ? 'Approve PlainShow in the Nextcloud tab that opened. This page notices when you are done.'
-                        : connecting === 'failed' ? 'That did not finish. Try again.'
-                        : 'Let the dashboard show your calendar, recent files and Talk. Nextcloud asks you to approve it once.'}
-                    action={cloud.widgets
-                        ? <Button size="sm" variant="ghost" onClick={() => router.delete('/account/nextcloud', { preserveScroll: true })}>Disconnect</Button>
-                        : <Button size="sm" variant="primary" loading={connecting === 'waiting'} onClick={connect}>Connect</Button>} />
-            )}
             <Setting icon="bx-server" off={!connections.pi.username} title={<>Server account {connections.pi.username ? <Badge tone="green">Linked</Badge> : <Badge>Not linked</Badge>}</>}
                 text={connections.pi.username ? <>Web acts as <span className="ps-mono">{connections.pi.username}</span>; you never need its password.</> : 'An administrator can create or link one for you.'}
                 action={connections.pi.webAccess && connections.pi.url ? <ButtonLink href={connections.pi.url} external size="sm">Open Web</ButtonLink> : undefined} />
@@ -219,12 +185,7 @@ function Connections({ connections }: Props) {
     );
 }
 
-function xsrf(): string {
-    const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
-    return match ? decodeURIComponent(match[1]) : '';
-}
-
-const SERVICE_NAMES: Record<string, string> = { core: 'Dashboard', blog: 'Blog', split: 'Split', latex: 'LaTeX' };
+const SERVICE_NAMES: Record<string, string> = { core: 'Dashboard', blog: 'Blog', split: 'Split', latex: 'LaTeX', cloud: 'Cloud' };
 
 function Tokens({ tokens }: { tokens: NonNullable<Props['tokens']> }) {
     const form = useForm<{ name: string; services: string[]; readOnly: boolean }>({ name: '', services: [], readOnly: true });
