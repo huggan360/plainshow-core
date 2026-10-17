@@ -39,6 +39,18 @@ return [
             ],
             'health' => 'https://latex.plainshow.se/',
         ],
+        'cloud' => [
+            'name' => 'Cloud', 'kind' => 'checkout', 'source' => '/var/www/html/cloud', 'remote' => 'origin',
+            'steps' => [
+                ['composer', 'install', '--no-dev', '--optimize-autoloader', '--no-interaction', '--no-progress', '--working-dir', 'apps/plainshow'],
+                ['sudo', '-u', 'www-data', 'php', 'occ', 'upgrade', '--no-interaction'],
+                ['sudo', '-u', 'www-data', 'php', 'occ', 'maintenance:repair', '--no-interaction'],
+                // Nextcloud keeps its routes in APCu; a reload clears them.
+                ['sudo', 'systemctl', 'reload', 'apache2'],
+                ['sudo', 'systemctl', 'restart', 'notify_push'],
+            ],
+            'health' => 'https://cloud.plainshow.se/status.php',
+        ],
         'web' => [
             'name' => 'Web', 'kind' => 'checkout', 'source' => '/opt/plainshow', 'remote' => 'web',
             'steps' => [
