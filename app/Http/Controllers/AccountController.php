@@ -6,6 +6,8 @@ use App\Support\ApiTokens;
 use App\Models\Extension;
 use App\Support\Audit;
 use App\Support\Avatars;
+use App\Support\CloudAccount;
+use App\Support\CloudWidgets;
 use App\Support\Permissions;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
@@ -33,6 +35,11 @@ class AccountController extends Controller
         abort_if($section === 'tokens' && ! Permissions::can($request->user(), 'core.api.use'), 404);
         $user = $request->user();
         $services = Permissions::for($user)['services'];
+        $cloudState = 'no_access';
+        if (in_array('cloud', $services, true)) {
+            $cloud = CloudWidgets::data('files', $user);
+            $cloudState = ! is_array($cloud) || isset($cloud['error']) ? 'unknown' : (($cloud['connected'] ?? false) ? 'ready' : 'not_created');
+        }
 
         return Inertia::render('Account', [
             'section' => $section,
@@ -60,9 +67,9 @@ class AccountController extends Controller
                 'cloud' => [
                     'available' => in_array('cloud', $services, true),
                     'url' => Extension::find('cloud')?->url,
-                    // Existing Nextcloud accounts are linked; otherwise one named after the username.
-                    'account' => DB::table('core_linked_accounts')->where(['user_id' => $user->id, 'provider' => 'nextcloud'])->value('external_id') ?? $user->username,
+                    'account' => CloudAccount::for($user),
                     'linked' => DB::table('core_linked_accounts')->where(['user_id' => $user->id, 'provider' => 'nextcloud'])->exists(),
+                    'state' => $cloudState,
                 ],
                 'pi' => [
                     'username' => $user->pi_username,

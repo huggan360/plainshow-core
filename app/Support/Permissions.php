@@ -79,8 +79,17 @@ class Permissions
             $patterns,
             DB::table('core_user_capabilities')->where('user_id', $user->id)->pluck('effect', 'capability')->all(),
         );
+        $unavailable = [];
+        if (! DB::table('core_linked_accounts')->where(['user_id' => $user->id, 'provider' => 'nextcloud'])->exists()) {
+            $unavailable[] = 'cloud';
+        }
+        if (! is_string($user->pi_username) || $user->pi_username === '') {
+            $unavailable[] = 'web';
+        }
+        $resolved['services'] = array_values(array_diff($resolved['services'], $unavailable));
         if ($resolved['capabilities'] !== ['*']) {
             $resolved['capabilities'] = Access::expand($resolved['capabilities'], DB::table('core_capabilities')->pluck('name')->all());
+            $resolved['capabilities'] = array_values(array_filter($resolved['capabilities'], fn (string $capability) => ! in_array(strstr($capability, '.', true), $unavailable, true)));
         }
 
         return $resolved;

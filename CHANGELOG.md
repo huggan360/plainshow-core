@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1
+
+- Let dashboard widgets size to their content on phones; show all list rows and server gauges without filler rows.
+- Distinguish Cloud access from an account that has actually been created.
+- Grant Cloud and Web access only to people with linked accounts in those services.
+- Use the PlainShow orange and a thicker border for dashboard profile pictures.
+
 ## 1.1.0
 
 - Cloud widgets use PlainShow Cloud directly, without a separate Nextcloud connection.

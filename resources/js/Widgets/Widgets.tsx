@@ -135,8 +135,13 @@ function Slots({ height, rows, figures, empty, more }: { height: Height; rows: R
                     {row.href ? <a className="widget-row" href={row.href}><RowContent row={row} /></a> : <div className="widget-row"><RowContent row={row} /></div>}
                 </li>
             ))}
+            {overflow && rows.slice(shown.length).map((row) => (
+                <li key={`mobile-${row.key}`} className="widget-slot widget-slot--mobile">
+                    {row.href ? <a className="widget-row" href={row.href}><RowContent row={row} /></a> : <div className="widget-row"><RowContent row={row} /></div>}
+                </li>
+            ))}
             {overflow && (
-                <li className="widget-slot">
+                <li className="widget-slot widget-slot--more">
                     {more ? <a className="widget-row widget-row--more" href={more.href}>{rows.length - shown.length} more<i className="bx bx-right-arrow-alt" aria-hidden="true" /></a>
                         : <div className="widget-row widget-row--more">{rows.length - shown.length} more</div>}
                 </li>
@@ -226,8 +231,8 @@ export function PiHealthWidget({ definition }: { definition: WidgetDefinition })
                     metrics.includes('disk') && <Gauge key="d" tone="orange" label="Disk used" value={s.diskPercent} display={details ? `${s.diskFree} free` : `${s.diskPercent}%`} />,
                     metrics.includes('cpu') && <Gauge key="c" tone="yellow" label="CPU load" value={s.cpuPercent} display={`${s.cpuPercent}%`} />,
                     metrics.includes('temperature') && s.temperature !== null && <Gauge key="t" tone={s.temperature >= 75 ? 'red' : s.temperature >= 62 ? 'orange' : 'green'} label="Temperature" value={(s.temperature / 90) * 100} display={`${s.temperature.toFixed(0)} °C`} />,
-                ].filter(Boolean).slice(0, height === 'short' ? 2 : 4);
-                return bars.length ? <div className="widget-bars ps-chain" style={{ '--bars': bars.length } as CSSProperties}>{bars}</div> : <Fill>Choose bars in the Design studio.</Fill>;
+                ].filter(Boolean);
+                return bars.length ? <div className="widget-bars ps-chain" data-height={height} style={{ '--bars': Math.min(bars.length, height === 'short' ? 2 : 4) } as CSSProperties}>{bars}</div> : <Fill>Choose bars in the Design studio.</Fill>;
             }}</Body>
         </WidgetFrame>
     );

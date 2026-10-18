@@ -9,7 +9,7 @@ type Props = {
     security: { twoFactor: boolean; recoveryCodesLeft: number; passwordChangedAt: string | null; lastLoginAt: string | null; enrollment: { secret: string; qr: string } | null; recoveryCodes: string[] | null };
     apiAccess: boolean;
     tokens: { list: ApiToken[]; services: string[]; error: string | null; created: { token: string; name: string } | null } | null;
-    connections: { cloud: { available: boolean; url: string | null; account: string; linked: boolean }; pi: { username: string | null; webAccess: boolean; url: string | null } };
+    connections: { cloud: { available: boolean; url: string | null; account: string; linked: boolean; state: 'ready' | 'not_created' | 'unknown' | 'no_access' }; pi: { username: string | null; webAccess: boolean; url: string | null } };
 };
 
 type ApiToken = { id: string; name: string; scopes: string[]; createdAt: string; expiresAt: string };
@@ -175,8 +175,8 @@ function Connections({ connections }: Props) {
 
     return (
         <div className="ps-stack">
-            <Setting icon="bx-cloud" off={!cloud.available} title={<>Cloud {cloud.available ? <Badge tone="green">Single sign-on</Badge> : <Badge>No access</Badge>}</>}
-                text={cloud.available ? <>Your files, photos and calendar, as <span className="ps-mono">{cloud.account}</span>. The desktop and phone apps sign in with PlainShow too, and the dashboard can show your calendar, recent files and photos.</> : 'An administrator can give you access.'}
+            <Setting icon="bx-cloud" off={!cloud.available} title={<>Cloud <Badge tone={cloud.state === 'ready' ? 'green' : cloud.state === 'not_created' ? 'amber' : undefined}>{cloud.state === 'ready' ? 'Account ready' : cloud.state === 'not_created' ? 'Not created yet' : cloud.available ? 'Access allowed' : 'No access'}</Badge></>}
+                text={cloud.state === 'ready' ? <>Your Cloud account is <span className="ps-mono">{cloud.account}</span>.</> : cloud.state === 'not_created' ? 'Your linked Cloud account could not be found. Ask an administrator.' : cloud.available ? 'You can open Cloud with your PlainShow account.' : cloud.linked ? 'Cloud access is turned off for your account.' : 'No Cloud account is linked. Ask an administrator to link one.'}
                 action={cloud.available && cloud.url ? <ButtonLink href={cloud.url} external size="sm">Open</ButtonLink> : undefined} />
             <Setting icon="bx-server" off={!connections.pi.username} title={<>Server account {connections.pi.username ? <Badge tone="green">Linked</Badge> : <Badge>Not linked</Badge>}</>}
                 text={connections.pi.username ? <>Web acts as <span className="ps-mono">{connections.pi.username}</span>; you never need its password.</> : 'An administrator can create or link one for you.'}

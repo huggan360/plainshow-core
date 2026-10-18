@@ -79,7 +79,7 @@ function RoleMatrix({ extensions, roles }: Props) {
                             </thead>
                             <tbody>
                                 <tr className="perm-row perm-row--access">
-                                    <th scope="row"><span className="perm-cap"><strong>Open {extension.name}</strong><span className="ps-small ps-muted">{extension.system ? 'Everyone with an account.' : 'Who gets the service without an exception.'}</span></span></th>
+                                    <th scope="row"><span className="perm-cap"><strong>Open {extension.name}</strong><span className="ps-small ps-muted">{extension.id === 'cloud' ? 'Requires a linked Cloud account.' : extension.id === 'web' ? 'Requires a server username.' : extension.system ? 'Everyone with an account.' : 'Who gets the service without an exception.'}</span></span></th>
                                     {ROLES.map((role) => (
                                         <td key={role} className="perm-col">
                                             <Check checked={extension.system || role === 'admin' || state.access[extension.id].includes(role)} disabled={extension.system || role === 'admin'}
