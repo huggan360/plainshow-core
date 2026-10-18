@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0
+
+- Cloud widgets use PlainShow Cloud directly, without a separate Nextcloud connection.
+- Cloud is managed through Updates, with the frontend's health endpoint checked after installation.
+- Remove the Talk widget and preserve old Nextcloud connection records in a rollback archive.
+- Use PlainShow Kit 1.4.
+
 ## 1.0.0
 
 - Design studio at `/design`: drag widgets into place on a live preview at desktop, tablet or phone width in either theme; size, rename and give them a glow; save for yourself or, for admins, as a role's default. Tokens (type, colour, boxes) on their own tab.

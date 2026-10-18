@@ -11,11 +11,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::dropIfExists('core_nextcloud_links');
+        if (Schema::hasTable('core_nextcloud_links')) {
+            Schema::rename('core_nextcloud_links', 'core_nextcloud_links_legacy');
+        }
     }
 
     public function down(): void
     {
+        if (Schema::hasTable('core_nextcloud_links_legacy')) {
+            Schema::rename('core_nextcloud_links_legacy', 'core_nextcloud_links');
+            return;
+        }
         Schema::create('core_nextcloud_links', function (Blueprint $table) {
             $table->foreignId('user_id')->primary();
             $table->string('nextcloud_user', 190);

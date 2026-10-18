@@ -49,7 +49,7 @@ return [
                 ['sudo', 'systemctl', 'reload', 'apache2'],
                 ['sudo', 'systemctl', 'restart', 'notify_push'],
             ],
-            'health' => 'https://cloud.plainshow.se/status.php',
+            'health' => 'https://cloud.plainshow.se/index.php/apps/plainshow/api/v1/health',
         ],
         'web' => [
             'name' => 'Web', 'kind' => 'checkout', 'source' => '/opt/plainshow', 'remote' => 'web',
