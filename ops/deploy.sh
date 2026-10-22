@@ -105,6 +105,24 @@ sudo -n chmod 0640 "$BASE/shared/.env"
 sudo -n find "$BASE/shared/storage" -maxdepth 1 -name '*.key' -exec chmod 0640 {} +
 sudo -n setfacl -R -b "$BASE/shared"
 
+# Core also installs the error and "updating" pages every PlainShow site
+# shows (kit ui/errors, served by ops/apache/plainshow-errors.conf), and the
+# folder the update runner puts its "updating" flags in.
+if [ "$APP" = core ]; then
+    sudo -n install -d -m 0755 "$ROOT/errors"
+    sudo -n install -d -o "$ME" -m 0755 "$ROOT/updating"
+    if [ -d "$RELEASE/vendor/plainshow/kit/ui/errors" ]; then
+        sudo -n cp "$RELEASE"/vendor/plainshow/kit/ui/errors/* "$ROOT/errors/"
+        sudo -n chmod -R a+rX "$ROOT/errors"
+    fi
+    if ! sudo -n cmp -s "$RELEASE/ops/apache/plainshow-errors.conf" /etc/apache2/conf-available/plainshow-errors.conf; then
+        sudo -n install -m 0644 "$RELEASE/ops/apache/plainshow-errors.conf" /etc/apache2/conf-available/plainshow-errors.conf
+        sudo -n a2enmod -q headers
+        sudo -n a2enconf -q plainshow-errors
+        sudo -n apache2ctl configtest
+    fi
+fi
+
 ln -sfn "$RELEASE" "$BASE/current.new"
 mv -Tf "$BASE/current.new" "$BASE/current"
 # PHP-FPM and mod_php cache resolved paths and opcode; graceful reloads make

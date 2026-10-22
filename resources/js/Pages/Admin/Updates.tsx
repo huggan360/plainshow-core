@@ -19,11 +19,17 @@ export default function Updates({ components, jobs, runnerSeen }: { components: 
     const active = jobs.some((job) => job.status === 'queued' || job.status === 'running');
     const busy = (id: string) => jobs.some((job) => (job.component === id || job.action === 'check') && (job.status === 'queued' || job.status === 'running'));
 
+    // While the dashboard installs itself, it shows the "updating" page to
+    // everyone (this page too), so wait until it answers again.
+    const coreBusy = jobs.some((job) => job.component === 'core' && job.action === 'update' && (job.status === 'queued' || job.status === 'running'));
     useEffect(() => {
         if (!active) return;
-        const timer = window.setInterval(() => router.reload({ only: ['components', 'jobs'] }), 3000);
+        const timer = window.setInterval(() => {
+            if (!coreBusy) { router.reload({ only: ['components', 'jobs'] }); return; }
+            fetch('/up', { cache: 'no-store' }).then((response) => { if (response.status !== 503) router.reload({ only: ['components', 'jobs'] }); }).catch(() => undefined);
+        }, 3000);
         return () => window.clearInterval(timer);
-    }, [active]);
+    }, [active, coreBusy]);
 
     const request = (component: string, action: Job['action'], target?: string, question?: string) => {
         if (question && !window.confirm(question)) return;
@@ -32,8 +38,9 @@ export default function Updates({ components, jobs, runnerSeen }: { components: 
     const available = components.filter((component) => component.updateAvailable).length;
 
     return (
-        <AppShell title="Updates" wide description="Installed and available versions of every part of PlainShow. Updates are built, checked and switched in one step, and go back by themselves if the new version does not answer."
+        <AppShell title="Updates" wide description="Installed and available versions of every part of PlainShow, from GitHub. An update is built, checked and switched in one step; visitors see an updating page meanwhile, the old version is removed afterwards, and it goes back by itself if the new version does not answer."
             actions={<Button icon="bx-refresh" onClick={() => request('all', 'check')} disabled={busy('all')}>Check now</Button>}>
+            {coreBusy && <div className="ps-alert"><i className="bx bx-loader-alt bx-spin" /><span>The dashboard is updating itself. It is unavailable for a minute or two, and this page carries on by itself.</span></div>}
             {!runnerSeen && <div className="ps-alert"><i className="bx bx-time-five" /><span>The update runner has not checked yet. It runs every minute; press Check now.</span></div>}
             <div className="updates">
                 <div className="updates__list">

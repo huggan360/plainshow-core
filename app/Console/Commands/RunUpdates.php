@@ -31,6 +31,13 @@ class RunUpdates extends Command
             return self::SUCCESS; // another run is busy
         }
 
+        // Leftovers from an earlier update (such as the core release this runner ran from).
+        foreach (self::components() as $component) {
+            if ($component['kind'] === 'release' && is_link($component['base'].'/current')) {
+                $this->prune($component);
+            }
+        }
+
         if ($this->option('check')) {
             $this->checkAll();
         }
@@ -179,6 +186,17 @@ class RunUpdates extends Command
         if (! preg_match('/^v\d+\.\d+\.\d+$/', $target)) {
             throw new RuntimeException('Updates go to a version tag.');
         }
+        // Visitors see the "updating" page while this runs (core/ops/apache/plainshow-errors.conf).
+        $this->setUpdating($component, true);
+        try {
+            $this->install($id, $component, $target);
+        } finally {
+            $this->setUpdating($component, false);
+        }
+    }
+
+    private function install(string $id, array $component, string $target): void
+    {
         $source = $component['source'];
         // Tags made on this machine count too, so a remote that cannot be reached is not fatal.
         $this->git($source, ['fetch', '--tags', '--quiet', $component['remote'] ?? 'origin'], 90, false);
@@ -196,6 +214,7 @@ class RunUpdates extends Command
                 throw new RuntimeException("$target failed its health check and was rolled back.");
             }
             $this->log("$target is live.");
+            $this->prune($component);
 
             return;
         }
@@ -245,6 +264,35 @@ class RunUpdates extends Command
         $this->log("Switched to $release.");
         if (! $this->healthy($component)) {
             throw new RuntimeException("$release does not answer its health check either.");
+        }
+    }
+
+    /** Old releases go once the new one is live: no legacy versions stay on the server. */
+    private function prune(array $component): void
+    {
+        $current = basename((string) readlink($component['base'].'/current'));
+        foreach (glob($component['base'].'/releases/*', GLOB_ONLYDIR) ?: [] as $dir) {
+            // The runner itself may run from the old core release; that one goes on the next run.
+            if (realpath($dir) === realpath(base_path())) {
+                continue;
+            }
+            if (basename($dir) !== $current && preg_match('/^\d{14}-[A-Za-z0-9._-]+$/', basename($dir))) {
+                $this->exec(['rm', '-rf', $dir], $component['base'], 300, false, quiet: true);
+                $this->log('Removed the old release '.basename($dir).'.');
+            }
+        }
+    }
+
+    /** The flag Apache checks to show the "updating" page on the component's sites. */
+    private function setUpdating(array $component, bool $on): void
+    {
+        $hosts = $component['hosts'] ?? array_filter([(string) parse_url((string) ($component['health'] ?? ''), PHP_URL_HOST)]);
+        $dir = (string) config('updates.flags', '/srv/plainshow/updating');
+        foreach ($hosts as $host) {
+            if (! preg_match('/^[a-z0-9.-]+$/', $host) || ! is_dir($dir)) {
+                continue;
+            }
+            $on ? @touch("$dir/$host") : @unlink("$dir/$host");
         }
     }
 

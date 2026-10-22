@@ -10,6 +10,10 @@
 $projects = env('PLAINSHOW_PROJECTS', '/home/hugohansson/projects/plainshow');
 
 return [
+    // While a component installs, the runner touches <flags>/<host> for its
+    // site; Apache then shows the "updating" page (ops/apache/plainshow-errors.conf).
+    'flags' => env('PLAINSHOW_UPDATING_FLAGS', '/srv/plainshow/updating'),
+
     'components' => [
         'core' => [
             'name' => 'Dashboard', 'kind' => 'release', 'source' => "$projects/core", 'base' => '/srv/plainshow/core',
@@ -32,7 +36,7 @@ return [
             'health' => 'https://split.plainshow.se/api/v1/health',
         ],
         'latex' => [
-            'name' => 'LaTeX', 'kind' => 'checkout', 'source' => '/var/www/html/projects/hugohansson/plainshow-latex', 'remote' => 'origin',
+            'name' => 'LaTeX', 'kind' => 'checkout', 'source' => env('PLAINSHOW_LATEX_SOURCE', '/var/www/html/projects/hugohansson/plainshow-latex'), 'remote' => 'origin',
             'steps' => [
                 ['composer', 'install', '--no-dev', '--optimize-autoloader', '--no-interaction', '--no-progress'],
                 ['plainshow', 'project', 'plainshow-latex', 'pm2', 'restart', 'latex-websocket'],
@@ -40,7 +44,7 @@ return [
             'health' => 'https://latex.plainshow.se/',
         ],
         'cloud' => [
-            'name' => 'Cloud', 'kind' => 'checkout', 'source' => '/var/www/html/cloud', 'remote' => 'origin',
+            'name' => 'Cloud', 'kind' => 'checkout', 'source' => env('PLAINSHOW_CLOUD_SOURCE', '/var/www/html/cloud'), 'remote' => 'origin',
             'steps' => [
                 ['composer', 'install', '--no-dev', '--optimize-autoloader', '--no-interaction', '--no-progress', '--working-dir', 'apps/plainshow'],
                 ['sudo', '-u', 'www-data', 'php', 'occ', 'upgrade', '--no-interaction'],

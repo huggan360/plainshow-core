@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.3.0
+
+- While a part of PlainShow installs an update, its site shows an "updating" page that reloads by itself; the dashboard's Updates page carries on while the dashboard updates itself.
+- Old versions are removed from the server once an update is live.
+- New error pages (401, 403, 404, 429, 500, 503) on every PlainShow site.
+- Kit 1.6. AGENTS.md for developers.
+
 ## 1.1.1
 
 - Let dashboard widgets size to their content on phones; show all list rows and server gauges without filler rows.
