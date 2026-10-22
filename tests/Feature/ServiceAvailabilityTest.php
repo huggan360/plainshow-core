@@ -11,7 +11,7 @@ use Tests\TestCase;
 
 class ServiceAvailabilityTest extends TestCase
 {
-    public function test_cloud_and_web_are_unavailable_without_linked_accounts(): void
+    public function test_cloud_is_available_by_permission_and_web_requires_a_server_account(): void
     {
         Schema::create('core_extensions', function (Blueprint $table) {
             $table->string('id')->primary();
@@ -48,10 +48,11 @@ class ServiceAvailabilityTest extends TestCase
         DB::table('core_role_capabilities')->insert(['role' => 'member', 'capability' => '*.view']);
         $user = new User(['username' => 'tester', 'role' => 'member']);
         $user->id = 42;
+        $user->status = 'active';
 
         $before = Permissions::for($user);
-        $this->assertSame(['core'], $before['services']);
-        $this->assertNotContains('cloud.view', $before['capabilities']);
+        $this->assertSame(['core', 'cloud'], $before['services']);
+        $this->assertContains('cloud.view', $before['capabilities']);
         $this->assertNotContains('web.view', $before['capabilities']);
 
         DB::table('core_linked_accounts')->insert(['user_id' => 42, 'provider' => 'nextcloud', 'external_id' => 'tester']);
@@ -60,5 +61,12 @@ class ServiceAvailabilityTest extends TestCase
         $after = Permissions::for($user);
         $this->assertContains('cloud', $after['services']);
         $this->assertContains('web', $after['services']);
+
+        DB::table('core_user_capabilities')->insert(['user_id' => 42, 'capability' => 'cloud.view', 'effect' => 'deny']);
+        Permissions::forget($user);
+        $this->assertNotContains('cloud.view', Permissions::for($user)['capabilities']);
+
+        $user->status = 'disabled';
+        $this->assertSame(['services' => [], 'capabilities' => []], Permissions::for($user));
     }
 }

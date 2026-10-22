@@ -9,17 +9,24 @@
     "default_access": [
         "admin",
         "moderator",
-        "member"
+        "user"
     ],
     "health": "https://split.plainshow.se/api/v1/health",
     "capabilities": [
         {
             "name": "split.group.create",
-            "label": "Create groups"
+            "label": "Create expense groups",
+            "description": "Start expense groups and manage members and expenses in groups the person owns.",
+            "tier": "user",
+            "group": "Expense groups"
         },
         {
             "name": "split.group.moderate",
-            "label": "Manage every group"
+            "label": "Manage every expense group",
+            "description": "Open and manage any expense group, including groups owned by someone else.",
+            "tier": "moderator",
+            "group": "Expense groups",
+            "implies": ["split.group.create"]
         }
     ],
     "widgets": [

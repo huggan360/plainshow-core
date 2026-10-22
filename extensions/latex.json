@@ -9,20 +9,31 @@
     "default_access": [
         "admin",
         "moderator",
-        "member"
+        "user"
     ],
     "capabilities": [
         {
             "name": "latex.project.view",
-            "label": "Open shared projects"
+            "label": "Open shared projects",
+            "description": "Open LaTeX projects shared directly with the person or with one of their groups.",
+            "tier": "user",
+            "group": "Projects"
         },
         {
             "name": "latex.project.create",
-            "label": "Create projects"
+            "label": "Create projects",
+            "description": "Create LaTeX projects and share projects the person owns.",
+            "tier": "user",
+            "group": "Projects",
+            "implies": ["latex.project.view"]
         },
         {
             "name": "latex.project.moderate",
-            "label": "Open and manage every project"
+            "label": "Manage every project",
+            "description": "Open, change, share or remove any LaTeX project, regardless of its owner.",
+            "tier": "moderator",
+            "group": "Projects",
+            "implies": ["latex.project.view", "latex.project.create"]
         }
     ],
     "widgets": [

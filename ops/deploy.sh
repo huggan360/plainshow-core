@@ -28,25 +28,36 @@ if [ "$SOURCE" = "--rollback" ]; then
 fi
 
 cd "$SOURCE"
-[ -z "$(git status --porcelain --untracked-files=no)" ] || { echo "Commit or stash changes in $SOURCE first." >&2; exit 1; }
+if [ "$REF" != --worktree ]; then
+    [ -z "$(git status --porcelain --untracked-files=no)" ] || { echo "Commit or stash changes in $SOURCE first." >&2; exit 1; }
+fi
 REF=${REF:-$(git describe --tags --exact-match 2>/dev/null || git rev-parse --short HEAD)}
 NAME="$(date +%Y%m%d%H%M%S)-${REF//\//-}"
 RELEASE="$BASE/releases/$NAME"
 
 say "Building $APP $REF into $RELEASE"
 mkdir -p "$BASE/releases" "$BASE/shared"
-git archive --format=tar "$REF" | (mkdir -p "$RELEASE" && tar -x -C "$RELEASE")
+git archive --format=tar "${REF/--worktree/HEAD}" | (mkdir -p "$RELEASE" && tar -x -C "$RELEASE")
+if [ "$REF" = --worktree ]; then
+    git diff --binary HEAD | (cd "$RELEASE" && git apply)
+    git ls-files --others --exclude-standard -z | tar --null -T - -cf - | tar -x -C "$RELEASE"
+fi
 
 # Frontend assets are built in the source checkout, where node_modules
 # already lives, and copied over. Releases never carry node_modules.
 if [ -f package.json ] && grep -q '"build"' package.json; then
-    git stash list >/dev/null
-    tmp=$(mktemp -d)
-    git worktree add -f --detach "$tmp" "$REF" >/dev/null 2>&1
-    ln -s "$SOURCE/node_modules" "$tmp/node_modules"
-    (cd "$tmp" && npm run build --silent)
-    cp -a "$tmp/public/build" "$RELEASE/public/build"
-    git worktree remove --force "$tmp"
+    if [ "$REF" = --worktree ]; then
+        npm run build --silent
+        cp -a public/build "$RELEASE/public/build"
+    else
+        git stash list >/dev/null
+        tmp=$(mktemp -d)
+        git worktree add -f --detach "$tmp" "$REF" >/dev/null 2>&1
+        ln -s "$SOURCE/node_modules" "$tmp/node_modules"
+        (cd "$tmp" && npm run build --silent)
+        cp -a "$tmp/public/build" "$RELEASE/public/build"
+        git worktree remove --force "$tmp"
+    fi
 fi
 
 # Shared state: .env and storage survive releases.
@@ -62,6 +73,13 @@ ln -sfn "$BASE/shared/.env" "$RELEASE/.env"
 
 cd "$RELEASE"
 GIT_TERMINAL_PROMPT=0 COMPOSER_NO_INTERACTION=1 composer install --no-dev --optimize-autoloader --no-progress --quiet
+# Composer publishes the package copy of the UI kit. For a worktree release,
+# restore the locally published assets afterwards so uncommitted kit updates
+# are not replaced by the older package revision.
+if [ "$REF" = --worktree ] && [ -d "$SOURCE/public/ui" ]; then
+    rm -rf "$RELEASE/public/ui"
+    cp -a "$SOURCE/public/ui" "$RELEASE/public/ui"
+fi
 php artisan migrate --force
 if [ "$APP" = core ]; then php artisan plainshow:extensions; fi
 php artisan config:cache
@@ -82,6 +100,7 @@ sudo -n setfacl -m "u:www-data:x" "$BASE" "$BASE/releases"
 sudo -n chmod 0750 "$BASE" "$BASE/releases" "$BASE/shared"
 sudo -n find "$BASE/shared/storage" "$RELEASE/bootstrap/cache" -type d -exec chmod 2770 {} +
 sudo -n find "$BASE/shared/storage" "$RELEASE/bootstrap/cache" -type f -exec chmod 0660 {} +
+sudo -n setfacl -m g::rwx "$RELEASE/bootstrap/cache"
 sudo -n chmod 0640 "$BASE/shared/.env"
 sudo -n find "$BASE/shared/storage" -maxdepth 1 -name '*.key' -exec chmod 0640 {} +
 sudo -n setfacl -R -b "$BASE/shared"

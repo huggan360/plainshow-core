@@ -8,12 +8,29 @@
     "default_access": [
         "admin",
         "moderator",
-        "member"
+        "user"
     ],
     "capabilities": [
         {
             "name": "cloud.files.view",
-            "label": "Use Cloud"
+            "label": "Use files",
+            "description": "Open the Files area and manage, upload, download and share files and folders.",
+            "tier": "user",
+            "group": "Files"
+        },
+        {
+            "name": "cloud.photos.view",
+            "label": "Use photos",
+            "description": "Open the Photos area, browse the photo library and create or share albums.",
+            "tier": "user",
+            "group": "Photos"
+        },
+        {
+            "name": "cloud.calendar.view",
+            "label": "Use calendar",
+            "description": "Open Calendar, manage calendars and events, and connect calendar apps on other devices.",
+            "tier": "user",
+            "group": "Calendar"
         }
     ],
     "widgets": [
@@ -22,6 +39,7 @@
             "title": "Calendar",
             "icon": "bx-calendar",
             "description": "What is coming up in your calendars.",
+            "capability": "cloud.calendar.view",
             "sizes": [
                 "m",
                 "l"
@@ -55,6 +73,7 @@
             "title": "Recent files",
             "icon": "bx-folder",
             "description": "Files you changed lately.",
+            "capability": "cloud.files.view",
             "sizes": [
                 "m",
                 "l"
@@ -67,6 +86,7 @@
             "title": "Photos",
             "icon": "bx-images",
             "description": "Your latest photos and videos.",
+            "capability": "cloud.photos.view",
             "sizes": [
                 "m",
                 "l"

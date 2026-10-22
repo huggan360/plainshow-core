@@ -11,8 +11,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  */
 class User extends Authenticatable
 {
-    public const ROLES = ['admin', 'moderator', 'member', 'guest'];
-
     protected $fillable = ['username', 'email', 'first_name', 'last_name', 'phone', 'role', 'status', 'pi_username'];
 
     protected $hidden = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];

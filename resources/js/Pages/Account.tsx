@@ -1,15 +1,14 @@
 import AppShell from '@/Layouts/AppShell';
-import { Avatar, Badge, Button, ButtonLink, Field, Frame, Modal, relativeTime } from '@/Components/ui';
+import { Avatar, Badge, Button, Field, Frame, Modal, relativeTime } from '@/Components/ui';
 import { Link, router, useForm } from '@inertiajs/react';
 import { Children, FormEvent, ReactNode, useEffect, useRef, useState } from 'react';
 
 type Props = {
-    section: 'profile' | 'security' | 'connections' | 'tokens';
-    profile: { username: string; firstName: string; lastName: string; email: string | null; phone: string | null; avatar: string | null; initials: string; role: string };
+    section: 'profile' | 'security' | 'tokens';
+    profile: { username: string; firstName: string; lastName: string; email: string | null; phone: string | null; avatar: string | null; initials: string; role: string; groups: string[] };
     security: { twoFactor: boolean; recoveryCodesLeft: number; passwordChangedAt: string | null; lastLoginAt: string | null; enrollment: { secret: string; qr: string } | null; recoveryCodes: string[] | null };
     apiAccess: boolean;
     tokens: { list: ApiToken[]; services: string[]; error: string | null; created: { token: string; name: string } | null } | null;
-    connections: { cloud: { available: boolean; url: string | null; account: string; linked: boolean; state: 'ready' | 'not_created' | 'unknown' | 'no_access' }; pi: { username: string | null; webAccess: boolean; url: string | null } };
 };
 
 type ApiToken = { id: string; name: string; scopes: string[]; createdAt: string; expiresAt: string };
@@ -17,14 +16,13 @@ type ApiToken = { id: string; name: string; scopes: string[]; createdAt: string;
 const SECTIONS = [
     { id: 'profile', label: 'Profile', icon: 'bx-user' },
     { id: 'security', label: 'Security', icon: 'bx-shield-quarter' },
-    { id: 'connections', label: 'Connections', icon: 'bx-link' },
     { id: 'tokens', label: 'API tokens', icon: 'bx-key' },
 ] as const;
 
 export default function Account(props: Props) {
     const sections = SECTIONS.filter((item) => item.id !== 'tokens' || props.apiAccess);
     return (
-        <AppShell title="Account" description="Your PlainShow account: who you are, how you sign in and what it is connected to."
+        <AppShell title="Account" description="Your profile, sign-in security and API access across PlainShow."
             actions={<nav className="ps-tabs" aria-label="Account sections">
                 {sections.map((item) => (
                     <Link key={item.id} href={item.id === 'profile' ? '/account' : `/account/${item.id}`} className={`ps-tab${props.section === item.id ? ' is-active' : ''}`} preserveScroll>{item.label}</Link>
@@ -33,7 +31,6 @@ export default function Account(props: Props) {
             <div className="account">
                 {props.section === 'profile' && <Profile {...props} />}
                 {props.section === 'security' && <Security {...props} />}
-                {props.section === 'connections' && <Connections {...props} />}
                 {props.section === 'tokens' && props.tokens && <Tokens tokens={props.tokens} />}
             </div>
         </AppShell>
@@ -102,6 +99,7 @@ function Profile({ profile }: Props) {
                     </div>
                 </form>
             </Frame>
+            {profile.groups.length > 0 && <Frame compact><div className="ps-inline" style={{ flexWrap: 'wrap' }}><strong>Groups</strong>{profile.groups.map((group) => <Badge key={group} tone="accent">{group}</Badge>)}</div></Frame>}
         </div>
     );
 }
@@ -166,21 +164,6 @@ function Security({ security }: Props) {
                     <input id="confirm-password" type="password" className="ps-input" autoComplete="current-password" value={disable.data.password} onChange={(event) => disable.setData('password', event.target.value)} />
                 </Field>
             </Modal>
-        </div>
-    );
-}
-
-function Connections({ connections }: Props) {
-    const cloud = connections.cloud;
-
-    return (
-        <div className="ps-stack">
-            <Setting icon="bx-cloud" off={!cloud.available} title={<>Cloud <Badge tone={cloud.state === 'ready' ? 'green' : cloud.state === 'not_created' ? 'amber' : undefined}>{cloud.state === 'ready' ? 'Account ready' : cloud.state === 'not_created' ? 'Not created yet' : cloud.available ? 'Access allowed' : 'No access'}</Badge></>}
-                text={cloud.state === 'ready' ? <>Your Cloud account is <span className="ps-mono">{cloud.account}</span>.</> : cloud.state === 'not_created' ? 'Your linked Cloud account could not be found. Ask an administrator.' : cloud.available ? 'You can open Cloud with your PlainShow account.' : cloud.linked ? 'Cloud access is turned off for your account.' : 'No Cloud account is linked. Ask an administrator to link one.'}
-                action={cloud.available && cloud.url ? <ButtonLink href={cloud.url} external size="sm">Open</ButtonLink> : undefined} />
-            <Setting icon="bx-server" off={!connections.pi.username} title={<>Server account {connections.pi.username ? <Badge tone="green">Linked</Badge> : <Badge>Not linked</Badge>}</>}
-                text={connections.pi.username ? <>Web acts as <span className="ps-mono">{connections.pi.username}</span>; you never need its password.</> : 'An administrator can create or link one for you.'}
-                action={connections.pi.webAccess && connections.pi.url ? <ButtonLink href={connections.pi.url} external size="sm">Open Web</ButtonLink> : undefined} />
         </div>
     );
 }

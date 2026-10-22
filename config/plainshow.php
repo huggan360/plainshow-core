@@ -10,6 +10,9 @@ return [
 
     // Installed extension releases live at <root>/<id>/current.
     'releases_root' => env('PLAINSHOW_RELEASES_ROOT', '/srv/plainshow'),
+    'account_helper' => env('PLAINSHOW_ACCOUNT_HELPER', '/usr/local/libexec/plainshow-account-helper'),
+    'sudo_command' => 'sudo',
+    'protected_pi_username' => env('PLAINSHOW_PROTECTED_PI_USERNAME', 'hugohansson'),
 
     // Where avatars are stored (outside the web root).
     'avatar_disk' => 'local',

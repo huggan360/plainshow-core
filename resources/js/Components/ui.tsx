@@ -65,11 +65,11 @@ export function Badge({ tone, children }: { tone?: 'accent' | 'blue' | 'green' |
     return <span className={`ps-badge${tone ? ` ps-badge--${tone}` : ''}`}>{children}</span>;
 }
 
-const ROLE_TONES: Record<string, 'red' | 'amber' | 'green' | undefined> = { admin: 'red', moderator: 'amber', member: 'green' };
-const ROLE_LABELS: Record<string, string> = { admin: 'Admin', moderator: 'Moderator', member: 'Member', guest: 'Guest' };
+const ROLE_TONES: Record<string, 'red' | 'amber' | 'green' | undefined> = { admin: 'red', moderator: 'amber', user: 'green' };
+const ROLE_LABELS: Record<string, string> = { admin: 'Admin', moderator: 'Moderator', user: 'User', guest: 'Guest' };
 
-export function RoleBadge({ role }: { role: string }) {
-    return <Badge tone={ROLE_TONES[role]}>{ROLE_LABELS[role] ?? role}</Badge>;
+export function RoleBadge({ role, name, color }: { role: string; name?: string; color?: string }) {
+    return <span className={`ps-badge${color ? ' ps-role-badge' : ROLE_TONES[role] ? ` ps-badge--${ROLE_TONES[role]}` : ''}`} style={color ? { color, borderColor: color } : undefined}>{name ?? ROLE_LABELS[role] ?? role}</span>;
 }
 
 export function Avatar({ src, initials, size, presence, alt = '' }: { src?: string | null; initials: string; size?: 'xs' | 'sm' | 'lg' | 'xl'; presence?: boolean; alt?: string }) {

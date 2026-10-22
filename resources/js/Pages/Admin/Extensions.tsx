@@ -7,12 +7,12 @@ type Extension = {
     defaultAccess: string[]; capabilities: number; health: { state: string; ms: number | null } | null;
 };
 
-const ROLE_LABEL: Record<string, string> = { admin: 'Admins', moderator: 'Moderators', member: 'Members', guest: 'Guests' };
+type Role = { key: string; name: string };
 const STATE: Record<string, { tone: 'green' | 'amber' | 'red' | undefined; label: string }> = {
     online: { tone: 'green', label: 'Online' }, error: { tone: 'amber', label: 'Errors' }, offline: { tone: 'red', label: 'Offline' }, unknown: { tone: undefined, label: 'Not checked' },
 };
 
-export default function Extensions({ extensions, roles }: { extensions: Extension[]; roles: string[] }) {
+export default function Extensions({ extensions, roles }: { extensions: Extension[]; roles: Role[] }) {
     const save = (extension: Extension, changes: Partial<Pick<Extension, 'enabled' | 'defaultAccess'>>) => {
         router.put(`/admin/services/${extension.id}`, { enabled: changes.enabled ?? extension.enabled, defaultAccess: changes.defaultAccess ?? extension.defaultAccess }, { preserveScroll: true });
     };
@@ -37,11 +37,11 @@ export default function Extensions({ extensions, roles }: { extensions: Extensio
                                     {!extension.system && (
                                         <div className="service__roles" role="group" aria-label={`Who gets ${extension.name} by default`}>
                                             {roles.map((role) => {
-                                                const on = extension.defaultAccess.includes(role);
+                                                const on = extension.defaultAccess.includes(role.key);
                                                 return (
-                                                    <button key={role} type="button" disabled={role === 'admin'} aria-pressed={on} className={`service__role${on ? ' is-on' : ''}`}
-                                                        onClick={() => save(extension, { defaultAccess: on ? extension.defaultAccess.filter((item) => item !== role) : [...extension.defaultAccess, role] })}>
-                                                        {on && <i className="bx bx-check" aria-hidden="true" />}{ROLE_LABEL[role]}
+                                                    <button key={role.key} type="button" disabled={role.key === 'admin'} aria-pressed={on} className={`service__role${on ? ' is-on' : ''}`}
+                                                        onClick={() => save(extension, { defaultAccess: on ? extension.defaultAccess.filter((item) => item !== role.key) : [...extension.defaultAccess, role.key] })}>
+                                                        {on && <i className="bx bx-check" aria-hidden="true" />}{role.name}
                                                     </button>
                                                 );
                                             })}

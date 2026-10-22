@@ -8,9 +8,9 @@
     "sort": 30,
     "default_access": ["admin"],
     "capabilities": [
-        { "name": "web.project.view", "label": "See projects" },
-        { "name": "web.project.create", "label": "Create projects" },
-        { "name": "web.server.moderate", "label": "Manage server accounts and services" }
+        { "name": "web.project.view", "label": "See projects", "description": "Open Web projects available to the person's server account.", "tier": "user", "group": "Projects" },
+        { "name": "web.project.create", "label": "Create projects", "description": "Create and deploy new Web projects from the person's server account.", "tier": "moderator", "group": "Projects", "implies": ["web.project.view"] },
+        { "name": "web.server.moderate", "label": "Manage server accounts and services", "description": "Perform administrative Web server and account operations.", "tier": "admin", "group": "Server" }
     ],
     "widgets": []
 }

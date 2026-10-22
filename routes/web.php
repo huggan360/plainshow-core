@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Auth\SsoController;
 use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GroupsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -20,6 +21,14 @@ Route::get('/avatars/{user}', AvatarController::class)->whereNumber('user');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'show'])->name('dashboard');
+    Route::get('/groups', [GroupsController::class, 'index'])->middleware('can.do:core.groups.view')->name('groups');
+    Route::post('/groups', [GroupsController::class, 'store']);
+    Route::put('/groups/{group}', [GroupsController::class, 'update'])->whereNumber('group');
+    Route::delete('/groups/{group}', [GroupsController::class, 'destroy'])->whereNumber('group');
+    Route::post('/groups/{group}/members', [GroupsController::class, 'addMember'])->whereNumber('group');
+    Route::put('/groups/{group}/members/{member}/latex', [GroupsController::class, 'latexPermission'])->whereNumber(['group', 'member']);
+    Route::put('/groups/{group}/owner', [GroupsController::class, 'transferOwner'])->whereNumber('group');
+    Route::delete('/groups/{group}/members/{member}', [GroupsController::class, 'removeMember'])->whereNumber('group');
     Route::get('/widgets/{extension}/{widget}', [DashboardController::class, 'widget'])->where(['extension' => '[a-z0-9-]+', 'widget' => '[a-z0-9-]+']);
     Route::put('/dashboard/layout', [DashboardController::class, 'saveLayout']);
     Route::delete('/dashboard/layout', [DashboardController::class, 'resetLayout']);
@@ -52,6 +61,7 @@ Route::middleware('auth')->group(function () {
             Route::put('/users/{user}', [UsersController::class, 'update']);
             Route::put('/users/{user}/access', [UsersController::class, 'access']);
             Route::post('/users/{user}/reset-link', [UsersController::class, 'resetLink']);
+            Route::delete('/users/{user}', [UsersController::class, 'destroy']);
         });
         Route::middleware('can.do:core.extensions.manage')->group(function () {
             Route::get('/services', [ExtensionsController::class, 'index'])->name('admin.extensions');
@@ -60,6 +70,9 @@ Route::middleware('auth')->group(function () {
         Route::middleware('can.do:core.permissions.manage')->group(function () {
             Route::get('/permissions', [PermissionsController::class, 'index'])->name('admin.permissions');
             Route::put('/permissions/roles', [PermissionsController::class, 'updateRoles']);
+            Route::post('/permissions/roles', [PermissionsController::class, 'storeRole']);
+            Route::put('/permissions/roles/{role}', [PermissionsController::class, 'updateRole']);
+            Route::delete('/permissions/roles/{role}', [PermissionsController::class, 'destroyRole']);
             Route::put('/permissions/users/{user}', [PermissionsController::class, 'updateUser']);
         });
         Route::middleware('can.do:core.updates.apply')->group(function () {

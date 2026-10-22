@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Extension;
+use App\Models\Role;
 use App\Models\User;
 use App\Support\Audit;
 use App\Support\CoreWidgets;
@@ -27,7 +28,7 @@ class ExtensionsController extends Controller
                 'capabilities' => count((array) ($extension->manifest['capabilities'] ?? [])),
                 'health' => $health[$extension->id] ?? null,
             ]),
-            'roles' => User::ROLES,
+            'roles' => Role::orderBy('sort')->orderBy('name')->get()->map->summary(),
         ]);
     }
 
@@ -36,7 +37,7 @@ class ExtensionsController extends Controller
         $data = $request->validate([
             'enabled' => ['required', 'boolean'],
             'defaultAccess' => ['present', 'array'],
-            'defaultAccess.*' => [Rule::in(User::ROLES)],
+            'defaultAccess.*' => [Rule::in(Role::keys())],
         ]);
         if ($extension->system) {
             $data['enabled'] = true;

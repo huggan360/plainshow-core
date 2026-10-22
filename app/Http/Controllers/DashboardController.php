@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DashboardLayout;
 use App\Models\Extension;
 use App\Models\RoleLayout;
+use App\Models\Role;
 use App\Support\Audit;
 use App\Support\CoreWidgets;
 use App\Support\Dashboard;
@@ -36,9 +37,10 @@ class DashboardController extends Controller
         $roles = null;
         if (Permissions::can($user, 'core.permissions.manage')) {
             $roles = [];
-            foreach (Dashboard::ROLES as $role) {
+            foreach (Dashboard::roles() as $role) {
                 $catalogue = Dashboard::catalogueForRole($role);
                 $roles[$role] = [
+                    'name' => Role::find($role)?->name ?? ucfirst($role),
                     'layout' => Dashboard::sanitize(Dashboard::roleLayout($role) ?? Dashboard::defaults(), $catalogue),
                     'catalogue' => $catalogue,
                     'saved' => Dashboard::roleLayout($role) !== null,
@@ -86,7 +88,7 @@ class DashboardController extends Controller
 
     public function saveRoleLayout(Request $request, string $role): RedirectResponse
     {
-        abort_unless(in_array($role, Dashboard::ROLES, true), 404);
+        abort_unless(in_array($role, Dashboard::roles(), true), 404);
         $widgets = Dashboard::sanitize($this->validated($request), Dashboard::catalogueForRole($role));
         RoleLayout::updateOrCreate(['role' => $role], ['widgets' => $widgets, 'updated_by' => $request->user()->id]);
         Audit::record('layout.role_saved', ['role' => $role, 'widgets' => count($widgets)]);
@@ -96,7 +98,7 @@ class DashboardController extends Controller
 
     public function resetRoleLayout(string $role): RedirectResponse
     {
-        abort_unless(in_array($role, Dashboard::ROLES, true), 404);
+        abort_unless(in_array($role, Dashboard::roles(), true), 404);
         RoleLayout::where('role', $role)->delete();
         Audit::record('layout.role_reset', ['role' => $role]);
 

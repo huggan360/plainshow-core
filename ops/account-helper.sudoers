@@ -1,0 +1,2 @@
+plainshow-core ALL=(root) NOPASSWD: /usr/local/libexec/plainshow-account-helper cloud *, /usr/local/libexec/plainshow-account-helper pi *, /usr/local/libexec/plainshow-account-helper group *
+plainshow-login ALL=(root) NOPASSWD: /usr/local/libexec/plainshow-account-helper pi password *

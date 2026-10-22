@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Extension;
 use App\Models\RoleLayout;
+use App\Models\Role;
 use App\Models\User;
 
 /**
@@ -19,8 +20,6 @@ class Dashboard
 
     public const GLOWS = ['accent', 'green', 'blue', 'violet', 'pink', 'warm', 'cyan', 'none'];
 
-    public const ROLES = ['admin', 'moderator', 'member', 'guest'];
-
     /** @return list<array<string, mixed>> every widget this user may use */
     public static function catalogue(User $user): array
     {
@@ -35,6 +34,11 @@ class Dashboard
         $can = fn (string $capability) => in_array('*', $resolved['capabilities'], true) || in_array($capability, $resolved['capabilities'], true);
 
         return self::catalogueFor($role, $can, $resolved['services']);
+    }
+
+    public static function roles(): array
+    {
+        return Role::keys();
     }
 
     private static function catalogueFor(string $role, callable $can, array $services): array

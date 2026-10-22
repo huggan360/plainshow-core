@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'moderator' | 'member' | 'guest';
+export type Role = string;
 
 export type UserSummary = {
     id: number;

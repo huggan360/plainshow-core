@@ -79,6 +79,7 @@ export default function AppShell({ title, children, wide, actions, description, 
                 <nav className="ps-nav">
                     <Link href="/" className={`ps-nav__item${active('/') ? ' is-active' : ''}`}><i className="bx bx-grid-alt" aria-hidden="true" />Dashboard</Link>
                     <Link href="/account" className={`ps-nav__item${active('/account') ? ' is-active' : ''}`}><i className="bx bx-user-circle" aria-hidden="true" />Account</Link>
+                    {can(caps, 'core.groups.view') && <Link href="/groups" className={`ps-nav__item${active('/groups') ? ' is-active' : ''}`}><i className="bx bx-group" aria-hidden="true" />Groups</Link>}
                 </nav>
                 {services.length > 0 && (
                     <div className="ps-sidebar__section">
@@ -111,7 +112,6 @@ export default function AppShell({ title, children, wide, actions, description, 
                             <div className="ps-dropdown__menu ps-dropdown__menu--up">
                                 <Link href="/account" className="ps-dropdown__item"><i className="bx bx-user" />Profile</Link>
                                 <Link href="/account/security" className="ps-dropdown__item"><i className="bx bx-shield-quarter" />Security</Link>
-                                <Link href="/account/connections" className="ps-dropdown__item"><i className="bx bx-link" />Connections</Link>
                                 <button type="button" className="ps-dropdown__item" onClick={toggleTheme}><i className={`bx ${theme === 'light' ? 'bx-moon' : 'bx-sun'}`} />{theme === 'light' ? 'Dark theme' : 'Light theme'}</button>
                                 <div className="ps-dropdown__sep" />
                                 <a href="/auth/logout" className="ps-dropdown__item"><i className="bx bx-log-out" />Sign out</a>
@@ -157,9 +157,8 @@ export default function AppShell({ title, children, wide, actions, description, 
 
             <nav className="ps-tabbar" aria-label="Quick navigation">
                 <Link href="/" className={`ps-tabbar__item${active('/') ? ' is-active' : ''}`}><i className="bx bx-grid-alt" />Home</Link>
-                <Link href="/design" className={`ps-tabbar__item${active('/design') ? ' is-active' : ''}`}><i className="bx bx-palette" />Design</Link>
+                {can(caps, 'core.groups.view') && <Link href="/groups" className={`ps-tabbar__item${active('/groups') ? ' is-active' : ''}`}><i className="bx bx-group" />Groups</Link>}
                 <Link href="/account" className={`ps-tabbar__item${active('/account') ? ' is-active' : ''}`}><i className="bx bx-user-circle" />Account</Link>
-                {admin.length > 0 && <Link href={admin[0].href} className={`ps-tabbar__item${active('/admin') ? ' is-active' : ''}`}><i className="bx bx-cog" />Admin</Link>}
             </nav>
 
             <div className="ps-toasts" aria-live="polite">

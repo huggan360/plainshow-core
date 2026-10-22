@@ -10,45 +10,95 @@
     "default_access": [
         "admin",
         "moderator",
-        "member",
+        "user",
         "guest"
     ],
     "capabilities": [
         {
             "name": "core.dashboard.use",
-            "label": "Use the dashboard"
+            "label": "Use the dashboard",
+            "description": "Open the PlainShow dashboard and use the widgets available to the account.",
+            "tier": "user",
+            "group": "Dashboard"
         },
         {
             "name": "core.system.view",
-            "label": "See server health details"
+            "label": "See server health details",
+            "description": "View processor, memory, storage, temperature and service health information.",
+            "tier": "moderator",
+            "group": "Monitoring"
         },
         {
             "name": "core.users.manage",
-            "label": "Create and edit accounts"
+            "label": "Create and edit accounts",
+            "description": "Create, disable, change and remove PlainShow accounts and their service access.",
+            "tier": "admin",
+            "group": "Accounts"
+        },
+        {
+            "name": "core.groups.view",
+            "label": "View groups",
+            "description": "Open the groups page and see groups the person belongs to and their members.",
+            "tier": "user",
+            "group": "Groups"
+        },
+        {
+            "name": "core.groups.create",
+            "label": "Create groups",
+            "description": "Create groups, invite members and manage groups the person owns.",
+            "tier": "user",
+            "group": "Groups",
+            "implies": ["core.groups.view"]
+        },
+        {
+            "name": "core.groups.manage",
+            "label": "Manage every group",
+            "description": "Open, change or remove any PlainShow group, including groups owned by someone else.",
+            "tier": "moderator",
+            "group": "Groups",
+            "implies": ["core.groups.create", "core.groups.view"]
         },
         {
             "name": "core.extensions.manage",
-            "label": "Turn services on and off"
+            "label": "Turn services on and off",
+            "description": "Enable, disable and configure installed PlainShow services.",
+            "tier": "admin",
+            "group": "Platform"
         },
         {
             "name": "core.permissions.manage",
-            "label": "Change roles and permissions"
+            "label": "Change roles and permissions",
+            "description": "Create roles and change role or person-specific permissions across every service.",
+            "tier": "admin",
+            "group": "Accounts"
         },
         {
             "name": "core.updates.apply",
-            "label": "Install updates"
+            "label": "Install updates",
+            "description": "Review and install application updates on the production server.",
+            "tier": "admin",
+            "group": "Platform"
         },
         {
             "name": "core.audit.view",
-            "label": "Read the audit log"
+            "label": "Read the audit log",
+            "description": "See sign-ins, account changes and administrative activity recorded by PlainShow.",
+            "tier": "moderator",
+            "group": "Monitoring"
         },
         {
             "name": "core.api.use",
-            "label": "Use the API and make API tokens"
+            "label": "Use the API",
+            "description": "Create personal API tokens and use the PlainShow API with this account's permissions.",
+            "tier": "user",
+            "group": "Account"
         },
         {
             "name": "core.design.tokens",
-            "label": "See the design tokens"
+            "label": "See design tokens",
+            "description": "Open the design reference containing PlainShow colours, typography and components.",
+            "tier": "user",
+            "group": "Dashboard"
         }
     ],
     "widgets": [

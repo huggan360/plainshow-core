@@ -20,6 +20,10 @@ class Permissions
     /** @return array{services: list<string>, capabilities: list<string>} */
     public static function for(User $user): array
     {
+        if (! $user->isActive()) {
+            return ['services' => [], 'capabilities' => []];
+        }
+
         return self::$cache[$user->id] ??= self::resolve($user);
     }
 
@@ -51,9 +55,10 @@ class Permissions
     /** What a role gets with no per-user overrides. */
     public static function forRole(string $role): array
     {
-        $resolved = Access::resolve($role, self::extensions(), [], DB::table('core_role_capabilities')->where('role', $role)->pluck('capability')->all(), []);
+        $resolved = RoleAccess::resolve($role, self::extensions(), [], DB::table('core_role_capabilities')->where('role', $role)->pluck('capability')->all(), []);
         if ($resolved['capabilities'] !== ['*']) {
             $resolved['capabilities'] = Access::expand($resolved['capabilities'], DB::table('core_capabilities')->pluck('name')->all());
+            $resolved['capabilities'] = CapabilityCatalog::expand($resolved['capabilities']);
         }
 
         return $resolved;
@@ -72,7 +77,7 @@ class Permissions
     {
         $extensions = self::extensions();
         $patterns = DB::table('core_role_capabilities')->where('role', $user->role)->pluck('capability')->all();
-        $resolved = Access::resolve(
+        $resolved = RoleAccess::resolve(
             $user->role,
             $extensions,
             DB::table('core_extension_access')->where('user_id', $user->id)->pluck('effect', 'extension_id')->all(),
@@ -80,16 +85,16 @@ class Permissions
             DB::table('core_user_capabilities')->where('user_id', $user->id)->pluck('effect', 'capability')->all(),
         );
         $unavailable = [];
-        if (! DB::table('core_linked_accounts')->where(['user_id' => $user->id, 'provider' => 'nextcloud'])->exists()) {
-            $unavailable[] = 'cloud';
-        }
         if (! is_string($user->pi_username) || $user->pi_username === '') {
             $unavailable[] = 'web';
         }
         $resolved['services'] = array_values(array_diff($resolved['services'], $unavailable));
         if ($resolved['capabilities'] !== ['*']) {
             $resolved['capabilities'] = Access::expand($resolved['capabilities'], DB::table('core_capabilities')->pluck('name')->all());
+            $denied = DB::table('core_user_capabilities')->where('user_id', $user->id)->where('effect', 'deny')->pluck('capability')->all();
+            $resolved['capabilities'] = array_values(array_diff($resolved['capabilities'], $denied));
             $resolved['capabilities'] = array_values(array_filter($resolved['capabilities'], fn (string $capability) => ! in_array(strstr($capability, '.', true), $unavailable, true)));
+            $resolved['capabilities'] = CapabilityCatalog::expand($resolved['capabilities']);
         }
 
         return $resolved;

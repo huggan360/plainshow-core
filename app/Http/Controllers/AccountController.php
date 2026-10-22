@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Support\ApiTokens;
-use App\Models\Extension;
+use App\Support\AccountLifecycle;
 use App\Support\Audit;
 use App\Support\Avatars;
-use App\Support\CloudAccount;
-use App\Support\CloudWidgets;
 use App\Support\Permissions;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
@@ -26,21 +24,14 @@ use Inertia\Response;
 use PragmaRX\Google2FA\Google2FA;
 use RuntimeException;
 
-/** One account page for the whole platform: profile, security and connections. */
+/** One account page for the whole platform: profile, security and API tokens. */
 class AccountController extends Controller
 {
     public function show(Request $request, string $section = 'profile'): Response
     {
-        abort_unless(in_array($section, ['profile', 'security', 'connections', 'tokens'], true), 404);
+        abort_unless(in_array($section, ['profile', 'security', 'tokens'], true), 404);
         abort_if($section === 'tokens' && ! Permissions::can($request->user(), 'core.api.use'), 404);
         $user = $request->user();
-        $services = Permissions::for($user)['services'];
-        $cloudState = 'no_access';
-        if (in_array('cloud', $services, true)) {
-            $cloud = CloudWidgets::data('files', $user);
-            $cloudState = ! is_array($cloud) || isset($cloud['error']) ? 'unknown' : (($cloud['connected'] ?? false) ? 'ready' : 'not_created');
-        }
-
         return Inertia::render('Account', [
             'section' => $section,
             'profile' => [
@@ -52,6 +43,9 @@ class AccountController extends Controller
                 'avatar' => $user->avatarUrl(),
                 'initials' => $user->initials(),
                 'role' => $user->role,
+                'groups' => DB::table('core_group_members as member')
+                    ->join('core_groups as groups', 'groups.id', '=', 'member.group_id')
+                    ->where('member.user_id', $user->id)->orderBy('groups.name')->pluck('groups.name')->all(),
             ],
             'security' => [
                 'twoFactor' => $user->hasTwoFactor(),
@@ -63,20 +57,6 @@ class AccountController extends Controller
             ],
             'apiAccess' => Permissions::can($user, 'core.api.use'),
             'tokens' => $section === 'tokens' ? $this->tokens($request) : null,
-            'connections' => [
-                'cloud' => [
-                    'available' => in_array('cloud', $services, true),
-                    'url' => Extension::find('cloud')?->url,
-                    'account' => CloudAccount::for($user),
-                    'linked' => DB::table('core_linked_accounts')->where(['user_id' => $user->id, 'provider' => 'nextcloud'])->exists(),
-                    'state' => $cloudState,
-                ],
-                'pi' => [
-                    'username' => $user->pi_username,
-                    'webAccess' => in_array('web', $services, true),
-                    'url' => Extension::find('web')?->url,
-                ],
-            ],
         ]);
     }
 
@@ -130,6 +110,9 @@ class AccountController extends Controller
         ]);
         if (! Hash::check($data['current'], $user->password)) {
             throw ValidationException::withMessages(['current' => 'That is not your current password.']);
+        }
+        if (Permissions::hasService($user, 'web')) {
+            AccountLifecycle::pi($user, 'password', $data['password']);
         }
         $user->forceFill(['password' => $data['password'], 'password_changed_at' => now()])->save();
         $this->endOtherSessions($request);

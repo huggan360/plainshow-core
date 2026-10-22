@@ -9,49 +9,85 @@
     "default_access": [
         "admin",
         "moderator",
-        "member"
+        "user"
     ],
     "health": "https://blog.plainshow.se/api/v1/health",
     "capabilities": [
         {
             "name": "blog.post.view",
-            "label": "Read posts"
+            "label": "Read posts",
+            "description": "Read public posts and posts shared with signed-in Blog users. This does not allow editing or publishing.",
+            "tier": "user",
+            "group": "Posts"
         },
         {
             "name": "blog.post.create",
-            "label": "Write posts"
+            "label": "Write posts",
+            "description": "Create posts and edit or remove your own posts. New posts stay members-only unless a moderator publishes them.",
+            "tier": "moderator",
+            "group": "Posts",
+            "implies": ["blog.post.view"]
         },
         {
             "name": "blog.post.moderate",
-            "label": "Edit and remove anyone's posts"
+            "label": "Manage all posts",
+            "description": "Edit, publish, hide or remove any person's post.",
+            "tier": "moderator",
+            "group": "Posts",
+            "implies": ["blog.post.view", "blog.post.create"]
         },
         {
             "name": "blog.comment.create",
-            "label": "Comment"
+            "label": "Comment on posts",
+            "description": "Add comments to posts that the person can read and remove their own comments.",
+            "tier": "user",
+            "group": "Comments",
+            "implies": ["blog.post.view"]
         },
         {
             "name": "blog.comment.moderate",
-            "label": "Remove comments"
+            "label": "Moderate comments",
+            "description": "Remove comments written by anyone.",
+            "tier": "moderator",
+            "group": "Comments",
+            "implies": ["blog.post.view", "blog.comment.create"]
         },
         {
             "name": "blog.gallery.view",
-            "label": "View galleries"
+            "label": "View galleries",
+            "description": "Open public galleries and galleries available to signed-in Blog users. Unpublished photos remain hidden.",
+            "tier": "user",
+            "group": "Galleries"
         },
         {
             "name": "blog.gallery.create",
-            "label": "Upload to galleries"
+            "label": "Upload to galleries",
+            "description": "Create galleries and upload photos. Uploaded photos wait for publication.",
+            "tier": "moderator",
+            "group": "Galleries",
+            "implies": ["blog.gallery.view"]
         },
         {
             "name": "blog.gallery.moderate",
-            "label": "Manage every gallery"
+            "label": "Manage every gallery",
+            "description": "Rename, publish, hide and remove galleries or photos belonging to anyone.",
+            "tier": "moderator",
+            "group": "Galleries",
+            "implies": ["blog.gallery.view", "blog.gallery.create"]
         },
         {
             "name": "blog.story.create",
-            "label": "Post stories"
+            "label": "Post stories",
+            "description": "Publish short-lived photo or video stories from the person's own account.",
+            "tier": "user",
+            "group": "Stories"
         },
         {
             "name": "blog.notice.moderate",
-            "label": "Publish notices"
+            "label": "Publish notices",
+            "description": "Create, change and remove notices shown across Blog.",
+            "tier": "moderator",
+            "group": "Notices"
         }
     ],
     "widgets": [

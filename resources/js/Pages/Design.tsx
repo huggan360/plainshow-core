@@ -7,10 +7,10 @@ import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordi
 import { router, usePage } from '@inertiajs/react';
 import { createContext, CSSProperties, KeyboardEvent, PointerEvent, ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-type RoleName = 'admin' | 'moderator' | 'member' | 'guest';
-type RoleData = { layout: LayoutItem[]; catalogue: WidgetDefinition[]; saved: boolean };
-type Props = { layout: LayoutItem[]; catalogue: WidgetDefinition[]; customised: boolean; roles: Record<RoleName, RoleData> | null };
+type RoleData = { name: string; layout: LayoutItem[]; catalogue: WidgetDefinition[]; saved: boolean };
+type Props = { layout: LayoutItem[]; catalogue: WidgetDefinition[]; customised: boolean; roles: Record<string, RoleData> | null };
 type Target = 'me' | RoleName;
+type RoleName = string;
 type Width = 'desktop' | 'tablet' | 'phone';
 
 const WIDTHS: Record<Width, { px: number; label: string; icon: string }> = {
@@ -26,8 +26,6 @@ const GLOWS: { value: Glow | undefined; label: string }[] = [
 ];
 /** How far the preview is scaled down, so dragged widgets follow the pointer. */
 const ZoomContext = createContext(1);
-const ROLE_LABELS: Record<RoleName, string> = { admin: 'admins', moderator: 'moderators', member: 'members', guest: 'guests' };
-
 export default function Design(props: Props) {
     const { props: shared } = usePage<SharedProps>();
     const tokens = can(shared.auth.capabilities, 'core.design.tokens');
@@ -85,7 +83,7 @@ function Studio({ layout, catalogue, customised, roles }: Props) {
         router.put(endpoint, { widgets: items } as unknown as Record<string, string>, { preserveScroll: true, preserveState: true, onSuccess: () => setDirty(false), onFinish: () => setSaving(false) });
     };
     const reset = () => {
-        const question = target === 'me' ? 'Go back to the default dashboard for your role?' : `Go back to the built-in default for ${ROLE_LABELS[target]}?`;
+        const question = target === 'me' ? 'Go back to the default dashboard for your role?' : `Go back to the built-in default for ${roles?.[target]?.name ?? target}?`;
         if (window.confirm(question)) router.delete(endpoint, { preserveScroll: true, preserveState: true });
     };
 
@@ -103,7 +101,7 @@ function Studio({ layout, catalogue, customised, roles }: Props) {
                             setTarget(event.target.value as Target);
                         }}>
                             <option value="me">Your dashboard</option>
-                            {(Object.keys(ROLE_LABELS) as RoleName[]).map((role) => <option key={role} value={role}>Default for {ROLE_LABELS[role]}</option>)}
+                            {Object.entries(roles).map(([role, data]) => <option key={role} value={role}>Default for {data.name}</option>)}
                         </select>
                     </label>
                 )}
@@ -501,7 +499,6 @@ function Tokens() {
                             <nav className="ps-account-menu">
                                 <span className="ps-account-menu__item is-active"><i className="bx bx-user" />Profile</span>
                                 <span className="ps-account-menu__item"><i className="bx bx-shield-quarter" />Security</span>
-                                <span className="ps-account-menu__item"><i className="bx bx-link" />Connections</span>
                             </nav>
                             <div className="ps-inline"><Avatar src={user.avatar} initials={user.initials} size="xl" /><Avatar initials="HH" size="lg" /><Avatar initials="AB" /><Avatar initials="CD" size="sm" presence /></div>
                         </div>

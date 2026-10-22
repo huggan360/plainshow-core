@@ -4,14 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Extension;
+use App\Models\Role;
 use App\Models\User;
 use App\Support\Audit;
+use App\Support\CapabilityCatalog;
 use App\Support\Permissions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use PlainShow\Kit\Access;
@@ -23,21 +27,17 @@ use PlainShow\Kit\Access;
  */
 class PermissionsController extends Controller
 {
-    /** Admins always hold everything, so only these roles are edited. */
-    private const EDITABLE = ['moderator', 'member', 'guest'];
-
     public function index(): Response
     {
-        $capabilities = DB::table('core_capabilities')->orderBy('name')->get()->groupBy('extension_id');
+        $capabilities = CapabilityCatalog::byExtension();
         $known = DB::table('core_capabilities')->pluck('name')->all();
-        $roles = [];
-        foreach (User::ROLES as $role) {
-            $patterns = DB::table('core_role_capabilities')->where('role', $role)->pluck('capability')->all();
-            $roles[$role] = [
+        $roles = Role::orderBy('sort')->orderBy('name')->get()->map(function (Role $role) use ($known) {
+            $patterns = DB::table('core_role_capabilities')->where('role', $role->key)->pluck('capability')->all();
+            return $role->summary() + [
                 'patterns' => $patterns,
-                'granted' => $role === 'admin' ? $known : Access::expand($patterns, $known),
+                'granted' => $role->key === 'admin' ? $known : Access::expand($patterns, $known),
             ];
-        }
+        })->values();
 
         return Inertia::render('Admin/Permissions', [
             'extensions' => Extension::orderBy('sort')->get()->map(fn (Extension $extension) => [
@@ -47,11 +47,7 @@ class PermissionsController extends Controller
                 'enabled' => $extension->enabled,
                 'system' => $extension->system,
                 'defaultAccess' => $extension->default_access ?? [],
-                'capabilities' => ($capabilities[$extension->id] ?? collect())->map(fn ($row) => [
-                    'name' => $row->name,
-                    'label' => $row->label,
-                    'description' => $row->description,
-                ])->values(),
+                'capabilities' => $capabilities[$extension->id] ?? [],
             ]),
             'roles' => $roles,
             'people' => User::orderBy('first_name')->orderBy('username')->get()->map(fn (User $user) => $user->summary() + [
@@ -68,24 +64,27 @@ class PermissionsController extends Controller
     public function updateRoles(Request $request): RedirectResponse
     {
         $known = DB::table('core_capabilities')->pluck('name')->all();
+        $roleKeys = Role::keys();
         $data = $request->validate([
             'capabilities' => ['required', 'array'],
             'capabilities.*' => ['present', 'array'],
             'capabilities.*.*' => ['string', Rule::in($known)],
             'access' => ['required', 'array'],
             'access.*' => ['present', 'array'],
-            'access.*.*' => ['string', Rule::in(User::ROLES)],
+            'access.*.*' => ['string', Rule::in($roleKeys)],
         ]);
 
         $changes = [];
-        DB::transaction(function () use ($data, $known, &$changes) {
-            foreach (self::EDITABLE as $role) {
+        DB::transaction(function () use ($data, $known, $roleKeys, &$changes) {
+            foreach (array_values(array_diff($roleKeys, ['admin'])) as $role) {
                 if (! array_key_exists($role, $data['capabilities'])) {
                     continue;
                 }
                 $old = DB::table('core_role_capabilities')->where('role', $role)->pluck('capability')->all();
                 $wanted = array_values(array_unique($data['capabilities'][$role]));
-                $stored = self::compact(array_merge($old, Access::defaultRolePatterns()[$role] ?? []), $wanted, $known);
+                $defaults = Access::defaultRolePatterns();
+                $defaults['user'] = $defaults['user'] ?? $defaults['member'] ?? [];
+                $stored = self::compact(array_merge($old, $defaults[$role] ?? []), $wanted, $known);
                 $before = Access::expand($old, $known);
                 $added = array_values(array_diff($wanted, $before));
                 $removed = array_values(array_diff($before, $wanted));
@@ -102,7 +101,7 @@ class PermissionsController extends Controller
                     continue;
                 }
                 // Admins can always open everything; system services stay open to all.
-                $access = $extension->system ? User::ROLES : array_values(array_unique(array_merge(['admin'], $data['access'][$extension->id])));
+                $access = $extension->system ? $roleKeys : array_values(array_unique(array_merge(['admin'], $data['access'][$extension->id])));
                 $before = $extension->default_access ?? [];
                 if (array_diff($access, $before) || array_diff($before, $access)) {
                     $extension->forceFill(['default_access' => $access])->save();
@@ -118,6 +117,56 @@ class PermissionsController extends Controller
         }
 
         return back()->with('status', $changes ? 'Role permissions saved.' : 'Nothing changed.');
+    }
+
+    public function storeRole(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:60', Rule::unique('core_roles', 'name')],
+            'color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+        ]);
+        $key = substr(Str::slug($data['name']), 0, 16);
+        if ($key === '' || ! preg_match('/^[a-z][a-z0-9-]*$/', $key)) {
+            throw ValidationException::withMessages(['name' => 'Use a name that contains letters.']);
+        }
+        if (Role::whereKey($key)->exists()) {
+            throw ValidationException::withMessages(['name' => 'A role with that name already exists.']);
+        }
+        $role = Role::create(['key' => $key, 'name' => trim($data['name']), 'color' => strtolower($data['color']), 'sort' => (Role::max('sort') ?? 0) + 10]);
+        Audit::record('permissions.role_created', ['role' => $role->key, 'name' => $role->name]);
+
+        return back()->with('status', $role->name.' created.');
+    }
+
+    public function updateRole(Request $request, Role $role): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:60', Rule::unique('core_roles', 'name')->ignore($role->key, 'key')],
+            'color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+        ]);
+        $role->update(['name' => trim($data['name']), 'color' => strtolower($data['color'])]);
+        Audit::record('permissions.role_renamed', ['role' => $role->key, 'name' => $role->name]);
+
+        return back()->with('status', 'Role renamed.');
+    }
+
+    public function destroyRole(Role $role): RedirectResponse
+    {
+        if ($role->protected || User::where('role', $role->key)->exists()) {
+            throw ValidationException::withMessages(['role' => 'Move every person to another role before deleting it.']);
+        }
+        DB::transaction(function () use ($role): void {
+            DB::table('core_role_capabilities')->where('role', $role->key)->delete();
+            DB::table('core_role_layouts')->where('role', $role->key)->delete();
+            foreach (Extension::all() as $extension) {
+                $extension->forceFill(['default_access' => array_values(array_diff($extension->default_access ?? [], [$role->key]))])->save();
+            }
+            $role->delete();
+        });
+        Permissions::forget();
+        Audit::record('permissions.role_deleted', ['role' => $role->key, 'name' => $role->name]);
+
+        return back()->with('status', 'Role deleted.');
     }
 
     /** Saves one person's allows and denies for services and capabilities. */
