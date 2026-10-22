@@ -1,6 +1,7 @@
 import { Avatar, Badge, relativeTime, RoleBadge } from '@/Components/ui';
 import { Link } from '@inertiajs/react';
 import { createContext, CSSProperties, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { t, locale } from '@/i18n';
 
 export type SettingField = {
     name: string; type: 'text' | 'links' | 'choices' | 'toggle' | 'select'; label: string; max?: number;
@@ -48,10 +49,10 @@ function useWidgetData<T>(extension: string, id: string, refreshSeconds?: number
     const load = useCallback(async () => {
         try {
             const response = await fetch(`/widgets/${extension}/${id}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
-            if (!response.ok) throw new Error(response.status === 404 ? 'Not available.' : 'Could not load.');
+            if (!response.ok) throw new Error(response.status === 404 ? t('Not available.') : t('Could not load.'));
             setState({ data: (await response.json()) as T, error: null, loading: false });
         } catch (error) {
-            setState((current) => ({ ...current, error: error instanceof Error ? error.message : 'Could not load.', loading: false }));
+            setState((current) => ({ ...current, error: error instanceof Error ? error.message : t('Could not load.'), loading: false }));
         }
     }, [extension, id]);
 
@@ -117,7 +118,7 @@ function Slots({ height, rows, figures, empty, more }: { height: Height; rows: R
     const total = SLOTS[height];
     const hasFigures = !!figures && figures.length > 0;
     const capacity = total - (hasFigures ? 1 : 0);
-    if (!hasFigures && rows.length === 0) return <Fill>{empty ?? 'Nothing yet.'}</Fill>;
+    if (!hasFigures && rows.length === 0) return <Fill>{empty ?? t('Nothing yet.')}</Fill>;
 
     const overflow = rows.length > capacity;
     const shown = overflow ? rows.slice(0, Math.max(0, capacity - 1)) : rows;
@@ -127,7 +128,7 @@ function Slots({ height, rows, figures, empty, more }: { height: Height; rows: R
         <ul className="widget-slots ps-chain" style={{ '--slots': total } as CSSProperties}>
             {hasFigures && (
                 <li className="widget-slot widget-figures">
-                    {figures!.map((figure) => <div key={figure.label} className={figure.tone ? `is-${figure.tone}` : undefined}><strong>{figure.value}</strong><span>{figure.label}</span></div>)}
+                    {figures!.map((figure) => <div key={t(figure.label)} className={figure.tone ? `is-${figure.tone}` : undefined}><strong>{figure.value}</strong><span>{t(figure.label)}</span></div>)}
                 </li>
             )}
             {shown.map((row) => (
@@ -147,7 +148,7 @@ function Slots({ height, rows, figures, empty, more }: { height: Height; rows: R
                 </li>
             )}
             {placeholders > 0 && rows.length === 0 && (
-                <li className="widget-slot widget-slot--empty" style={{ gridRow: `span ${placeholders}` }}>{empty ?? 'Nothing yet.'}</li>
+                <li className="widget-slot widget-slot--empty" style={{ gridRow: `span ${placeholders}` }}>{empty ?? t('Nothing yet.')}</li>
             )}
             {placeholders > 0 && rows.length > 0 && Array.from({ length: placeholders }, (_, index) => <li key={`p${index}`} className="widget-slot widget-slot--placeholder" aria-hidden="true" />)}
         </ul>
@@ -157,10 +158,10 @@ function Slots({ height, rows, figures, empty, more }: { height: Height; rows: R
 /* ---------- Welcome: greeting, clock and date ---------- */
 type GreetingData = { firstName: string; role: string; services: number };
 function greetingFor(hour: number) {
-    if (hour < 5) return 'Good night';
-    if (hour < 10) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 5) return t('Good night');
+    if (hour < 10) return t('Good morning');
+    if (hour < 17) return t('Good afternoon');
+    return t('Good evening');
 }
 function useNow(everySecond: boolean): Date {
     const [now, setNow] = useState(() => new Date());
@@ -180,7 +181,7 @@ export function GreetingWidget({ definition }: { definition: WidgetDefinition })
     const now = useNow(seconds && display !== 'greeting');
     const glow = item?.glow ?? 'accent';
     const clock = now.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: seconds ? '2-digit' : undefined });
-    const date = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    const date = now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
 
     return (
         <section className="ps-frame ps-widget widget-greeting" data-glow={glow === 'none' ? undefined : glow}>
@@ -189,7 +190,7 @@ export function GreetingWidget({ definition }: { definition: WidgetDefinition })
                     <div className="widget-greeting__main">
                         {showDate && <p className="ps-eyebrow ps-eyebrow--accent">{date}</p>}
                         {display !== 'clock'
-                            ? <h2 className="ps-title ps-title--hero widget-greeting__title">{greetingFor(now.getHours())}{state.data ? `, ${state.data.firstName}` : ''}</h2>
+                            ? <h2 className="ps-title ps-title--hero widget-greeting__title">{greetingFor(now.getHours())}{state.data ? t(', {firstName}', { firstName: state.data.firstName }) : ''}</h2>
                             : <p className="widget-clock">{clock}</p>}
                         {showRole && state.data && (
                             <div className="ps-inline widget-greeting__badges">
@@ -223,16 +224,16 @@ export function PiHealthWidget({ definition }: { definition: WidgetDefinition })
     const details = useSetting<boolean>(definition, 'details') ?? true;
     const system = state.data?.system;
     return (
-        <WidgetFrame definition={definition} action={details && system ? <span className="widget-note">Up {system.uptime}</span> : undefined}>
+        <WidgetFrame definition={definition} action={details && system ? <span className="widget-note">{t('Up')}{' '}{system.uptime}</span> : undefined}>
             <Body state={state} height={height}>{() => {
                 const s = system!;
                 const bars = [
-                    metrics.includes('memory') && <Gauge key="m" tone="red" label="RAM used" value={s.memoryPercent} display={`${s.memoryPercent}%`} />,
-                    metrics.includes('disk') && <Gauge key="d" tone="orange" label="Disk used" value={s.diskPercent} display={details ? `${s.diskFree} free` : `${s.diskPercent}%`} />,
-                    metrics.includes('cpu') && <Gauge key="c" tone="yellow" label="CPU load" value={s.cpuPercent} display={`${s.cpuPercent}%`} />,
-                    metrics.includes('temperature') && s.temperature !== null && <Gauge key="t" tone={s.temperature >= 75 ? 'red' : s.temperature >= 62 ? 'orange' : 'green'} label="Temperature" value={(s.temperature / 90) * 100} display={`${s.temperature.toFixed(0)} °C`} />,
+                    metrics.includes('memory') && <Gauge key="m" tone="red" label={t('RAM used')} value={s.memoryPercent} display={`${s.memoryPercent}%`} />,
+                    metrics.includes('disk') && <Gauge key="d" tone="orange" label={t('Disk used')} value={s.diskPercent} display={details ? `${s.diskFree} free` : `${s.diskPercent}%`} />,
+                    metrics.includes('cpu') && <Gauge key="c" tone="yellow" label={t('CPU load')} value={s.cpuPercent} display={`${s.cpuPercent}%`} />,
+                    metrics.includes('temperature') && s.temperature !== null && <Gauge key="t" tone={s.temperature >= 75 ? 'red' : s.temperature >= 62 ? 'orange' : 'green'} label={t('Temperature')} value={(s.temperature / 90) * 100} display={`${s.temperature.toFixed(0)} °C`} />,
                 ].filter(Boolean);
-                return bars.length ? <div className="widget-bars ps-chain" data-height={height} style={{ '--bars': Math.min(bars.length, height === 'short' ? 2 : 4) } as CSSProperties}>{bars}</div> : <Fill>Choose bars in the Design studio.</Fill>;
+                return bars.length ? <div className="widget-bars ps-chain" data-height={height} style={{ '--bars': Math.min(bars.length, height === 'short' ? 2 : 4) } as CSSProperties}>{bars}</div> : <Fill>{t('Choose bars in the Design studio.')}</Fill>;
             }}</Body>
         </WidgetFrame>
     );
@@ -250,11 +251,11 @@ export function LauncherWidget({ definition }: { definition: WidgetDefinition })
             <Body state={state} height={height}>{({ apps }) => {
                 const shown = apps.filter((app) => !hidden.includes(app.id));
                 return shown.length === 0
-                    ? <Fill>No services to show.</Fill>
+                    ? <Fill>{t('No services to show.')}</Fill>
                     : <div className={`widget-apps${descriptions ? ' widget-apps--described' : ''}`}>{shown.map((app) => (
                         <a key={app.id} href={app.url} className="widget-app">
                             <span className="widget-app__icon"><i className={`bx ${app.icon}`} aria-hidden="true" /></span>
-                            <span className="widget-app__text"><strong>{app.name}</strong>{descriptions && <span>{app.description}</span>}</span>
+                            <span className="widget-app__text"><strong>{app.name}</strong>{descriptions && <span>{t(app.description)}</span>}</span>
                         </a>
                     ))}</div>;
             }}</Body>
@@ -279,13 +280,13 @@ export function AdminUsersWidget({ definition }: { definition: WidgetDefinition 
     const state = useWidgetData<UsersData>(definition.extension, definition.id, 120);
     const height = useHeight(definition);
     return (
-        <WidgetFrame definition={definition} action={<More href="/admin/users">All</More>}>
+        <WidgetFrame definition={definition} action={<More href="/admin/users">{t('All')}</More>}>
             <Body state={state} height={height}>{(data) => (
                 <Slots height={height} more={{ href: '/admin/users' }}
                     figures={[
-                        { label: 'Accounts', value: data.total },
-                        { label: 'Admins', value: data.byRole.admin ?? 0 },
-                        { label: 'No 2FA', value: data.withoutTwoFactor, tone: data.withoutTwoFactor > 0 ? 'warn' : undefined },
+                        { label: t('Accounts'), value: data.total },
+                        { label: t('Admins'), value: data.byRole.admin ?? 0 },
+                        { label: t('No 2FA'), value: data.withoutTwoFactor, tone: data.withoutTwoFactor > 0 ? 'warn' : undefined },
                     ]}
                     rows={data.recent.map((user) => ({ key: user.id, lead: <Avatar src={user.avatar} initials={user.initials} size="xs" />, title: user.name, trail: relativeTime(user.lastLogin) }))}
                     empty="Nobody has signed in yet." />
@@ -310,7 +311,7 @@ export function AdminServicesWidget({ definition }: { definition: WidgetDefiniti
                 return <Slots height={height} more={{ href: '/admin/services' }} empty="Every service answers." rows={shown.map((service) => ({
                     key: service.id,
                     title: service.name,
-                    trail: <span className="widget-state">{service.state === 'online' ? (service.ms !== null ? `${service.ms} ms` : 'Online') : service.state === 'offline' ? 'Down' : service.state === 'error' ? 'Errors' : 'Unknown'}<span className={`ps-dot ${STATE_DOT[service.state] ?? ''}`} aria-hidden="true" /></span>,
+                    trail: <span className="widget-state">{service.state === 'online' ? (service.ms !== null ? t('{ms} ms', { ms: service.ms }) : t('Online')) : service.state === 'offline' ? t('Down') : service.state === 'error' ? t('Errors') : t('Unknown')}<span className={`ps-dot ${STATE_DOT[service.state] ?? ''}`} aria-hidden="true" /></span>,
                 }))} />;
             }}</Body>
         </WidgetFrame>
@@ -323,13 +324,13 @@ export function AdminSecurityWidget({ definition }: { definition: WidgetDefiniti
     const state = useWidgetData<SecurityData>(definition.extension, definition.id, 60);
     const height = useHeight(definition);
     return (
-        <WidgetFrame definition={definition} action={<More href="/admin/audit">Log</More>}>
+        <WidgetFrame definition={definition} action={<More href="/admin/audit">{t('Log')}</More>}>
             <Body state={state} height={height}>{(data) => (
                 <Slots height={height} more={{ href: '/admin/audit' }}
                     figures={[
-                        { label: 'Today', value: data.signIns },
-                        { label: 'Failed', value: data.failed, tone: data.failed > 0 ? 'warn' : undefined },
-                        { label: 'Locked', value: data.locked, tone: data.locked > 0 ? 'alert' : undefined },
+                        { label: t('Today'), value: data.signIns },
+                        { label: t('Failed'), value: data.failed, tone: data.failed > 0 ? 'warn' : undefined },
+                        { label: t('Locked'), value: data.locked, tone: data.locked > 0 ? 'alert' : undefined },
                     ]}
                     rows={eventRows(data.events, true)} empty="No sign-ins yet." />
             )}</Body>
@@ -343,10 +344,10 @@ export function AdminUpdatesWidget({ definition }: { definition: WidgetDefinitio
     const state = useWidgetData<UpdatesData>(definition.extension, definition.id, 300);
     const height = useHeight(definition);
     return (
-        <WidgetFrame definition={definition} action={<More href="/admin/updates">Open</More>}>
+        <WidgetFrame definition={definition} action={<More href="/admin/updates">{t('Open')}</More>}>
             <Body state={state} height={height}>{(data) => (
                 <Slots height={height} more={{ href: '/admin/updates' }}
-                    empty={<><i className="bx bx-check-circle widget-ok" aria-hidden="true" /> Up to date{data.checkedAt ? `, checked ${relativeTime(data.checkedAt)}` : ''}.{data.failed > 0 && <><br />{data.failed === 1 ? 'One update failed' : `${data.failed} updates failed`} this week.</>}</>}
+                    empty={<><i className="bx bx-check-circle widget-ok" aria-hidden="true" /> {' '}{t('Up to date')}{data.checkedAt ? t(', checked {when}', { when: relativeTime(data.checkedAt) }) : ''}.{data.failed > 0 && <><br />{data.failed === 1 ? t('One update failed') : t('{failed} updates failed', { failed: data.failed })} {' '}{t('this week.')}</>}</>}
                     rows={data.available.map((item) => ({ key: item.id, title: item.name, meta: `${item.installed ?? 'unknown'} installed`, trail: <Badge tone="accent">{item.latest}</Badge> }))} />
             )}</Body>
         </WidgetFrame>
@@ -358,7 +359,7 @@ export function NotesWidget({ definition }: { definition: WidgetDefinition }) {
     const text = (useContext(WidgetItem)?.settings?.text ?? '').trim();
     return (
         <WidgetFrame definition={definition} glow="warm">
-            {text ? <div className="widget-notes">{text}</div> : <Fill>Write a note in the <Link href="/design">Design studio</Link>.</Fill>}
+            {text ? <div className="widget-notes">{text}</div> : <Fill>{t('Write a note in the')}{' '}<Link href="/design">{t('Design studio')}</Link>.</Fill>}
         </WidgetFrame>
     );
 }
@@ -367,7 +368,7 @@ export function BookmarksWidget({ definition }: { definition: WidgetDefinition }
     const height = useHeight(definition);
     return (
         <WidgetFrame definition={definition}>
-            <Slots height={height} empty={<>Add links in the <Link href="/design">Design studio</Link>.</>}
+            <Slots height={height} empty={<>{t('Add links in the')}{' '}<Link href="/design">{t('Design studio')}</Link>.</>}
                 rows={links.map((link, index) => ({ key: index, title: link.label, trail: hostOf(link.url), href: link.url }))} />
         </WidgetFrame>
     );
@@ -379,23 +380,23 @@ function hostOf(url: string) {
 /* ---------- Cloud: calendar and files (photos is a gallery) ---------- */
 type CloudState = { connected: boolean; error?: string };
 function NotConnected() {
-    return <Fill icon="bx-cloud"><p>You have no Cloud account yet. An administrator can give you access.</p></Fill>;
+    return <Fill icon="bx-cloud"><p>{t('You have no Cloud account yet. An administrator can give you access.')}</p></Fill>;
 }
 type CalendarEvent = { title: string; place: string; start: string; end: string; allDay: boolean; calendar: string; color: string | null };
 function dayLabel(date: Date): string {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const day = new Date(date); day.setHours(0, 0, 0, 0);
     const diff = Math.round((day.getTime() - today.getTime()) / 86400000);
-    if (diff <= 0) return 'Today';
-    if (diff === 1) return 'Tomorrow';
-    return date.toLocaleDateString('en-GB', { weekday: 'long' });
+    if (diff <= 0) return t('Today');
+    if (diff === 1) return t('Tomorrow');
+    return date.toLocaleDateString(locale, { weekday: 'long' });
 }
 export function CalendarWidget({ definition }: { definition: WidgetDefinition }) {
     const state = useWidgetData<CloudState & { events?: CalendarEvent[] }>(definition.extension, definition.id, 300);
     const height = useHeight(definition);
     const days = Number(useSetting<string>(definition, 'days') ?? 14);
     return (
-        <WidgetFrame definition={definition} action={<More href="https://cloud.plainshow.se/calendar">Calendar</More>}>
+        <WidgetFrame definition={definition} action={<More href="https://cloud.plainshow.se/calendar">{t('Calendar')}</More>}>
             <Body state={state} height={height}>{(data) => {
                 if (!data.connected) return <NotConnected />;
                 if (data.error) return <Fill icon="bx-error-circle">{data.error}</Fill>;
@@ -405,9 +406,9 @@ export function CalendarWidget({ definition }: { definition: WidgetDefinition })
                     const start = new Date(event.start);
                     return {
                         key: index,
-                        lead: <span className="widget-day" style={event.color ? { '--day': event.color } as CSSProperties : undefined}><strong>{start.getDate()}</strong><span>{start.toLocaleDateString('en-GB', { month: 'short' })}</span></span>,
+                        lead: <span className="widget-day" style={event.color ? { '--day': event.color } as CSSProperties : undefined}><strong>{start.getDate()}</strong><span>{start.toLocaleDateString(locale, { month: 'short' })}</span></span>,
                         title: event.title,
-                        meta: [dayLabel(start), event.allDay ? 'All day' : start.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }), event.place].filter(Boolean).join(', '),
+                        meta: [dayLabel(start), event.allDay ? t('All day') : start.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }), event.place].filter(Boolean).join(', '),
                     };
                 })} />;
             }}</Body>
@@ -427,13 +428,13 @@ export function FilesWidget({ definition }: { definition: WidgetDefinition }) {
     const state = useWidgetData<CloudState & { files?: CloudFile[] }>(definition.extension, definition.id, 300);
     const height = useHeight(definition);
     return (
-        <WidgetFrame definition={definition} action={<More href="https://cloud.plainshow.se/">Files</More>}>
+        <WidgetFrame definition={definition} action={<More href="https://cloud.plainshow.se/">{t('Files')}</More>}>
             <Body state={state} height={height}>{(data) => !data.connected ? <NotConnected /> : data.error ? <Fill icon="bx-error-circle">{data.error}</Fill> : (
                 <Slots height={height} more={{ href: 'https://cloud.plainshow.se/' }} empty="No files yet." rows={(data.files ?? []).map((file, index) => ({
                     key: index, href: file.url,
                     lead: <i className={`bx ${fileIcon(file.type, file.name)} widget-row__icon`} aria-hidden="true" />,
                     title: file.name,
-                    meta: file.folder ?? 'Home',
+                    meta: file.folder ?? t('Home'),
                     trail: file.changed ? relativeTime(file.changed) : undefined,
                 }))} />
             )}</Body>
@@ -457,7 +458,7 @@ export function ExtensionWidget({ definition }: { definition: WidgetDefinition }
     const height = useHeight(definition);
     const more = state.data?.more;
     return (
-        <WidgetFrame definition={definition} action={more ? <More href={more.url}>{more.label}</More> : undefined}>
+        <WidgetFrame definition={definition} action={more ? <More href={more.url}>{t(more.label)}</More> : undefined}>
             <Body state={state} height={height}>{(data) => {
                 if (data.type === 'gallery' && data.images && data.images.length > 0) {
                     const rows = { short: 1, normal: 2, tall: 3 }[height];
@@ -471,8 +472,8 @@ export function ExtensionWidget({ definition }: { definition: WidgetDefinition }
                         </div>
                     );
                 }
-                if (data.error) return <Fill icon="bx-error-circle">{data.empty ?? 'Could not load.'}</Fill>;
-                return <Slots height={height} more={more ? { href: more.url } : undefined} empty={data.empty ?? 'Nothing here yet.'}
+                if (data.error) return <Fill icon="bx-error-circle">{data.empty ?? t('Could not load.')}</Fill>;
+                return <Slots height={height} more={more ? { href: more.url } : undefined} empty={data.empty ?? t('Nothing here yet.')}
                     figures={data.metrics?.map((metric) => ({ label: metric.label, value: metric.value, tone: metric.tone === 'minus' ? 'alert' : metric.tone === 'plus' ? 'good' : undefined }))}
                     rows={(data.items ?? []).map((entry, index) => ({
                         key: index, href: entry.url, title: entry.title, meta: entry.meta,

@@ -24,29 +24,30 @@ class ExtensionWidgets
         $secret = self::secret($extension->id);
         $api = rtrim((string) ($extension->manifest['api'] ?? ''), '/');
         if ($secret === null || $api === '') {
-            return ['type' => 'list', 'items' => [], 'empty' => $extension->name.' is not connected to the dashboard yet.'];
+            return ['type' => 'list', 'items' => [], 'empty' => __(':name is not connected to the dashboard yet.', ['name' => $extension->name])];
         }
 
         // Answers are cached briefly; failures are not, so a slow moment does not stick.
-        $cacheKey = "widget:{$extension->id}:{$widget}:{$user->id}";
+        $cacheKey = "widget:{$extension->id}:{$widget}:{$user->id}:".app()->getLocale();
         if (is_array($cached = Cache::get($cacheKey))) {
             return $cached;
         }
         $data = (function () use ($extension, $widget, $user, $secret, $api, $account) {
             try {
                 $host = (string) parse_url($api, PHP_URL_HOST);
-                $response = Http::timeout(8)->connectTimeout(3)->retry(2, 200, throw: false)->acceptJson()
+                // The service answers in the visitor's language (kit Lang reads Accept-Language).
+                $response = Http::timeout(8)->connectTimeout(3)->retry(2, 200, throw: false)->acceptJson()->withHeaders(['Accept-Language' => app()->getLocale()])
                     // Every extension runs on this machine: go straight there, still over checked TLS.
                     ->withOptions(['curl' => [CURLOPT_RESOLVE => ["$host:443:127.0.0.1"]]])
                     ->get("$api/widgets/$widget", Widgets::sign($user->id, $widget, $secret, null, $account));
                 $data = $response->json();
                 if (! $response->ok() || ! is_array($data) || ! in_array($data['type'] ?? null, self::TYPES, true)) {
-                    return ['type' => 'list', 'items' => [], 'empty' => 'Could not reach '.$extension->name.'.', 'error' => true];
+                    return ['type' => 'list', 'items' => [], 'empty' => __('Could not reach :name.', ['name' => $extension->name]), 'error' => true];
                 }
 
                 return self::clean($data);
             } catch (Throwable) {
-                return ['type' => 'list', 'items' => [], 'empty' => 'Could not reach '.$extension->name.'.', 'error' => true];
+                return ['type' => 'list', 'items' => [], 'empty' => __('Could not reach :name.', ['name' => $extension->name]), 'error' => true];
             }
         })();
         if (empty($data['error'])) {

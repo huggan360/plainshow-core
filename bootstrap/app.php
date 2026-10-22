@@ -23,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // The language cookie is set by scripts on every PlainShow site, so it is not encrypted.
+        $middleware->encryptCookies(except: ['ps_lang']);
+        $middleware->web(prepend: [\App\Http\Middleware\SetLanguage::class]);
         $middleware->web(append: [SecurityHeaders::class, EnsureActiveUser::class, HandleInertiaRequests::class]);
         $middleware->alias(['can.do' => RequireCapability::class]);
         $middleware->redirectGuestsTo(fn (Request $request) => '/auth/login?return='.rawurlencode($request->getRequestUri()));

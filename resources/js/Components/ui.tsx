@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { ComponentProps, ReactNode, useEffect, useRef } from 'react';
+import { t, locale } from '@/i18n';
 
 type Glow = 'accent' | 'green' | 'blue' | 'violet' | 'pink' | 'warm' | 'cyan';
 
@@ -66,7 +67,7 @@ export function Badge({ tone, children }: { tone?: 'accent' | 'blue' | 'green' |
 }
 
 const ROLE_TONES: Record<string, 'red' | 'amber' | 'green' | undefined> = { admin: 'red', moderator: 'amber', user: 'green' };
-const ROLE_LABELS: Record<string, string> = { admin: 'Admin', moderator: 'Moderator', user: 'User', guest: 'Guest' };
+const ROLE_LABELS: Record<string, string> = { admin: t('Admin'), moderator: t('Moderator'), user: t('User'), guest: t('Guest') };
 
 export function RoleBadge({ role, name, color }: { role: string; name?: string; color?: string }) {
     return <span className={`ps-badge${color ? ' ps-role-badge' : ROLE_TONES[role] ? ` ps-badge--${ROLE_TONES[role]}` : ''}`} style={color ? { color, borderColor: color } : undefined}>{name ?? ROLE_LABELS[role] ?? role}</span>;
@@ -129,7 +130,7 @@ export function Modal({ open, title, onClose, size, children, footer }: { open: 
                 <Frame>
                     <div className="ps-modal__head">
                         <h2 className="ps-modal__title">{title}</h2>
-                        <Button variant="ghost" iconOnly icon="bx-x" aria-label="Close" onClick={onClose} />
+                        <Button variant="ghost" iconOnly icon="bx-x" aria-label={t('Close')} onClick={onClose} />
                     </div>
                     <div className="ps-modal__body">{children}</div>
                     {footer && <div className="ps-modal__foot">{footer}</div>}
@@ -148,9 +149,9 @@ export function Meter({ value, label }: { value: number; label: string }) {
 }
 
 export function relativeTime(iso: string | null | undefined): string {
-    if (!iso) return 'Never';
+    if (!iso) return t('Never');
     const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
-    const format = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+    const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
     const steps: [number, Intl.RelativeTimeFormatUnit][] = [[60, 'second'], [3600, 'minute'], [86400, 'hour'], [604800, 'day'], [2629800, 'week'], [31557600, 'month']];
     for (let i = 0; i < steps.length; i++) {
         const [limit, unit] = steps[i];

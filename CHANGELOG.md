@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.4.0
+
+- English, Dutch and Swedish: the browser's language by default, or chosen in the account menu (the choice follows you to every PlainShow site).
+- The account menu is the same in every app: Account, the app's own items, Language, Theme, Sign out.
+- Groups: your groups as cards; a card opens the group and who is in it; owners edit it from there (name and colour, people and their LaTeX access, owner, delete).
+- Dashboard widgets from other services come in your language.
+
 ## v1.3.0
 
 - While a part of PlainShow installs an update, its site shows an "updating" page that reloads by itself; the dashboard's Updates page carries on while the dashboard updates itself.

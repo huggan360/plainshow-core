@@ -1,5 +1,6 @@
 import { Frame } from '@/Components/ui';
 import { ReactNode } from 'react';
+import { t } from '@/i18n';
 
 export type PermissionChoice = 'default' | 'allow' | 'deny';
 export type PermissionTier = 'user' | 'moderator' | 'admin';
@@ -20,16 +21,16 @@ export type PermissionExtension = {
 };
 
 const TIERS: Array<{ key: PermissionTier; label: string; text: string }> = [
-    { key: 'user', label: 'Common user privileges', text: 'Everyday actions with the lowest level of access.' },
-    { key: 'moderator', label: 'Moderator privileges', text: 'Create, edit or manage content beyond ordinary use.' },
-    { key: 'admin', label: 'Admin privileges', text: 'Sensitive account, platform or server administration.' },
+    { key: 'user', label: t('Common user privileges'), text: t('Everyday actions with the lowest level of access.') },
+    { key: 'moderator', label: t('Moderator privileges'), text: t('Create, edit or manage content beyond ordinary use.') },
+    { key: 'admin', label: t('Admin privileges'), text: t('Sensitive account, platform or server administration.') },
 ];
 
 export function capabilitySections(capabilities: PermissionCapability[]) {
     return TIERS.map((tier) => ({
         ...tier,
-        groups: Array.from(new Set(capabilities.filter((capability) => capability.tier === tier.key).map((capability) => capability.group || 'General')))
-            .map((group) => ({ group, capabilities: capabilities.filter((capability) => capability.tier === tier.key && (capability.group || 'General') === group) })),
+        groups: Array.from(new Set(capabilities.filter((capability) => capability.tier === tier.key).map((capability) => capability.group || t('General'))))
+            .map((group) => ({ group, capabilities: capabilities.filter((capability) => capability.tier === tier.key && (capability.group || t('General')) === group) })),
     })).filter((tier) => tier.groups.length > 0);
 }
 
@@ -57,14 +58,14 @@ export function implicationText(name: string, activeNames: string[], capabilitie
 
 export function CapabilityInfo({ capability, implication }: { capability: PermissionCapability; implication?: string }) {
     return <span className="perm-cap">
-        <span className="perm-cap__name">{capability.label}<code className="ps-small ps-muted">{capability.name}</code></span>
+        <span className="perm-cap__name">{t(capability.label)}<code className="ps-small ps-muted">{capability.name}</code></span>
         <span className="perm-cap__help"><i className="bx bx-info-circle" aria-hidden="true" />{implication ?? capability.description}</span>
     </span>;
 }
 
 export function CapabilitySectionRows({ capabilities, columns, render }: { capabilities: PermissionCapability[]; columns: number; render: (capability: PermissionCapability) => ReactNode }) {
     return <>{capabilitySections(capabilities).map((tier) => <tbody key={tier.key} className={`perm-tier perm-tier--${tier.key}`}>
-        <tr className="perm-tier__head"><th colSpan={columns}><span>{tier.label}</span><small>{tier.text}</small></th></tr>
+        <tr className="perm-tier__head"><th colSpan={columns}><span>{t(tier.label)}</span><small>{tier.text}</small></th></tr>
         {tier.groups.map(({ group, capabilities: grouped }) => <FragmentRows key={group} group={group} capabilities={grouped} columns={columns} render={render} />)}
     </tbody>)}</>;
 }
@@ -98,13 +99,13 @@ export function PermissionEditor({ extensions, effectiveServices, effectiveCapab
                 <table className="ps-table perm-table perm-table--person">
                     <thead><tr>
                         <th scope="col"><span className="perm-ext"><i className={`bx ${extension.icon}`} aria-hidden="true" />{extension.name}</span></th>
-                        <th scope="col" className="perm-now">Now</th><th scope="col">Exception</th>
+                        <th scope="col" className="perm-now">{t('Now')}</th><th scope="col">{t('Exception')}</th>
                     </tr></thead>
                     <tbody>
                         <tr className="perm-row perm-row--access">
-                            <th scope="row"><strong>Open {extension.name}</strong></th>
+                            <th scope="row"><strong>{t('Open')}{' '}{extension.name}</strong></th>
                             <td className="perm-now"><Verdict yes={service} /></td>
-                            <td><PermissionChoiceControl value={access[extension.id] ?? 'default'} disabled={extension.system && extension.id === 'core'} label={`Open ${extension.name}`} onChange={(value) => onAccessChange(extension.id, value)} /></td>
+                            <td><PermissionChoiceControl value={access[extension.id] ?? 'default'} disabled={extension.system && extension.id === 'core'} label={t('Open {name}', { name: extension.name })} onChange={(value) => onAccessChange(extension.id, value)} /></td>
                         </tr>
                     </tbody>
                     {!isAdmin && <CapabilitySectionRows capabilities={extension.capabilities} columns={3} render={(capability) => {
@@ -113,7 +114,7 @@ export function PermissionEditor({ extensions, effectiveServices, effectiveCapab
                         return <tr key={capability.name} className={`perm-row${included ? ' is-implied' : ''}`}>
                             <th scope="row"><CapabilityInfo capability={capability} implication={reason} /></th>
                             <td className="perm-now"><Verdict yes={effectiveCapabilities.includes('*') || effectiveCapabilities.includes(capability.name) || included} /></td>
-                            <td><PermissionChoiceControl value={included ? 'allow' : capabilities[capability.name] ?? 'default'} disabled={included} label={capability.label} title={reason} onChange={(value) => onCapabilityChange(capability.name, value)} /></td>
+                            <td><PermissionChoiceControl value={included ? 'allow' : capabilities[capability.name] ?? 'default'} disabled={included} label={t(capability.label)} title={reason} onChange={(value) => onCapabilityChange(capability.name, value)} /></td>
                         </tr>;
                     }} />}
                 </table>
@@ -123,11 +124,11 @@ export function PermissionEditor({ extensions, effectiveServices, effectiveCapab
 }
 
 function Verdict({ yes }: { yes: boolean }) {
-    return yes ? <span className="perm-verdict is-yes"><i className="bx bx-check" aria-hidden="true" />Yes</span> : <span className="perm-verdict"><i className="bx bx-minus" aria-hidden="true" />No</span>;
+    return yes ? <span className="perm-verdict is-yes"><i className="bx bx-check" aria-hidden="true" />{t('Yes')}</span> : <span className="perm-verdict"><i className="bx bx-minus" aria-hidden="true" />{t('No')}</span>;
 }
 
 function PermissionChoiceControl({ value, onChange, label, disabled, title }: { value: PermissionChoice; onChange: (value: PermissionChoice) => void; label: string; disabled?: boolean; title?: string }) {
-    const options: [PermissionChoice, string][] = [['default', 'Role'], ['allow', 'Allow'], ['deny', 'Deny']];
+    const options: [PermissionChoice, string][] = [['default', t('Role')], ['allow', t('Allow')], ['deny', t('Deny')]];
     return <div className="perm-tri" role="radiogroup" aria-label={label} title={title}>{options.map(([option, text]) =>
         <button key={option} type="button" role="radio" aria-checked={value === option} disabled={disabled} className={`perm-tri__option perm-tri__option--${option}${value === option ? ' is-active' : ''}`} onClick={() => onChange(option)}>{text}</button>
     )}</div>;

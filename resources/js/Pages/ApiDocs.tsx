@@ -3,6 +3,7 @@ import { Badge, Frame } from '@/Components/ui';
 import { SharedProps } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { t } from '@/i18n';
 
 type Field = { name: string; type?: string; in?: string; required: boolean; description: string };
 type Endpoint = { method: string; path: string; summary: string; description: string; capability: string | null; public: boolean; parameters: Field[]; body: { type: string; fields: Field[] } | null };
@@ -13,18 +14,18 @@ export default function ApiDocs({ services }: { services: Service[] }) {
     const content = <Docs services={services} signedIn={!!props.auth.user} />;
 
     if (props.auth.user) {
-        return <AppShell title="API" wide description="Call PlainShow from your own scripts: one address and one token for every service.">{content}</AppShell>;
+        return <AppShell title={t('API')} wide description={t('Call PlainShow from your own scripts: one address and one token for every service.')}>{content}</AppShell>;
     }
 
     return (
         <div className="ps docs-guest">
-            <Head title="API" />
+            <Head title={t('API')} />
             <header className="docs-guest__bar">
-                <a href="/" className="ps-brand"><img className="ps-brand__logo" src={`/ui/brand/plainshow-logo.webp?v=${props.uiVersion}`} alt="PlainShow" /></a>
-                <a href="/auth/login?return=%2Fapi" className="ps-btn ps-btn--sm ps-btn--primary">Sign in</a>
+                <a href="/" className="ps-brand"><img className="ps-brand__logo" src={`/ui/brand/plainshow-logo.webp?v=${props.uiVersion}`} alt={t('PlainShow')} /></a>
+                <a href="/auth/login?return=%2Fapi" className="ps-btn ps-btn--sm ps-btn--primary">{t('Sign in')}</a>
             </header>
             <main className="ps-content ps-content--wide">
-                <div className="ps-page-head"><div><h1 className="ps-page-head__title">API</h1><p className="ps-page-head__text">Use PlainShow from your own scripts: one address, one token, every service.</p></div></div>
+                <div className="ps-page-head"><div><h1 className="ps-page-head__title">{t('API')}</h1><p className="ps-page-head__text">{t('Use PlainShow from your own scripts: one address, one token, every service.')}</p></div></div>
                 {content}
             </main>
         </div>
@@ -37,16 +38,16 @@ function Docs({ services, signedIn }: { services: Service[]; signedIn: boolean }
             <Frame>
                 <div className="docs-start">
                     <div className="docs-start__steps">
-                        <h2 className="ps-frame__title">Getting started</h2>
+                        <h2 className="ps-frame__title">{t('Getting started')}</h2>
                         <ol className="docs-steps">
-                            <li><strong>Make a token</strong> in <a href={signedIn ? '/account/tokens' : '/auth/login?return=%2Faccount%2Ftokens'}>Account, API tokens</a>. Pick what it reaches; it lasts 90 days.</li>
-                            <li><strong>Send it</strong> with every call. Calls act as you, so a token never does more than you can.</li>
-                            <li><strong>Read the answer:</strong> JSON, or one of the statuses on the right.</li>
+                            <li><strong>{t('Make a token')}</strong> in <a href={signedIn ? '/account/tokens' : '/auth/login?return=%2Faccount%2Ftokens'}>{t('Account, API tokens')}</a>{t('. Pick what it reaches; it lasts 90 days.')}</li>
+                            <li><strong>{t('Send it')}</strong> {' '}{t('with every call. Calls act as you, so a token never does more than you can.')}</li>
+                            <li><strong>{t('Read the answer:')}</strong> {' '}{t('JSON, or one of the statuses on the right.')}</li>
                         </ol>
-                        <pre className="docs-code">{'curl https://plainshow.se/api/core/v1/me \\\n  -H "Authorization: Bearer $PLAINSHOW_TOKEN"'}</pre>
+                        <pre className="docs-code">{t('curl https://plainshow.se/api/core/v1/me \\\n  -H "Authorization: Bearer $PLAINSHOW_TOKEN"')}</pre>
                     </div>
                     <ul className="ps-chain docs-errors">
-                        {[['401', 'No token, or it expired or was revoked'], ['403', 'Not allowed, or the token does not reach this'], ['404', 'Nothing there'], ['422', 'Something you sent is wrong'], ['429', 'Over 120 calls a minute'], ['503', 'The service is turned off']].map(([code, text]) => (
+                        {[['401', t('No token, or it expired or was revoked')], ['403', t('Not allowed, or the token does not reach this')], ['404', t('Nothing there')], ['422', t('Something you sent is wrong')], ['429', 'Over 120 calls a minute'], ['503', t('The service is turned off')]].map(([code, text]) => (
                             <li key={code}><code>{code}</code><span>{text}</span></li>
                         ))}
                     </ul>
@@ -67,7 +68,7 @@ function ServiceDocs({ service }: { service: Service }) {
                     <strong>{service.name}</strong>
                     <code className="docs-service__base">{service.base}</code>
                 </div>
-                <a className="ps-btn ps-btn--sm ps-btn--ghost" href={service.spec} target="_blank" rel="noreferrer">OpenAPI</a>
+                <a className="ps-btn ps-btn--sm ps-btn--ghost" href={service.spec} target="_blank" rel="noreferrer">{t('OpenAPI')}</a>
                 <button type="button" className="ps-btn ps-btn--sm" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
                     {service.endpoints.length} endpoints<i className={`bx ${open ? 'bx-chevron-up' : 'bx-chevron-down'}`} aria-hidden="true" />
                 </button>
@@ -86,14 +87,14 @@ function EndpointRow({ endpoint }: { endpoint: Endpoint }) {
                 <span className={`docs-method docs-method--${endpoint.method.toLowerCase()}`}>{endpoint.method}</span>
                 <code className="docs-endpoint__path">{endpoint.path}</code>
                 <span className="docs-endpoint__summary">{endpoint.summary}</span>
-                {endpoint.public && <Badge>No token</Badge>}
+                {endpoint.public && <Badge>{t('No token')}</Badge>}
             </button>
             {open && (
                 <div className="docs-endpoint__detail">
-                    {endpoint.description && <p>{endpoint.description}</p>}
-                    {endpoint.capability && <p className="ps-small ps-muted">Needs <code>{endpoint.capability}</code>.</p>}
-                    {endpoint.parameters.length > 0 && <FieldTable title="Parameters" fields={endpoint.parameters} />}
-                    {endpoint.body && endpoint.body.fields.length > 0 && <FieldTable title={endpoint.body.type === 'multipart/form-data' ? 'Form fields' : 'Body'} fields={endpoint.body.fields} />}
+                    {endpoint.description && <p>{t(endpoint.description)}</p>}
+                    {endpoint.capability && <p className="ps-small ps-muted">{t('Needs')}{' '}<code>{endpoint.capability}</code>.</p>}
+                    {endpoint.parameters.length > 0 && <FieldTable title={t('Parameters')} fields={endpoint.parameters} />}
+                    {endpoint.body && endpoint.body.fields.length > 0 && <FieldTable title={endpoint.body.type === 'multipart/form-data' ? t('Form fields') : t('Body')} fields={endpoint.body.fields} />}
                 </div>
             )}
         </li>
@@ -109,7 +110,7 @@ function FieldTable({ title, fields }: { title: string; fields: Field[] }) {
                     <tr key={field.name}>
                         <th scope="row"><code>{field.name}</code>{field.required && <span className="docs-fields__required">required</span>}</th>
                         <td className="ps-muted">{field.in || field.type}</td>
-                        <td>{field.description}</td>
+                        <td>{t(field.description)}</td>
                     </tr>
                 ))}</tbody>
             </table>

@@ -2,6 +2,7 @@ import { Avatar } from '@/Components/ui';
 import { can, SharedProps } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
+import { lang, LANGS, setLang, t } from '@/i18n';
 
 type Toast = { id: number; kind: 'success' | 'error'; message: string };
 
@@ -60,30 +61,30 @@ export default function AppShell({ title, children, wide, actions, description, 
     const path = url.split('?')[0];
     const active = (prefix: string) => (prefix === '/' ? path === '/' : path.startsWith(prefix));
     const admin = [
-        can(caps, 'core.users.manage') && { href: '/admin/users', icon: 'bx-group', label: 'Accounts' },
-        can(caps, 'core.extensions.manage') && { href: '/admin/services', icon: 'bx-extension', label: 'Services' },
-        can(caps, 'core.permissions.manage') && { href: '/admin/permissions', icon: 'bx-key', label: 'Permissions' },
-        can(caps, 'core.updates.apply') && { href: '/admin/updates', icon: 'bx-refresh', label: 'Updates' },
-        can(caps, 'core.audit.view') && { href: '/admin/audit', icon: 'bx-list-ul', label: 'Audit log' },
+        can(caps, 'core.users.manage') && { href: '/admin/users', icon: 'bx-group', label: t('Accounts') },
+        can(caps, 'core.extensions.manage') && { href: '/admin/services', icon: 'bx-extension', label: t('Services') },
+        can(caps, 'core.permissions.manage') && { href: '/admin/permissions', icon: 'bx-key', label: t('Permissions') },
+        can(caps, 'core.updates.apply') && { href: '/admin/updates', icon: 'bx-refresh', label: t('Updates') },
+        can(caps, 'core.audit.view') && { href: '/admin/audit', icon: 'bx-list-ul', label: t('Audit log') },
     ].filter(Boolean) as { href: string; icon: string; label: string }[];
 
     return (
         <div className={`ps-shell${menuOpen ? ' is-menu-open' : ''}`}>
             <Head title={title} />
-            <aside className="ps-sidebar" aria-label="Main">
+            <aside className="ps-sidebar" aria-label={t('Main')}>
                 <div className="ps-sidebar__brand">
                     <Link href="/" className="ps-brand">
-                        <img className="ps-brand__logo" src={`/ui/brand/plainshow-logo.webp?v=${props.uiVersion}`} alt="PlainShow" width="92" height="30" />
+                        <img className="ps-brand__logo" src={`/ui/brand/plainshow-logo.webp?v=${props.uiVersion}`} alt={t('PlainShow')} width="92" height="30" />
                     </Link>
                 </div>
                 <nav className="ps-nav">
-                    <Link href="/" className={`ps-nav__item${active('/') ? ' is-active' : ''}`}><i className="bx bx-grid-alt" aria-hidden="true" />Dashboard</Link>
-                    <Link href="/account" className={`ps-nav__item${active('/account') ? ' is-active' : ''}`}><i className="bx bx-user-circle" aria-hidden="true" />Account</Link>
-                    {can(caps, 'core.groups.view') && <Link href="/groups" className={`ps-nav__item${active('/groups') ? ' is-active' : ''}`}><i className="bx bx-group" aria-hidden="true" />Groups</Link>}
+                    <Link href="/" className={`ps-nav__item${active('/') ? ' is-active' : ''}`}><i className="bx bx-grid-alt" aria-hidden="true" />{t('Dashboard')}</Link>
+                    <Link href="/account" className={`ps-nav__item${active('/account') ? ' is-active' : ''}`}><i className="bx bx-user-circle" aria-hidden="true" />{t('Account')}</Link>
+                    {can(caps, 'core.groups.view') && <Link href="/groups" className={`ps-nav__item${active('/groups') ? ' is-active' : ''}`}><i className="bx bx-group" aria-hidden="true" />{t('Groups')}</Link>}
                 </nav>
                 {services.length > 0 && (
                     <div className="ps-sidebar__section">
-                        <p className="ps-eyebrow ps-sidebar__label">Services</p>
+                        <p className="ps-eyebrow ps-sidebar__label">{t('Services')}</p>
                         <nav className="ps-nav">
                             {services.map((app) => (
                                 <a key={app.id} href={app.url ?? '#'} className="ps-nav__item"><i className={`bx ${app.icon}`} aria-hidden="true" />{app.name}<i className="bx bx-right-top-arrow-circle ps-nav__count" aria-hidden="true" /></a>
@@ -93,28 +94,28 @@ export default function AppShell({ title, children, wide, actions, description, 
                 )}
                 {admin.length > 0 && (
                     <div className="ps-sidebar__section">
-                        <p className="ps-eyebrow ps-sidebar__label">Administration</p>
+                        <p className="ps-eyebrow ps-sidebar__label">{t('Administration')}</p>
                         <nav className="ps-nav">
-                            {admin.map((item) => <Link key={item.href} href={item.href} className={`ps-nav__item${active(item.href) ? ' is-active' : ''}`}><i className={`bx ${item.icon}`} aria-hidden="true" />{item.label}</Link>)}
+                            {admin.map((item) => <Link key={item.href} href={item.href} className={`ps-nav__item${active(item.href) ? ' is-active' : ''}`}><i className={`bx ${item.icon}`} aria-hidden="true" />{t(item.label)}</Link>)}
                         </nav>
                     </div>
                 )}
                 <div className="ps-sidebar__foot">
-                    <Link href="/design" className={`ps-nav__item${active('/design') ? ' is-active' : ''}`}><i className="bx bx-palette" aria-hidden="true" />Design</Link>
-                    {can(caps, 'core.api.use') && <Link href="/api" className={`ps-nav__item${path === '/api' ? ' is-active' : ''}`}><i className="bx bx-code-alt" aria-hidden="true" />API</Link>}
+                    <Link href="/design" className={`ps-nav__item${active('/design') ? ' is-active' : ''}`}><i className="bx bx-palette" aria-hidden="true" />{t('Design')}</Link>
+                    {can(caps, 'core.api.use') && <Link href="/api" className={`ps-nav__item${path === '/api' ? ' is-active' : ''}`}><i className="bx bx-code-alt" aria-hidden="true" />{t('API')}</Link>}
                     <div className={`ps-dropdown ps-me${accountOpen ? ' is-open' : ''}`} ref={accountRef}>
-                        <button type="button" className="ps-me__button" aria-expanded={accountOpen} aria-label="Account menu" onClick={() => setAccountOpen((open) => !open)}>
+                        <button type="button" className="ps-me__button" aria-expanded={accountOpen} aria-label={t('Account menu')} onClick={() => setAccountOpen((open) => !open)}>
                             <Avatar src={user.avatar} initials={user.initials} size="sm" />
                             <span className="ps-me__text"><span className="ps-me__name">{user.name}</span><span className="ps-me__meta">@{user.username}</span></span>
                             <i className={`bx ${accountOpen ? 'bx-chevron-down' : 'bx-chevron-up'} ps-me__chevron`} aria-hidden="true" />
                         </button>
                         {accountOpen && (
                             <div className="ps-dropdown__menu ps-dropdown__menu--up">
-                                <Link href="/account" className="ps-dropdown__item"><i className="bx bx-user" />Profile</Link>
-                                <Link href="/account/security" className="ps-dropdown__item"><i className="bx bx-shield-quarter" />Security</Link>
-                                <button type="button" className="ps-dropdown__item" onClick={toggleTheme}><i className={`bx ${theme === 'light' ? 'bx-moon' : 'bx-sun'}`} />{theme === 'light' ? 'Dark theme' : 'Light theme'}</button>
+                                <Link href="/account" className="ps-dropdown__item"><i className="bx bx-user" />{t('Account')}</Link>
+                                <LanguageSwitch />
+                                <button type="button" className="ps-dropdown__item" onClick={toggleTheme}><i className={`bx ${theme === 'light' ? 'bx-moon' : 'bx-sun'}`} />{theme === 'light' ? t('Dark theme') : t('Light theme')}</button>
                                 <div className="ps-dropdown__sep" />
-                                <a href="/auth/logout" className="ps-dropdown__item"><i className="bx bx-log-out" />Sign out</a>
+                                <a href="/auth/logout" className="ps-dropdown__item"><i className="bx bx-log-out" />{t('Sign out')}</a>
                             </div>
                         )}
                     </div>
@@ -123,11 +124,11 @@ export default function AppShell({ title, children, wide, actions, description, 
 
             <div className="ps-main">
                 <header className="ps-topbar">
-                    <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-menu-toggle" aria-label="Open menu" onClick={() => setMenuOpen(true)}><i className="bx bx-menu" /></button>
-                    <Link href="/" className="ps-brand shell-topbar-mark" aria-label="PlainShow"><img className="ps-brand__mark" src={`/ui/brand/plainshow-icon.webp?v=${props.uiVersion}`} alt="" /></Link>
+                    <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-menu-toggle" aria-label={t('Open menu')} onClick={() => setMenuOpen(true)}><i className="bx bx-menu" /></button>
+                    <Link href="/" className="ps-brand shell-topbar-mark" aria-label={t('PlainShow')}><img className="ps-brand__mark" src={`/ui/brand/plainshow-icon.webp?v=${props.uiVersion}`} alt="" /></Link>
                     <span className="ps-topbar__spacer" />
                     <div className="ps-switcher" ref={switcherRef}>
-                        <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-switcher__trigger" aria-label="Switch service" aria-expanded={switcherOpen} onClick={() => setSwitcherOpen((open) => !open)}><i className="bx bx-grid" /></button>
+                        <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon ps-switcher__trigger" aria-label={t('Switch service')} aria-expanded={switcherOpen} onClick={() => setSwitcherOpen((open) => !open)}><i className="bx bx-grid" /></button>
                         {switcherOpen && (
                             <div className="ps-switcher__panel">
                                 <div className="ps-switcher__grid">
@@ -155,10 +156,10 @@ export default function AppShell({ title, children, wide, actions, description, 
                 </main>
             </div>
 
-            <nav className="ps-tabbar" aria-label="Quick navigation">
-                <Link href="/" className={`ps-tabbar__item${active('/') ? ' is-active' : ''}`}><i className="bx bx-grid-alt" />Home</Link>
-                {can(caps, 'core.groups.view') && <Link href="/groups" className={`ps-tabbar__item${active('/groups') ? ' is-active' : ''}`}><i className="bx bx-group" />Groups</Link>}
-                <Link href="/account" className={`ps-tabbar__item${active('/account') ? ' is-active' : ''}`}><i className="bx bx-user-circle" />Account</Link>
+            <nav className="ps-tabbar" aria-label={t('Quick navigation')}>
+                <Link href="/" className={`ps-tabbar__item${active('/') ? ' is-active' : ''}`}><i className="bx bx-grid-alt" />{t('Home')}</Link>
+                {can(caps, 'core.groups.view') && <Link href="/groups" className={`ps-tabbar__item${active('/groups') ? ' is-active' : ''}`}><i className="bx bx-group" />{t('Groups')}</Link>}
+                <Link href="/account" className={`ps-tabbar__item${active('/account') ? ' is-active' : ''}`}><i className="bx bx-user-circle" />{t('Account')}</Link>
             </nav>
 
             <div className="ps-toasts" aria-live="polite">
@@ -171,4 +172,14 @@ export default function AppShell({ title, children, wide, actions, description, 
             </div>
         </div>
     );
+}
+
+/** English, Dutch or Swedish, for every PlainShow site (the same switch in every app's menu). */
+export function LanguageSwitch() {
+    return <div className="ps-dropdown__lang" role="group" aria-label={t('Language')}>
+        <i className="bx bx-globe" aria-hidden="true" /><span>{t('Language')}</span>
+        <span className="ps-lang">{LANGS.map((item) => (
+            <button key={item.code} type="button" lang={item.code} title={item.name} aria-pressed={item.code === lang} className={item.code === lang ? 'is-active' : ''} onClick={() => setLang(item.code)}>{item.code.toUpperCase()}</button>
+        ))}</span>
+    </div>;
 }

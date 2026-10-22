@@ -45,6 +45,6 @@ class AuditLabels
 
     public static function label(string $event): string
     {
-        return self::LABELS[$event] ?? ucfirst(str_replace(['.', '_'], ' ', $event));
+        return isset(self::LABELS[$event]) ? __(self::LABELS[$event]) : ucfirst(str_replace(['.', '_'], ' ', $event));
     }
 }

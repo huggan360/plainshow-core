@@ -79,7 +79,7 @@ class UsersController extends Controller
                 throw ValidationException::withMessages(['username' => $error->getMessage()]);
             }
             if ($cloudExists) {
-                throw ValidationException::withMessages(['username' => 'That Cloud account already exists. Link it before creating this person.']);
+                throw ValidationException::withMessages(['username' => __('That Cloud account already exists. Link it before creating this person.')]);
             }
         }
         try {
@@ -101,7 +101,7 @@ class UsersController extends Controller
         Audit::record('user.created', ['username' => $user->username, 'role' => $user->role], $user->id);
 
         return back()
-            ->with('status', "Account {$user->username} created. Send them the link below to set a password.")
+            ->with('status', __('Account :username created. Send them the link below to set a password.', ['username' => $user->username]))
             ->with('reset_link', ['username' => $user->username, 'url' => ResetLinks::create($user)]);
     }
 
@@ -114,10 +114,10 @@ class UsersController extends Controller
 
         $before = $user->only(['role', 'status', 'pi_username']);
         if ($data['username'] !== $user->username) {
-            throw ValidationException::withMessages(['username' => 'Changing an existing username needs an account migration.']);
+            throw ValidationException::withMessages(['username' => __('Changing an existing username needs an account migration.')]);
         }
         if ($user->pi_username && $data['pi_username'] !== $user->pi_username) {
-            throw ValidationException::withMessages(['piUsername' => 'An existing server account cannot be relinked here.']);
+            throw ValidationException::withMessages(['piUsername' => __('An existing server account cannot be relinked here.')]);
         }
         $beforeServices = Permissions::for($user)['services'];
         $data = $this->withPiUsername($data, Permissions::forRole($data['role'])['services']);
@@ -137,7 +137,7 @@ class UsersController extends Controller
         }
         Audit::record('user.updated', ['before' => $before, 'after' => $user->only(['role', 'status', 'pi_username'])], $user->id);
 
-        return back()->with('status', "Saved {$user->username}.");
+        return back()->with('status', __('Saved :username.', ['username' => $user->username]));
     }
 
     public function access(Request $request, User $user): RedirectResponse
@@ -176,7 +176,7 @@ class UsersController extends Controller
         Permissions::forget($user);
         Audit::record('user.access_changed', ['access' => $data['access']], $user->id);
 
-        return back()->with('status', "Service access saved for {$user->username}.");
+        return back()->with('status', __('Service access saved for :username.', ['username' => $user->username]));
     }
 
     public function resetLink(User $user): RedirectResponse
@@ -196,13 +196,13 @@ class UsersController extends Controller
             'retainData' => ['required', 'boolean'],
         ]);
         if ($user->pi_username === config('plainshow.protected_pi_username')) {
-            throw ValidationException::withMessages(['confirmUsername' => 'The protected server account cannot be removed here.']);
+            throw ValidationException::withMessages(['confirmUsername' => __('The protected server account cannot be removed here.')]);
         }
         if ($user->role === 'admin' && User::where('role', 'admin')->where('status', 'active')->whereKeyNot($user->id)->doesntExist()) {
-            throw ValidationException::withMessages(['confirmUsername' => 'This is the last active administrator.']);
+            throw ValidationException::withMessages(['confirmUsername' => __('This is the last active administrator.')]);
         }
         if (DB::table('core_groups')->where('owner_id', $user->id)->exists()) {
-            throw ValidationException::withMessages(['confirmUsername' => 'Transfer or delete their groups first.']);
+            throw ValidationException::withMessages(['confirmUsername' => __('Transfer or delete their groups first.')]);
         }
         $username = $user->username;
         $memberships = DB::table('core_group_members')->where('user_id', $user->id)->pluck('group_id')->all();
@@ -268,13 +268,13 @@ class UsersController extends Controller
             'piUsername' => ['nullable', 'string', 'max:32', 'regex:/^[a-z_][a-z0-9_-]*$/', Rule::unique('users', 'pi_username')->ignore($user?->id)],
         ]);
         if (str_starts_with($data['username'], 'removed-')) {
-            throw ValidationException::withMessages(['username' => 'That username is reserved.']);
+            throw ValidationException::withMessages(['username' => __('That username is reserved.')]);
         }
         if (DB::table('core_reserved_usernames')->where('username', strtolower($data['username']))->exists()) {
-            throw ValidationException::withMessages(['username' => 'That username belonged to a removed account.']);
+            throw ValidationException::withMessages(['username' => __('That username belonged to a removed account.')]);
         }
         if (empty($user?->pi_username) && ! empty($data['piUsername']) && $data['piUsername'] !== strtolower($data['username'])) {
-            throw ValidationException::withMessages(['piUsername' => 'The server username must match the PlainShow username.']);
+            throw ValidationException::withMessages(['piUsername' => __('The server username must match the PlainShow username.')]);
         }
 
         return [
@@ -294,10 +294,10 @@ class UsersController extends Controller
         }
         $candidate = strtolower($data['username']);
         if (! preg_match('/^[a-z_][a-z0-9_-]{1,30}$/D', $candidate)) {
-            throw ValidationException::withMessages(['username' => 'Web access requires a Linux-compatible username.']);
+            throw ValidationException::withMessages(['username' => __('Web access requires a Linux-compatible username.')]);
         }
         if (DB::table('users')->where('pi_username', $candidate)->where('username', '!=', $data['username'])->exists()) {
-            throw ValidationException::withMessages(['username' => 'That server username is already in use.']);
+            throw ValidationException::withMessages(['username' => __('That server username is already in use.')]);
         }
         $data['pi_username'] = $candidate;
 
@@ -359,10 +359,10 @@ class UsersController extends Controller
     {
         $losesAdmin = $user->role === 'admin' && ($data['role'] !== 'admin' || $data['status'] !== 'active');
         if ($losesAdmin && User::where('role', 'admin')->where('status', 'active')->whereKeyNot($user->id)->doesntExist()) {
-            throw ValidationException::withMessages(['role' => 'This is the last active administrator.']);
+            throw ValidationException::withMessages(['role' => __('This is the last active administrator.')]);
         }
         if ($user->is($request->user()) && ($data['role'] !== $user->role || $data['status'] !== 'active')) {
-            throw ValidationException::withMessages(['role' => 'Ask another administrator to change your own role or status.']);
+            throw ValidationException::withMessages(['role' => __('Ask another administrator to change your own role or status.')]);
         }
     }
 }

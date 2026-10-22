@@ -3,6 +3,7 @@ import { Avatar, Badge, Button, Field, Frame, Modal, relativeTime, RoleBadge } f
 import { PermissionCapability, PermissionChoice, PermissionEditor } from '@/Components/PermissionEditor';
 import { router, useForm } from '@inertiajs/react';
 import { FormEvent, useEffect, useState } from 'react';
+import { t, tn } from '@/i18n';
 
 type Row = {
     id: number; username: string; name: string; firstName: string; lastName: string; initials: string; avatar: string | null;
@@ -28,18 +29,18 @@ export default function Users({ users, search, extensions, access, capabilities,
     }, [query, search]);
 
     return (
-        <AppShell title="Accounts" wide description={`${users.length} ${users.length === 1 ? 'person' : 'people'}`} actions={<>
+        <AppShell title={t('Accounts')} wide description={tn(users.length, '1 person', '{n} people')} actions={<>
             <div className="ps-input-wrap admin-search">
                 <i className="bx bx-search" aria-hidden="true" />
-                <input className="ps-input" type="search" placeholder="Search accounts" value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search accounts" />
+                <input className="ps-input" type="search" placeholder={t('Search accounts')} value={query} onChange={(event) => setQuery(event.target.value)} aria-label={t('Search accounts')} />
             </div>
-            <Button variant="primary" icon="bx-plus" onClick={() => setCreating(true)}>New account</Button>
+            <Button variant="primary" icon="bx-plus" onClick={() => setCreating(true)}>{t('New account')}</Button>
         </>}>
 
             <Frame flush>
                 <div className="ps-table-wrap">
                     <table className="ps-table admin-table">
-                        <thead><tr><th>Name</th><th>Role</th><th className="admin-hide-sm">Services</th><th className="admin-hide-sm">Security</th><th className="admin-hide-md">Last sign-in</th><th aria-label="Actions" /></tr></thead>
+                        <thead><tr><th>{t('Name')}</th><th>{t('Role')}</th><th className="admin-hide-sm">{t('Services')}</th><th className="admin-hide-sm">{t('Security')}</th><th className="admin-hide-md">{t('Last sign-in')}</th><th aria-label={t('Actions')} /></tr></thead>
                         <tbody>
                             {users.map((user) => (
                                 <tr key={user.id} className={user.status !== 'active' ? 'is-muted' : ''}>
@@ -49,11 +50,11 @@ export default function Users({ users, search, extensions, access, capabilities,
                                             <span><strong>{user.name}</strong><span className="ps-muted ps-small">@{user.username}</span></span>
                                         </button>
                                     </td>
-                                    <td><div className="ps-inline" style={{ flexWrap: 'wrap' }}><RoleBadge role={user.role} name={roles.find((role) => role.key === user.role)?.name} color={roles.find((role) => role.key === user.role)?.color} />{user.groups.map((group) => <Badge key={group} tone="accent">{group}</Badge>)}{user.status !== 'active' && <Badge tone="red">Disabled</Badge>}</div></td>
+                                    <td><div className="ps-inline" style={{ flexWrap: 'wrap' }}><RoleBadge role={user.role} name={roles.find((role) => role.key === user.role)?.name} color={roles.find((role) => role.key === user.role)?.color} />{user.groups.map((group) => <Badge key={group} tone="accent">{group}</Badge>)}{user.status !== 'active' && <Badge tone="red">{t('Disabled')}</Badge>}</div></td>
                                     <td className="admin-hide-sm"><div className="admin-services">{extensions.filter((extension) => !extension.system && user.services.includes(extension.id)).map((extension) => <i key={extension.id} className={`bx ${extension.icon}`} title={extension.name} />)}</div></td>
-                                    <td className="admin-hide-sm">{user.twoFactor ? <Badge tone="green">Two-factor</Badge> : <span className="ps-faint ps-small">Password only</span>}</td>
+                                    <td className="admin-hide-sm">{user.twoFactor ? <Badge tone="green">{t('Two-factor')}</Badge> : <span className="ps-faint ps-small">{t('Password only')}</span>}</td>
                                     <td className="admin-hide-md ps-small">{relativeTime(user.lastLogin)}</td>
-                                    <td className="admin-actions"><Button size="sm" variant="ghost" iconOnly icon="bx-edit-alt" aria-label={`Edit ${user.name}`} onClick={() => setEditing(user)} /></td>
+                                    <td className="admin-actions"><Button size="sm" variant="ghost" iconOnly icon="bx-edit-alt" aria-label={t('Edit {name}', { name: user.name })} onClick={() => setEditing(user)} /></td>
                                 </tr>
                             ))}
                         </tbody>
@@ -63,10 +64,10 @@ export default function Users({ users, search, extensions, access, capabilities,
 
             {editing && <EditUser key={editing.id} user={editing} roles={roles} extensions={extensions} overrides={access[editing.id] ?? {}} capabilities={capabilities} capabilityOverrides={capabilityOverrides[editing.id] ?? {}} onClose={() => setEditing(null)} />}
             {creating && <CreateUser roles={roles} onClose={() => setCreating(false)} />}
-            <Modal open={link !== null} size="sm" title="Password link" onClose={() => setLink(null)}
-                footer={<><Button variant="ghost" onClick={() => setLink(null)}>Done</Button><Button variant="primary" icon="bx-copy" onClick={() => navigator.clipboard?.writeText(link?.url ?? '')}>Copy link</Button></>}>
-                <p className="ps-soft">Send this to <strong>{link?.username}</strong>. It works once, for one hour.</p>
-                <input className="ps-input ps-mono admin-link" readOnly value={link?.url ?? ''} onFocus={(event) => event.target.select()} aria-label="Password link" />
+            <Modal open={link !== null} size="sm" title={t('Password link')} onClose={() => setLink(null)}
+                footer={<><Button variant="ghost" onClick={() => setLink(null)}>{t('Done')}</Button><Button variant="primary" icon="bx-copy" onClick={() => navigator.clipboard?.writeText(link?.url ?? '')}>{t('Copy link')}</Button></>}>
+                <p className="ps-soft">{t('Send this to')}{' '}<strong>{link?.username}</strong>{t('. It works once, for one hour.')}</p>
+                <input className="ps-input ps-mono admin-link" readOnly value={link?.url ?? ''} onFocus={(event) => event.target.select()} aria-label={t('Password link')} />
             </Modal>
         </AppShell>
     );
@@ -76,17 +77,17 @@ function UserFields({ form, roles }: { form: ReturnType<typeof useForm<{ usernam
     return (
         <>
             <div className="account__grid">
-                <Field label="First name" htmlFor="u-first" error={form.errors.firstName}><input id="u-first" className="ps-input" value={form.data.firstName} onChange={(event) => form.setData('firstName', event.target.value)} /></Field>
-                <Field label="Last name" htmlFor="u-last" error={form.errors.lastName}><input id="u-last" className="ps-input" value={form.data.lastName} onChange={(event) => form.setData('lastName', event.target.value)} /></Field>
-                <Field label="Username" htmlFor="u-name" error={form.errors.username}><input id="u-name" className="ps-input" value={form.data.username} onChange={(event) => form.setData('username', event.target.value)} autoCapitalize="none" spellCheck={false} /></Field>
-                <Field label="Email" htmlFor="u-email" error={form.errors.email}><input id="u-email" type="email" className="ps-input" value={form.data.email} onChange={(event) => form.setData('email', event.target.value)} /></Field>
-                <Field label="Role" htmlFor="u-role" error={form.errors.role}>
+                <Field label={t('First name')} htmlFor="u-first" error={form.errors.firstName}><input id="u-first" className="ps-input" value={form.data.firstName} onChange={(event) => form.setData('firstName', event.target.value)} /></Field>
+                <Field label={t('Last name')} htmlFor="u-last" error={form.errors.lastName}><input id="u-last" className="ps-input" value={form.data.lastName} onChange={(event) => form.setData('lastName', event.target.value)} /></Field>
+                <Field label={t('Username')} htmlFor="u-name" error={form.errors.username}><input id="u-name" className="ps-input" value={form.data.username} onChange={(event) => form.setData('username', event.target.value)} autoCapitalize="none" spellCheck={false} /></Field>
+                <Field label={t('Email')} htmlFor="u-email" error={form.errors.email}><input id="u-email" type="email" className="ps-input" value={form.data.email} onChange={(event) => form.setData('email', event.target.value)} /></Field>
+                <Field label={t('Role')} htmlFor="u-role" error={form.errors.role}>
                     <select id="u-role" className="ps-select" value={form.data.role} onChange={(event) => form.setData('role', event.target.value)}>
                         {roles.map((role) => <option key={role.key} value={role.key}>{role.name}</option>)}
                     </select>
                 </Field>
-                <Field label="Server account" htmlFor="u-pi" error={form.errors.piUsername} help="Created automatically when Web access is enabled.">
-                    <input id="u-pi" className="ps-input ps-mono" value={form.data.piUsername || 'Automatic'} readOnly />
+                <Field label={t('Server account')} htmlFor="u-pi" error={form.errors.piUsername} help={t('Created automatically when Web access is enabled.')}>
+                    <input id="u-pi" className="ps-input ps-mono" value={form.data.piUsername || t('Automatic')} readOnly />
                 </Field>
             </div>
         </>
@@ -109,22 +110,22 @@ function EditUser({ user, roles, extensions, overrides, capabilities, capability
         <>
         <Modal open={!removing} title={user.name} onClose={onClose}
             footer={tab === 'details'
-                ? <><Button variant="ghost" icon="bx-key" onClick={() => router.post(`/admin/users/${user.id}/reset-link`, {}, { preserveScroll: true, onSuccess: onClose })}>Password link</Button><Button variant="danger" onClick={() => setRemoving(true)}>Remove</Button><span className="ps-topbar__spacer" /><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="primary" loading={form.processing} onClick={save}>Save</Button></>
+                ? <><Button variant="ghost" icon="bx-key" onClick={() => router.post(`/admin/users/${user.id}/reset-link`, {}, { preserveScroll: true, onSuccess: onClose })}>{t('Password link')}</Button><Button variant="danger" onClick={() => setRemoving(true)}>{t('Remove')}</Button><span className="ps-topbar__spacer" /><Button variant="ghost" onClick={onClose}>{t('Cancel')}</Button><Button variant="primary" loading={form.processing} onClick={save}>{t('Save')}</Button></>
                 : tab === 'access'
-                    ? <><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="primary" loading={accessForm.processing} onClick={() => accessForm.put(`/admin/users/${user.id}/access`, { preserveScroll: true, onSuccess: onClose })}>Save access</Button></>
-                    : <><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="primary" loading={permissionForm.processing} onClick={() => permissionForm.put(`/admin/permissions/users/${user.id}`, { preserveScroll: true, onSuccess: onClose })}>Save permissions</Button></>}>
+                    ? <><Button variant="ghost" onClick={onClose}>{t('Cancel')}</Button><Button variant="primary" loading={accessForm.processing} onClick={() => accessForm.put(`/admin/users/${user.id}/access`, { preserveScroll: true, onSuccess: onClose })}>{t('Save access')}</Button></>
+                    : <><Button variant="ghost" onClick={onClose}>{t('Cancel')}</Button><Button variant="primary" loading={permissionForm.processing} onClick={() => permissionForm.put(`/admin/permissions/users/${user.id}`, { preserveScroll: true, onSuccess: onClose })}>{t('Save permissions')}</Button></>}>
             <div className="ps-tabs admin-tabs" role="tablist">
-                <button type="button" role="tab" aria-selected={tab === 'details'} className={`ps-tab${tab === 'details' ? ' is-active' : ''}`} onClick={() => setTab('details')}>Details</button>
-                <button type="button" role="tab" aria-selected={tab === 'access'} className={`ps-tab${tab === 'access' ? ' is-active' : ''}`} onClick={() => setTab('access')}>Service access</button>
-                <button type="button" role="tab" aria-selected={tab === 'permissions'} className={`ps-tab${tab === 'permissions' ? ' is-active' : ''}`} onClick={() => setTab('permissions')}>Permissions</button>
+                <button type="button" role="tab" aria-selected={tab === 'details'} className={`ps-tab${tab === 'details' ? ' is-active' : ''}`} onClick={() => setTab('details')}>{t('Details')}</button>
+                <button type="button" role="tab" aria-selected={tab === 'access'} className={`ps-tab${tab === 'access' ? ' is-active' : ''}`} onClick={() => setTab('access')}>{t('Service access')}</button>
+                <button type="button" role="tab" aria-selected={tab === 'permissions'} className={`ps-tab${tab === 'permissions' ? ' is-active' : ''}`} onClick={() => setTab('permissions')}>{t('Permissions')}</button>
             </div>
             {tab === 'details' ? (
                 <form onSubmit={save} noValidate>
                     <UserFields form={form as never} roles={roles} />
-                    <Field label="Status" htmlFor="u-status" error={form.errors.status}>
+                    <Field label={t('Status')} htmlFor="u-status" error={form.errors.status}>
                         <select id="u-status" className="ps-select" value={form.data.status} onChange={(event) => form.setData('status', event.target.value)}>
-                            <option value="active">Active</option>
-                            <option value="disabled">Disabled (signed out everywhere)</option>
+                            <option value="active">{t('Active')}</option>
+                            <option value="disabled">{t('Disabled (signed out everywhere)')}</option>
                         </select>
                     </Field>
                 </form>
@@ -133,11 +134,11 @@ function EditUser({ user, roles, extensions, overrides, capabilities, capability
                     {extensions.filter((extension) => !extension.system).map((extension) => (
                         <li key={extension.id} className="ps-row">
                             <span className="ps-row__icon"><i className={`bx ${extension.icon}`} /></span>
-                            <span className="ps-row__body"><span className="ps-row__title">{extension.name}</span><span className="ps-row__meta">{user.accounts[extension.id as 'cloud' | 'web'] === true ? 'Account exists' : user.services.includes(extension.id) ? 'Available' : 'No access'}</span></span>
+                            <span className="ps-row__body"><span className="ps-row__title">{extension.name}</span><span className="ps-row__meta">{user.accounts[extension.id as 'cloud' | 'web'] === true ? t('Account exists') : user.services.includes(extension.id) ? t('Available') : t('No access')}</span></span>
                             <span className="ps-row__action">
-                                <select className="ps-select admin-access" value={accessForm.data.access[extension.id]} onChange={(event) => accessForm.setData('access', { ...accessForm.data.access, [extension.id]: event.target.value })} aria-label={`${extension.name} access`}>
-                                    <option value="allow">Has access</option>
-                                    <option value="deny">No access</option>
+                                <select className="ps-select admin-access" value={accessForm.data.access[extension.id]} onChange={(event) => accessForm.setData('access', { ...accessForm.data.access, [extension.id]: event.target.value })} aria-label={t('{name} access', { name: extension.name })}>
+                                    <option value="allow">{t('Has access')}</option>
+                                    <option value="deny">{t('No access')}</option>
                                 </select>
                             </span>
                         </li>
@@ -153,16 +154,16 @@ function EditUser({ user, roles, extensions, overrides, capabilities, capability
                 </div>
             )}
         </Modal>
-        <Modal open={removing} size="sm" title={`Remove ${user.name}`} onClose={() => setRemoving(false)} footer={<><Button variant="ghost" onClick={() => setRemoving(false)}>Cancel</Button><Button variant="danger" loading={removal.processing} onClick={() => removal.delete(`/admin/users/${user.id}`, { preserveScroll: true, onSuccess: onClose })}>Remove account</Button></>}>
-            <p className="ps-soft">Their PlainShow login is removed. Shared expense history stays.</p>
-            <Field label="Service accounts" htmlFor="remove-services">
+        <Modal open={removing} size="sm" title={t('Remove {name}', { name: user.name })} onClose={() => setRemoving(false)} footer={<><Button variant="ghost" onClick={() => setRemoving(false)}>{t('Cancel')}</Button><Button variant="danger" loading={removal.processing} onClick={() => removal.delete(`/admin/users/${user.id}`, { preserveScroll: true, onSuccess: onClose })}>{t('Remove account')}</Button></>}>
+            <p className="ps-soft">{t('Their PlainShow login is removed. Shared expense history stays.')}</p>
+            <Field label={t('Service accounts')} htmlFor="remove-services">
                 <div id="remove-services" className="ps-stack admin-remove-services">
-                    {(['cloud', 'web'] as const).filter((service) => user.accounts[service]).map((service) => <label key={service} className="ps-check"><input type="checkbox" checked={removal.data.services.includes(service)} onChange={(event) => removal.setData('services', event.target.checked ? [...removal.data.services, service] : removal.data.services.filter((item) => item !== service))} /><span>{service === 'cloud' ? 'Cloud account' : 'Web server account'}</span></label>)}
+                    {(['cloud', 'web'] as const).filter((service) => user.accounts[service]).map((service) => <label key={service} className="ps-check"><input type="checkbox" checked={removal.data.services.includes(service)} onChange={(event) => removal.setData('services', event.target.checked ? [...removal.data.services, service] : removal.data.services.filter((item) => item !== service))} /><span>{service === 'cloud' ? t('Cloud account') : t('Web server account')}</span></label>)}
                 </div>
             </Field>
-            <label className="ps-check"><input type="checkbox" checked={removal.data.retainData} onChange={(event) => removal.setData('retainData', event.target.checked)} /><span>Keep stored data for selected services</span></label>
-            <p className="ps-small ps-muted">When kept, service accounts are disabled instead of permanently deleted.</p>
-            <Field label={`Type ${user.username} to confirm`} htmlFor="remove-username" error={removal.errors.confirmUsername}><input id="remove-username" className="ps-input" value={removal.data.confirmUsername} onChange={(event) => removal.setData('confirmUsername', event.target.value)} /></Field>
+            <label className="ps-check"><input type="checkbox" checked={removal.data.retainData} onChange={(event) => removal.setData('retainData', event.target.checked)} /><span>{t('Keep stored data for selected services')}</span></label>
+            <p className="ps-small ps-muted">{t('When kept, service accounts are disabled instead of permanently deleted.')}</p>
+            <Field label={t('Type {username} to confirm', { username: user.username })} htmlFor="remove-username" error={removal.errors.confirmUsername}><input id="remove-username" className="ps-input" value={removal.data.confirmUsername} onChange={(event) => removal.setData('confirmUsername', event.target.value)} /></Field>
         </Modal>
         </>
     );
@@ -173,9 +174,9 @@ function CreateUser({ roles, onClose }: { roles: Role[]; onClose: () => void }) 
     const save = (event: FormEvent) => { event.preventDefault(); form.post('/admin/users', { preserveScroll: true, onSuccess: onClose }); };
 
     return (
-        <Modal open title="New account" onClose={onClose}
-            footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="primary" loading={form.processing} onClick={save}>Create</Button></>}>
-            <p className="ps-soft admin-intro">They set their own password through a one-time link.</p>
+        <Modal open title={t('New account')} onClose={onClose}
+            footer={<><Button variant="ghost" onClick={onClose}>{t('Cancel')}</Button><Button variant="primary" loading={form.processing} onClick={save}>{t('Create')}</Button></>}>
+            <p className="ps-soft admin-intro">{t('They set their own password through a one-time link.')}</p>
             <form onSubmit={save} noValidate><UserFields form={form as never} roles={roles} /></form>
         </Modal>
     );

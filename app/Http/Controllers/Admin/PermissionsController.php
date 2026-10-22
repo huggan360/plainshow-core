@@ -127,10 +127,10 @@ class PermissionsController extends Controller
         ]);
         $key = substr(Str::slug($data['name']), 0, 16);
         if ($key === '' || ! preg_match('/^[a-z][a-z0-9-]*$/', $key)) {
-            throw ValidationException::withMessages(['name' => 'Use a name that contains letters.']);
+            throw ValidationException::withMessages(['name' => __('Use a name that contains letters.')]);
         }
         if (Role::whereKey($key)->exists()) {
-            throw ValidationException::withMessages(['name' => 'A role with that name already exists.']);
+            throw ValidationException::withMessages(['name' => __('A role with that name already exists.')]);
         }
         $role = Role::create(['key' => $key, 'name' => trim($data['name']), 'color' => strtolower($data['color']), 'sort' => (Role::max('sort') ?? 0) + 10]);
         Audit::record('permissions.role_created', ['role' => $role->key, 'name' => $role->name]);
@@ -147,13 +147,13 @@ class PermissionsController extends Controller
         $role->update(['name' => trim($data['name']), 'color' => strtolower($data['color'])]);
         Audit::record('permissions.role_renamed', ['role' => $role->key, 'name' => $role->name]);
 
-        return back()->with('status', 'Role renamed.');
+        return back()->with('status', __('Role renamed.'));
     }
 
     public function destroyRole(Role $role): RedirectResponse
     {
         if ($role->protected || User::where('role', $role->key)->exists()) {
-            throw ValidationException::withMessages(['role' => 'Move every person to another role before deleting it.']);
+            throw ValidationException::withMessages(['role' => __('Move every person to another role before deleting it.')]);
         }
         DB::transaction(function () use ($role): void {
             DB::table('core_role_capabilities')->where('role', $role->key)->delete();
@@ -166,7 +166,7 @@ class PermissionsController extends Controller
         Permissions::forget();
         Audit::record('permissions.role_deleted', ['role' => $role->key, 'name' => $role->name]);
 
-        return back()->with('status', 'Role deleted.');
+        return back()->with('status', __('Role deleted.'));
     }
 
     /** Saves one person's allows and denies for services and capabilities. */

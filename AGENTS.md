@@ -100,9 +100,29 @@ one look.
 - Accounts live in login/core only. Services read identity from Login (OIDC)
   and permissions from core; never add a local password system.
 - UI text: short and plain; never use the middle dot character as a
-  separator. English in core, login, cloud and latex; Swedish in blog and split.
+  separator.
+
 - Design: kit CSS (`ps-*` classes, `--ps-*` tokens), Outfit for UI text, the
   serif for titles, brand orange `#FC5000`, nested "frame" boxes.
 - Secrets: never commit `.env`, `config/*.php` with credentials, keys or
   tokens, and never print them in logs or output.
 - Test what you change with the repo's own tests (below) before tagging.
+
+### Languages (English, Dutch, Swedish)
+
+- Every page speaks English, Dutch or Swedish. The choice is the `ps_lang`
+  cookie for the whole domain, set by the language switch in every account
+  menu; without it the browser's language decides, then English (kit `Lang`).
+- Texts are written in one source language (English in core, login, cloud and
+  latex; Swedish in blog and split) and looked up by that text in
+  `lang/<code>.json` ({"Source text": "Translation"}). `{name}` placeholders
+  are filled in after translating (Laravel's `__()` uses `:name`).
+- Wrap every visible text: React `t('...')` and `tn(count, 'one', '{n} many')`
+  from the app's `i18n.ts`; Laravel `__('...')`; plain PHP `ps_h('...')` in HTML
+  and `ps_t('...')` elsewhere; plain JS `psT('...')`. Never build a sentence
+  from pieces; use one text with placeholders. Dates use the chosen locale.
+- After adding texts, add their translations and check:
+  `python3 vendor/plainshow/kit/bin/i18n-check.py lang/nl.json <code folders>`
+  (also `sv.json`, or `en.json` for blog and split).
+- The account menu is the same everywhere: Account, the app's own items,
+  Language, Theme, then Sign out.

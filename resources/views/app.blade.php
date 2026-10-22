@@ -1,6 +1,6 @@
 @php($uiVersion = \Composer\InstalledVersions::getReference('plainshow/kit') ? substr(\Composer\InstalledVersions::getReference('plainshow/kit'), 0, 8) : 'dev')
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="{{ app()->getLocale() }}" data-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

@@ -76,14 +76,14 @@ class DashboardController extends Controller
         $widgets = Dashboard::sanitize($this->validated($request), Dashboard::catalogue($request->user()));
         DashboardLayout::updateOrCreate(['user_id' => $request->user()->id], ['widgets' => $widgets]);
 
-        return back()->with('status', 'Dashboard saved.');
+        return back()->with('status', __('Dashboard saved.'));
     }
 
     public function resetLayout(Request $request): RedirectResponse
     {
         DashboardLayout::where('user_id', $request->user()->id)->delete();
 
-        return back()->with('status', 'Dashboard reset.');
+        return back()->with('status', __('Dashboard reset.'));
     }
 
     public function saveRoleLayout(Request $request, string $role): RedirectResponse

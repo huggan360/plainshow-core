@@ -1,6 +1,7 @@
 import AppShell from '@/Layouts/AppShell';
 import { Badge, Frame, Switch } from '@/Components/ui';
 import { router } from '@inertiajs/react';
+import { t } from '@/i18n';
 
 type Extension = {
     id: string; name: string; description: string; icon: string; url: string | null; enabled: boolean; system: boolean; version: string | null;
@@ -9,7 +10,7 @@ type Extension = {
 
 type Role = { key: string; name: string };
 const STATE: Record<string, { tone: 'green' | 'amber' | 'red' | undefined; label: string }> = {
-    online: { tone: 'green', label: 'Online' }, error: { tone: 'amber', label: 'Errors' }, offline: { tone: 'red', label: 'Offline' }, unknown: { tone: undefined, label: 'Not checked' },
+    online: { tone: 'green', label: t('Online') }, error: { tone: 'amber', label: t('Errors') }, offline: { tone: 'red', label: t('Offline') }, unknown: { tone: undefined, label: t('Not checked') },
 };
 
 export default function Extensions({ extensions, roles }: { extensions: Extension[]; roles: Role[] }) {
@@ -18,7 +19,7 @@ export default function Extensions({ extensions, roles }: { extensions: Extensio
     };
 
     return (
-        <AppShell title="Services" description="Turn services on or off, and choose which roles get them by default.">
+        <AppShell title={t('Services')} description={t('Turn services on or off, and choose which roles get them by default.')}>
             <div className="ps-stack">
                 {extensions.map((extension) => {
                     const state = STATE[extension.health?.state ?? 'unknown'];
@@ -30,12 +31,12 @@ export default function Extensions({ extensions, roles }: { extensions: Extensio
                                     <div className="ps-inline">
                                         <strong>{extension.name}</strong>
                                         {extension.version && <span className="ps-faint ps-small ps-mono">v{extension.version}</span>}
-                                        {extension.enabled && <Badge tone={state.tone}>{state.label}</Badge>}
-                                        {extension.system && <Badge>Always on</Badge>}
+                                        {extension.enabled && <Badge tone={state.tone}>{t(state.label)}</Badge>}
+                                        {extension.system && <Badge>{t('Always on')}</Badge>}
                                     </div>
-                                    <p className="ps-muted ps-small">{extension.description}</p>
+                                    <p className="ps-muted ps-small">{t(extension.description)}</p>
                                     {!extension.system && (
-                                        <div className="service__roles" role="group" aria-label={`Who gets ${extension.name} by default`}>
+                                        <div className="service__roles" role="group" aria-label={t('Who gets {name} by default', { name: extension.name })}>
                                             {roles.map((role) => {
                                                 const on = extension.defaultAccess.includes(role.key);
                                                 return (
@@ -49,7 +50,7 @@ export default function Extensions({ extensions, roles }: { extensions: Extensio
                                     )}
                                 </div>
                                 <div className="service__toggle">
-                                    <Switch checked={extension.enabled} disabled={extension.system} label={`${extension.name} on`} onChange={(enabled) => save(extension, { enabled })} />
+                                    <Switch checked={extension.enabled} disabled={extension.system} label={t('{name} on', { name: extension.name })} onChange={(enabled) => save(extension, { enabled })} />
                                 </div>
                             </div>
                         </Frame>

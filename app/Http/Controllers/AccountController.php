@@ -77,7 +77,7 @@ class AccountController extends Controller
         ])->save();
         Audit::record('profile.updated');
 
-        return back()->with('status', 'Profile saved.');
+        return back()->with('status', __('Profile saved.'));
     }
 
     public function updateAvatar(Request $request): RedirectResponse
@@ -90,7 +90,7 @@ class AccountController extends Controller
         }
         Audit::record('avatar.updated');
 
-        return back()->with('status', 'Profile picture updated.');
+        return back()->with('status', __('Profile picture updated.'));
     }
 
     public function removeAvatar(Request $request): RedirectResponse
@@ -98,7 +98,7 @@ class AccountController extends Controller
         Avatars::remove($request->user());
         Audit::record('avatar.removed');
 
-        return back()->with('status', 'Profile picture removed.');
+        return back()->with('status', __('Profile picture removed.'));
     }
 
     public function updatePassword(Request $request): RedirectResponse
@@ -109,7 +109,7 @@ class AccountController extends Controller
             'password' => ['required', 'confirmed', 'max:512', Password::min(10)->letters()->uncompromised(0)],
         ]);
         if (! Hash::check($data['current'], $user->password)) {
-            throw ValidationException::withMessages(['current' => 'That is not your current password.']);
+            throw ValidationException::withMessages(['current' => __('That is not your current password.')]);
         }
         if (Permissions::hasService($user, 'web')) {
             AccountLifecycle::pi($user, 'password', $data['password']);
@@ -118,7 +118,7 @@ class AccountController extends Controller
         $this->endOtherSessions($request);
         Audit::record('password.changed');
 
-        return back()->with('status', 'Password changed. Other devices were signed out.');
+        return back()->with('status', __('Password changed. Other devices were signed out.'));
     }
 
     public function startTwoFactor(Request $request, Google2FA $google2fa): RedirectResponse
@@ -135,7 +135,7 @@ class AccountController extends Controller
         abort_unless(is_string($secret), 409);
         $data = $request->validate(['code' => ['required', 'string', 'max:10']]);
         if (! $google2fa->verifyKey($secret, preg_replace('/\s+/', '', $data['code']), 1)) {
-            throw ValidationException::withMessages(['code' => 'That code is not valid. Check the time on your phone and try again.']);
+            throw ValidationException::withMessages(['code' => __('That code is not valid. Check the time on your phone and try again.')]);
         }
         $codes = $this->newRecoveryCodes();
         $request->user()->forceFill([
@@ -147,7 +147,7 @@ class AccountController extends Controller
         $request->session()->flash('two_factor.codes', $codes);
         Audit::record('two_factor.enabled');
 
-        return back()->with('status', 'Two-factor authentication is on.');
+        return back()->with('status', __('Two-factor authentication is on.'));
     }
 
     public function cancelTwoFactor(Request $request): RedirectResponse
@@ -162,12 +162,12 @@ class AccountController extends Controller
         $user = $request->user();
         $request->validate(['password' => ['required', 'string', 'max:512']]);
         if (! Hash::check($request->input('password'), $user->password)) {
-            throw ValidationException::withMessages(['password' => 'That is not your password.']);
+            throw ValidationException::withMessages(['password' => __('That is not your password.')]);
         }
         $user->forceFill(['two_factor_secret' => null, 'two_factor_confirmed_at' => null, 'two_factor_recovery_codes' => null])->save();
         Audit::record('two_factor.disabled');
 
-        return back()->with('status', 'Two-factor authentication is off.');
+        return back()->with('status', __('Two-factor authentication is off.'));
     }
 
     public function regenerateRecoveryCodes(Request $request): RedirectResponse
@@ -179,7 +179,7 @@ class AccountController extends Controller
         $request->session()->flash('two_factor.codes', $codes);
         Audit::record('two_factor.recovery_regenerated');
 
-        return back()->with('status', 'New recovery codes created. The old ones no longer work.');
+        return back()->with('status', __('New recovery codes created. The old ones no longer work.'));
     }
 
     public function signOutEverywhere(Request $request): RedirectResponse
@@ -187,7 +187,7 @@ class AccountController extends Controller
         $this->endOtherSessions($request);
         Audit::record('sessions.revoked');
 
-        return back()->with('status', 'Signed out of every other device.');
+        return back()->with('status', __('Signed out of every other device.'));
     }
 
     /** Ends the user's sessions on other devices, in core and login, and revokes app tokens. */
@@ -252,7 +252,7 @@ class AccountController extends Controller
             return back()->with('error', $failure->getMessage());
         }
 
-        return back()->with('api_token', ['token' => $created['token'], 'name' => $data['name']])->with('status', 'Token created. Copy it now.');
+        return back()->with('api_token', ['token' => $created['token'], 'name' => $data['name']])->with('status', __('Token created. Copy it now.'));
     }
 
     public function revokeToken(Request $request, string $token): RedirectResponse
@@ -264,6 +264,6 @@ class AccountController extends Controller
             return back()->with('error', $failure->getMessage());
         }
 
-        return back()->with('status', 'Token revoked.');
+        return back()->with('status', __('Token revoked.'));
     }
 }

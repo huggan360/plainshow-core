@@ -22,6 +22,8 @@ Route::get('/avatars/{user}', AvatarController::class)->whereNumber('user');
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'show'])->name('dashboard');
     Route::get('/groups', [GroupsController::class, 'index'])->middleware('can.do:core.groups.view')->name('groups');
+    Route::get('/groups/{group}', [GroupsController::class, 'show'])->whereNumber('group')->middleware('can.do:core.groups.view');
+    Route::get('/groups/{group}/edit', [GroupsController::class, 'edit'])->whereNumber('group')->middleware('can.do:core.groups.view');
     Route::post('/groups', [GroupsController::class, 'store']);
     Route::put('/groups/{group}', [GroupsController::class, 'update'])->whereNumber('group');
     Route::delete('/groups/{group}', [GroupsController::class, 'destroy'])->whereNumber('group');

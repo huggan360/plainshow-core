@@ -4,6 +4,7 @@ import { CapabilityInfo, CapabilitySectionRows, impliedCapabilities, implication
 import { UserSummary } from '@/types';
 import { router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
+import { t } from '@/i18n';
 
 type Capability = PermissionCapability;
 type Extension = { id: string; name: string; icon: string; enabled: boolean; system: boolean; defaultAccess: string[]; capabilities: Capability[] };
@@ -21,10 +22,10 @@ export default function Permissions(props: Props) {
     const [tab, setTab] = useState<'roles' | 'people'>(() => (new URLSearchParams(window.location.search).get('person') ? 'people' : 'roles'));
 
     return (
-        <AppShell title="Permissions" wide description="What each role may do in every service, and the exceptions for single people. Other services pick up changes the next time someone signs in."
+        <AppShell title={t('Permissions')} wide description={t('What each role may do in every service, and the exceptions for single people. Other services pick up changes the next time someone signs in.')}
             actions={<div className="ps-tabs" role="tablist">
-                <button type="button" role="tab" aria-selected={tab === 'roles'} className={`ps-tab${tab === 'roles' ? ' is-active' : ''}`} onClick={() => setTab('roles')}>Roles</button>
-                <button type="button" role="tab" aria-selected={tab === 'people'} className={`ps-tab${tab === 'people' ? ' is-active' : ''}`} onClick={() => setTab('people')}>People</button>
+                <button type="button" role="tab" aria-selected={tab === 'roles'} className={`ps-tab${tab === 'roles' ? ' is-active' : ''}`} onClick={() => setTab('roles')}>{t('Roles')}</button>
+                <button type="button" role="tab" aria-selected={tab === 'people'} className={`ps-tab${tab === 'people' ? ' is-active' : ''}`} onClick={() => setTab('people')}>{t('People')}</button>
             </div>}>
             {tab === 'roles' ? <RoleMatrix {...props} /> : <People {...props} />}
         </AppShell>
@@ -65,26 +66,26 @@ function RoleMatrix({ extensions, roles }: Props) {
         <div className="perm">
             <Frame compact>
                 <div className="perm-role-picker">
-                    <div className="perm-role-tabs" role="tablist" aria-label="Role">
+                    <div className="perm-role-tabs" role="tablist" aria-label={t('Role')}>
                         {roles.map((role) => <button key={role.key} type="button" role="tab" aria-selected={role.key === selected?.key} className={`perm-role-tab${role.key === selected?.key ? ' is-active' : ''}`} onClick={() => setSelectedKey(role.key)}><RoleBadge role={role.key} name={role.name} color={role.color} /></button>)}
                     </div>
-                    <Button size="sm" variant="primary" icon="bx-plus" onClick={() => setRoleModal('new')}>New role</Button>
+                    <Button size="sm" variant="primary" icon="bx-plus" onClick={() => setRoleModal('new')}>{t('New role')}</Button>
                 </div>
             </Frame>
             {selected && <Frame compact>
                 <div className="perm-role-head">
                     <RoleBadge role={selected.key} name={selected.name} color={selected.color} />
-                    <span className="ps-small ps-muted">Choose what this role may access and do.</span>
+                    <span className="ps-small ps-muted">{t('Choose what this role may access and do.')}</span>
                     <span className="perm-bar__spacer" />
-                    <Button size="sm" variant="ghost" icon="bx-edit" onClick={() => setRoleModal(selected)}>Edit role</Button>
-                    {!selected.protected && <Button size="sm" variant="ghost" icon="bx-trash" onClick={() => { if (window.confirm(`Delete ${selected.name}?`)) router.delete(`/admin/permissions/roles/${selected.key}`, { preserveScroll: true }); }}>Delete</Button>}
+                    <Button size="sm" variant="ghost" icon="bx-edit" onClick={() => setRoleModal(selected)}>{t('Edit role')}</Button>
+                    {!selected.protected && <Button size="sm" variant="ghost" icon="bx-trash" onClick={() => { if (window.confirm(t('Delete {name}?', { name: selected.name }))) router.delete(`/admin/permissions/roles/${selected.key}`, { preserveScroll: true }); }}>{t('Delete')}</Button>}
                 </div>
             </Frame>}
             <div className={`perm-bar${dirty ? ' is-dirty' : ''}`}>
-                <span className="ps-small ps-muted">{dirty ? 'Unsaved changes' : 'Admins always have everything.'}</span>
+                <span className="ps-small ps-muted">{dirty ? t('Unsaved changes') : t('Admins always have everything.')}</span>
                 <span className="perm-bar__spacer" />
-                {dirty && <Button size="sm" variant="ghost" icon="bx-reset" onClick={() => setState(initial)}>Undo</Button>}
-                <Button size="sm" variant="primary" icon="bx-check" disabled={!dirty} loading={saving} onClick={save}>Save</Button>
+                {dirty && <Button size="sm" variant="ghost" icon="bx-reset" onClick={() => setState(initial)}>{t('Undo')}</Button>}
+                <Button size="sm" variant="primary" icon="bx-check" disabled={!dirty} loading={saving} onClick={save}>{t('Save')}</Button>
             </div>
             {selected && extensions.map((extension) => <RoleExtension key={extension.id} extension={extension} role={selected} selectedCapabilities={state.capabilities[selected.key] ?? []}
                 hasAccess={extension.system || selected.key === 'admin' || state.access[extension.id].includes(selected.key)}
@@ -100,19 +101,19 @@ function RoleExtension({ extension, role, selectedCapabilities, hasAccess, onAcc
         <div className="ps-table-wrap">
             <table className="ps-table perm-table">
                 <thead><tr>
-                    <th scope="col"><span className="perm-ext"><i className={`bx ${extension.icon}`} aria-hidden="true" />{extension.name}{!extension.enabled && <Badge>Off</Badge>}</span></th>
-                    <th scope="col" className="perm-col">Allowed</th>
+                    <th scope="col"><span className="perm-ext"><i className={`bx ${extension.icon}`} aria-hidden="true" />{extension.name}{!extension.enabled && <Badge>{t('Off')}</Badge>}</span></th>
+                    <th scope="col" className="perm-col">{t('Allowed')}</th>
                 </tr></thead>
                 <tbody><tr className="perm-row perm-row--access">
-                    <th scope="row"><span className="perm-cap"><strong>Open {extension.name}</strong><span className="ps-small ps-muted">{extension.id === 'cloud' ? 'Creates or enables the linked Cloud account.' : extension.id === 'web' ? 'Requires a server username.' : extension.system ? 'Everyone with an account.' : 'Who gets the service without an exception.'}</span></span></th>
-                    <td className="perm-col"><Check checked={hasAccess} disabled={extension.system || role.key === 'admin'} label={`${role.name} can open ${extension.name}`} onChange={onAccess} /></td>
+                    <th scope="row"><span className="perm-cap"><strong>{t('Open')}{' '}{extension.name}</strong><span className="ps-small ps-muted">{extension.id === 'cloud' ? t('Creates or enables the linked Cloud account.') : extension.id === 'web' ? t('Requires a server username.') : extension.system ? t('Everyone with an account.') : t('Who gets the service without an exception.')}</span></span></th>
+                    <td className="perm-col"><Check checked={hasAccess} disabled={extension.system || role.key === 'admin'} label={t('{name} can open {name2}', { name: role.name, name2: extension.name })} onChange={onAccess} /></td>
                 </tr></tbody>
                 <CapabilitySectionRows capabilities={extension.capabilities} columns={2} render={(capability) => {
                     const included = implied.has(capability.name);
                     const reason = implicationText(capability.name, selectedCapabilities, extension.capabilities);
                     return <tr key={capability.name} className={`perm-row${included ? ' is-implied' : ''}`}>
                         <th scope="row"><CapabilityInfo capability={capability} implication={reason} /></th>
-                        <td className="perm-col"><Check checked={role.key === 'admin' || selectedCapabilities.includes(capability.name) || included} disabled={role.key === 'admin' || included} muted={role.key !== 'admin' && !hasAccess} title={reason} label={`${role.name}: ${capability.label}`} onChange={() => onCapability(capability.name)} /></td>
+                        <td className="perm-col"><Check checked={role.key === 'admin' || selectedCapabilities.includes(capability.name) || included} disabled={role.key === 'admin' || included} muted={role.key !== 'admin' && !hasAccess} title={reason} label={t('{name}: {label}', { name: role.name, label: capability.label })} onChange={() => onCapability(capability.name)} /></td>
                     </tr>;
                 }} />
             </table>
@@ -130,18 +131,18 @@ function RoleModal({ role, onClose }: { role: RoleInfo | null; onClose: () => vo
         const options = { preserveScroll: true, onSuccess: onClose, onFinish: () => setSaving(false) };
         role ? router.put(`/admin/permissions/roles/${role.key}`, { name: name.trim(), color }, options) : router.post('/admin/permissions/roles', { name: name.trim(), color }, options);
     };
-    return <Modal open title={role ? `Edit ${role.name}` : 'New role'} size="sm" onClose={onClose} footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="primary" loading={saving} disabled={!name.trim()} onClick={submit}>{role ? 'Save role' : 'Create role'}</Button></>}>
+    return <Modal open title={role ? t('Edit {name}', { name: role.name }) : t('New role')} size="sm" onClose={onClose} footer={<><Button variant="ghost" onClick={onClose}>{t('Cancel')}</Button><Button variant="primary" loading={saving} disabled={!name.trim()} onClick={submit}>{role ? t('Save role') : t('Create role')}</Button></>}>
         <div className="ps-stack">
-            <Field label="Role name" htmlFor="role-name"><input id="role-name" className="ps-input" value={name} onChange={(event) => setName(event.target.value)} /></Field>
-            <Field label="Badge color" htmlFor="role-color"><div className="perm-color"><input id="role-color" type="color" value={color} onChange={(event) => setColor(event.target.value)} /><input className="ps-input ps-mono" value={color} pattern="#[0-9A-Fa-f]{6}" onChange={(event) => setColor(event.target.value)} /></div></Field>
-            <div><RoleBadge role={role?.key ?? 'custom'} name={name.trim() || 'Role preview'} color={/^#[0-9a-f]{6}$/i.test(color) ? color : '#64748b'} /></div>
+            <Field label={t('Role name')} htmlFor="role-name"><input id="role-name" className="ps-input" value={name} onChange={(event) => setName(event.target.value)} /></Field>
+            <Field label={t('Badge color')} htmlFor="role-color"><div className="perm-color"><input id="role-color" type="color" value={color} onChange={(event) => setColor(event.target.value)} /><input className="ps-input ps-mono" value={color} pattern="#[0-9A-Fa-f]{6}" onChange={(event) => setColor(event.target.value)} /></div></Field>
+            <div><RoleBadge role={role?.key ?? 'custom'} name={name.trim() || t('Role preview')} color={/^#[0-9a-f]{6}$/i.test(color) ? color : '#64748b'} /></div>
         </div>
     </Modal>;
 }
 
 function Check({ checked, disabled, muted, label, title, onChange }: { checked: boolean; disabled?: boolean; muted?: boolean; label: string; title?: string; onChange: () => void }) {
     return (
-        <label className={`perm-check${checked ? ' is-on' : ''}${muted ? ' is-muted' : ''}`} title={title ?? (muted ? 'Has no effect while the role cannot open the service' : undefined)}>
+        <label className={`perm-check${checked ? ' is-on' : ''}${muted ? ' is-muted' : ''}`} title={title ?? (muted ? t('Has no effect while the role cannot open the service') : undefined)}>
             <input type="checkbox" checked={checked} disabled={disabled} onChange={onChange} aria-label={label} />
             <i className={`bx ${checked ? 'bx-check' : ''}`} aria-hidden="true" />
         </label>
@@ -160,7 +161,7 @@ function People({ extensions, people, overrides }: Props) {
     return (
         <div className="perm-people">
             <Frame compact className="perm-people__list">
-                <input className="ps-input" type="search" placeholder="Search people" aria-label="Search people" value={query} onChange={(event) => setQuery(event.target.value)} />
+                <input className="ps-input" type="search" placeholder={t('Search people')} aria-label={t('Search people')} value={query} onChange={(event) => setQuery(event.target.value)} />
                 <ul className="ps-list perm-people__names">
                     {visible.map((person) => (
                         <li key={person.id}>
@@ -175,7 +176,7 @@ function People({ extensions, people, overrides }: Props) {
             </Frame>
             {selected
                 ? <PersonEditor key={selected.id} person={selected} extensions={extensions} access={overrides.access[selected.id] ?? {}} capabilities={overrides.capabilities[selected.id] ?? {}} />
-                : <Frame><Empty icon="bx-user">Choose someone to see what they can do.</Empty></Frame>}
+                : <Frame><Empty icon="bx-user">{t('Choose someone to see what they can do.')}</Empty></Frame>}
         </div>
     );
 }
@@ -208,10 +209,10 @@ function PersonEditor({ person, extensions, access, capabilities }: { person: Pe
                     <div className="perm-person-head__text"><h2 className="ps-frame__title">{person.name}</h2><span className="ps-small ps-muted">@{person.username}</span></div>
                     <RoleBadge role={person.role} />
                     <span className="perm-bar__spacer" />
-                    {dirty && <Button size="sm" variant="ghost" icon="bx-reset" onClick={() => setState(initial)}>Undo</Button>}
-                    <Button size="sm" variant="primary" icon="bx-check" disabled={!dirty} loading={saving} onClick={save}>Save</Button>
+                    {dirty && <Button size="sm" variant="ghost" icon="bx-reset" onClick={() => setState(initial)}>{t('Undo')}</Button>}
+                    <Button size="sm" variant="primary" icon="bx-check" disabled={!dirty} loading={saving} onClick={save}>{t('Save')}</Button>
                 </div>
-                {isAdmin && <p className="ps-small ps-muted perm-person-note">Admins have every capability. Denying a service still closes it to them.</p>}
+                {isAdmin && <p className="ps-small ps-muted perm-person-note">{t('Admins have every capability. Denying a service still closes it to them.')}</p>}
             </Frame>
             <PermissionEditor extensions={extensions} effectiveServices={person.effective.services} effectiveCapabilities={person.effective.capabilities} access={state.access} capabilities={state.capabilities} isAdmin={isAdmin}
                 onAccessChange={(extension, value) => setState((current) => ({ ...current, access: { ...current.access, [extension]: value } }))}

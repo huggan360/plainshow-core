@@ -2,6 +2,7 @@ import AppShell from '@/Layouts/AppShell';
 import { Badge, Button, Empty, Frame, FrameHead, relativeTime } from '@/Components/ui';
 import { router } from '@inertiajs/react';
 import { Fragment, ReactNode, useEffect, useState } from 'react';
+import { t, tn, locale } from '@/i18n';
 
 type Release = { name: string; ref: string; at: string | null; current: boolean };
 type Component = {
@@ -11,9 +12,9 @@ type Component = {
 type Job = { id: number; component: string; action: 'check' | 'update' | 'rollback'; target: string | null; status: 'queued' | 'running' | 'done' | 'failed'; log: string | null; requestedBy: string | null; createdAt: string; finishedAt: string | null };
 
 const STATUS: Record<Job['status'], { tone: 'green' | 'amber' | 'red' | 'accent' | undefined; label: string }> = {
-    queued: { tone: undefined, label: 'Waiting' }, running: { tone: 'accent', label: 'Running' }, done: { tone: 'green', label: 'Done' }, failed: { tone: 'red', label: 'Failed' },
+    queued: { tone: undefined, label: t('Waiting') }, running: { tone: 'accent', label: t('Running') }, done: { tone: 'green', label: t('Done') }, failed: { tone: 'red', label: t('Failed') },
 };
-const KIND: Record<Component['kind'], string> = { release: 'Releases', checkout: 'Checkout', library: 'Library' };
+const KIND: Record<Component['kind'], string> = { release: t('Releases'), checkout: t('Checkout'), library: t('Library') };
 
 export default function Updates({ components, jobs, runnerSeen }: { components: Component[]; jobs: Job[]; runnerSeen: boolean }) {
     const active = jobs.some((job) => job.status === 'queued' || job.status === 'running');
@@ -38,13 +39,13 @@ export default function Updates({ components, jobs, runnerSeen }: { components: 
     const available = components.filter((component) => component.updateAvailable).length;
 
     return (
-        <AppShell title="Updates" wide description="Installed and available versions of every part of PlainShow, from GitHub. An update is built, checked and switched in one step; visitors see an updating page meanwhile, the old version is removed afterwards, and it goes back by itself if the new version does not answer."
-            actions={<Button icon="bx-refresh" onClick={() => request('all', 'check')} disabled={busy('all')}>Check now</Button>}>
-            {coreBusy && <div className="ps-alert"><i className="bx bx-loader-alt bx-spin" /><span>The dashboard is updating itself. It is unavailable for a minute or two, and this page carries on by itself.</span></div>}
-            {!runnerSeen && <div className="ps-alert"><i className="bx bx-time-five" /><span>The update runner has not checked yet. It runs every minute; press Check now.</span></div>}
+        <AppShell title={t('Updates')} wide description={t('Installed and available versions of every part of PlainShow, from GitHub. An update is built, checked and switched in one step; visitors see an updating page meanwhile, the old version is removed afterwards, and it goes back by itself if the new version does not answer.')}
+            actions={<Button icon="bx-refresh" onClick={() => request('all', 'check')} disabled={busy('all')}>{t('Check now')}</Button>}>
+            {coreBusy && <div className="ps-alert"><i className="bx bx-loader-alt bx-spin" /><span>{t('The dashboard is updating itself. It is unavailable for a minute or two, and this page carries on by itself.')}</span></div>}
+            {!runnerSeen && <div className="ps-alert"><i className="bx bx-time-five" /><span>{t('The update runner has not checked yet. It runs every minute; press Check now.')}</span></div>}
             <div className="updates">
                 <div className="updates__list">
-                    {available > 0 && <p className="ps-small ps-muted">{available === 1 ? 'One update is' : `${available} updates are`} ready to install.</p>}
+                    {available > 0 && <p className="ps-small ps-muted">{tn(available, 'One update is ready to install.', '{n} updates are ready to install.')}</p>}
                     {components.map((component) => (
                         <ComponentCard key={component.id} component={component} busy={busy(component.id)}
                             onUpdate={() => request(component.id, 'update', component.latest!, `Install ${component.name} ${component.latest}?`)}
@@ -52,10 +53,10 @@ export default function Updates({ components, jobs, runnerSeen }: { components: 
                     ))}
                 </div>
                 <Frame compact className="updates__jobs">
-                    <FrameHead title="Activity" />
+                    <FrameHead title={t('Activity')} />
                     {jobs.length === 0
-                        ? <Empty icon="bx-history">Nothing has run yet.</Empty>
-                        : <ul className="updates-jobs">{jobs.map((job) => <JobRow key={job.id} job={job} name={components.find((component) => component.id === job.component)?.name ?? 'Everything'} open={job.status === 'running' || job.status === 'failed'} />)}</ul>}
+                        ? <Empty icon="bx-history">{t('Nothing has run yet.')}</Empty>
+                        : <ul className="updates-jobs">{jobs.map((job) => <JobRow key={job.id} job={job} name={components.find((component) => component.id === job.component)?.name ?? t('Everything')} open={job.status === 'running' || job.status === 'failed'} />)}</ul>}
                 </Frame>
             </div>
         </AppShell>
@@ -71,34 +72,34 @@ function ComponentCard({ component, busy, onUpdate, onSwitch }: { component: Com
                     <div className="update-card__title">
                         <h2 className="ps-frame__title">{component.name}</h2>
                         <Badge>{KIND[component.kind]}</Badge>
-                        {component.updateAvailable ? <Badge tone="accent">Update</Badge> : component.installed && component.kind !== 'library' && <Badge tone="green">Up to date</Badge>}
+                        {component.updateAvailable ? <Badge tone="accent">{t('Update')}</Badge> : component.installed && component.kind !== 'library' && <Badge tone="green">{t('Up to date')}</Badge>}
                     </div>
-                    {component.updateAvailable && <Button variant="primary" size="sm" icon="bx-download" loading={busy} disabled={busy} onClick={onUpdate}>Install {component.latest}</Button>}
+                    {component.updateAvailable && <Button variant="primary" size="sm" icon="bx-download" loading={busy} disabled={busy} onClick={onUpdate}>{t('Install')}{' '}{component.latest}</Button>}
                 </div>
                 <dl className="update-card__facts">
-                    <div><dt>Installed</dt><dd className="ps-mono">{component.installed ?? 'Unknown'}</dd></div>
-                    <div><dt>Latest</dt><dd className="ps-mono">{component.latest ?? 'No tags yet'}</dd></div>
-                    <div><dt>Checked</dt><dd>{component.checkedAt ? relativeTime(component.checkedAt) : 'Never'}</dd></div>
+                    <div><dt>{t('Installed')}</dt><dd className="ps-mono">{component.installed ?? t('Unknown')}</dd></div>
+                    <div><dt>{t('Latest')}</dt><dd className="ps-mono">{component.latest ?? t('No tags yet')}</dd></div>
+                    <div><dt>{t('Checked')}</dt><dd>{component.checkedAt ? relativeTime(component.checkedAt) : t('Never')}</dd></div>
                 </dl>
                 {component.error && <div className="ps-alert"><i className="bx bx-error-circle" /><span>{component.error}</span></div>}
                 {component.updateAvailable && component.changelog && (
                     <details className="update-card__notes" open>
-                        <summary>What is new</summary>
+                        <summary>{t('What is new')}</summary>
                         <Changelog text={component.changelog} />
                     </details>
                 )}
                 {component.kind === 'release' && component.releases.length > 0 && (
                     <div className="update-card__releases">
                         <button type="button" className="update-card__toggle" aria-expanded={showReleases} onClick={() => setShowReleases((open) => !open)}>
-                            <i className={`bx ${showReleases ? 'bx-chevron-down' : 'bx-chevron-right'}`} aria-hidden="true" />Kept releases ({component.releases.length})
+                            <i className={`bx ${showReleases ? 'bx-chevron-down' : 'bx-chevron-right'}`} aria-hidden="true" />{t('Kept releases (')}{component.releases.length})
                         </button>
                         {showReleases && (
                             <ul className="ps-list">
                                 {component.releases.map((release) => (
                                     <li key={release.name} className="ps-row">
                                         <span className="ps-row__icon"><i className={`bx ${release.current ? 'bx-check-circle' : 'bx-archive'}`} aria-hidden="true" /></span>
-                                        <span className="ps-row__body"><span className="ps-row__title ps-mono">{release.ref}</span><span className="ps-row__meta">{release.at ? new Date(release.at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : release.name}</span></span>
-                                        <span className="ps-row__action">{release.current ? <Badge tone="green">Live</Badge> : <Button size="sm" icon="bx-undo" disabled={busy} onClick={() => onSwitch(release)}>Switch</Button>}</span>
+                                        <span className="ps-row__body"><span className="ps-row__title ps-mono">{release.ref}</span><span className="ps-row__meta">{release.at ? new Date(release.at).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' }) : release.name}</span></span>
+                                        <span className="ps-row__action">{release.current ? <Badge tone="green">{t('Live')}</Badge> : <Button size="sm" icon="bx-undo" disabled={busy} onClick={() => onSwitch(release)}>{t('Switch')}</Button>}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -112,16 +113,16 @@ function ComponentCard({ component, busy, onUpdate, onSwitch }: { component: Com
 
 function JobRow({ job, name, open }: { job: Job; name: string; open: boolean }) {
     const status = STATUS[job.status];
-    const what = job.action === 'check' ? 'Check for updates' : job.action === 'update' ? `${name} ${job.target}` : `${name} back to ${job.target?.replace(/^\d{14}-/, '')}`;
+    const what = job.action === 'check' ? t('Check for updates') : job.action === 'update' ? `${name} ${job.target}` : `${name} back to ${job.target?.replace(/^\d{14}-/, '')}`;
     return (
         <li className="updates-job">
             <details open={open}>
                 <summary>
                     <span className="updates-job__what">{what}</span>
-                    <Badge tone={status.tone}>{status.label}</Badge>
-                    <span className="ps-small ps-muted updates-job__when">{job.requestedBy ? `${job.requestedBy}, ` : ''}{relativeTime(job.finishedAt ?? job.createdAt)}</span>
+                    <Badge tone={status.tone}>{t(status.label)}</Badge>
+                    <span className="ps-small ps-muted updates-job__when">{job.requestedBy ? t('{requestedBy}, ', { requestedBy: job.requestedBy }) : ''}{relativeTime(job.finishedAt ?? job.createdAt)}</span>
                 </summary>
-                {job.log ? <pre className="updates-job__log">{job.log}</pre> : <p className="ps-small ps-muted">No output yet.</p>}
+                {job.log ? <pre className="updates-job__log">{job.log}</pre> : <p className="ps-small ps-muted">{t('No output yet.')}</p>}
             </details>
         </li>
     );

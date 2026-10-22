@@ -29,18 +29,18 @@ class CloudWidgets
             return ExtensionWidgets::data($extension, $widget, $user, $account);
         }
 
-        $key = "cloud:$widget:{$user->id}";
+        $key = "cloud:$widget:{$user->id}:".app()->getLocale();
         if (is_array($cached = Cache::get($key))) {
             return $cached;
         }
         $secret = ExtensionWidgets::secret('cloud');
         $api = rtrim((string) ($extension->manifest['api'] ?? ''), '/');
         if ($secret === null || $api === '') {
-            return ['connected' => true, 'error' => 'Cloud is not connected to the dashboard yet.'];
+            return ['connected' => true, 'error' => __('Cloud is not connected to the dashboard yet.')];
         }
         try {
             $host = (string) parse_url($api, PHP_URL_HOST);
-            $response = Http::timeout(10)->connectTimeout(3)->acceptJson()
+            $response = Http::timeout(10)->connectTimeout(3)->acceptJson()->withHeaders(['Accept-Language' => app()->getLocale()])
                 ->withOptions(['curl' => [CURLOPT_RESOLVE => ["$host:443:127.0.0.1"]]])
                 ->get("$api/widgets/$widget", Widgets::sign($user->id, $widget, $secret, null, $account));
             $data = $response->json();
