@@ -21,25 +21,26 @@ export default function GroupsIndex({ groups, canCreate, viewerId }: { groups: G
                 {canCreate && <Button variant="primary" icon="bx-plus" onClick={() => setCreating(true)}>{t('Make a group')}</Button>}
             </Empty>
         ) : (
-            <div className="group-grid">
+            <div className="group-list">
                 {groups.map((group) => {
                     const shown = group.members.slice(0, 5);
-                    return <Link key={group.id} href={`/groups/${group.id}`} className="group-card" style={groupStyle(group)}>
-                        <span className="group-card__top">
+                    return <Link key={group.id} href={`/groups/${group.id}`} className="ps-frame ps-frame--compact group-card" style={groupStyle(group)}>
+                        <span className="ps-frame__panel group-card__panel">
                             <GroupMark group={group} />
                             <span className="group-card__title">
                                 <strong>{group.name}</strong>
-                                <span>{group.members.length === 1 ? t('1 member') : t('{n} members', { n: group.members.length })}</span>
+                                <span>
+                                    {group.members.length === 1 ? t('1 member') : t('{n} members', { n: group.members.length })}
+                                    {', '}
+                                    {group.ownerId === viewerId ? t('You own this group') : group.ownerName ? t('Owned by {ownerName}', { ownerName: group.ownerName }) : t('No owner')}
+                                </span>
+                            </span>
+                            <span className="group-card__people">
+                                {!group.isMember && <span className="group-card__tag">{t('Not a member')}</span>}
+                                <span className="group-stack">{shown.map((member) => <MemberAvatar key={member.id} member={member} size="xs" />)}</span>
+                                {group.members.length > shown.length && <span className="group-card__more">+{group.members.length - shown.length}</span>}
                             </span>
                             <i className="bx bx-chevron-right group-card__go" aria-hidden="true" />
-                        </span>
-                        <span className="group-card__people">
-                            <span className="group-stack">{shown.map((member) => <MemberAvatar key={member.id} member={member} size="xs" />)}</span>
-                            {group.members.length > shown.length && <span className="group-card__more">+{group.members.length - shown.length}</span>}
-                        </span>
-                        <span className="group-card__foot">
-                            {group.ownerId === viewerId ? t('You own this group') : group.ownerName ? t('Owned by {ownerName}', { ownerName: group.ownerName }) : t('No owner')}
-                            {!group.isMember && <span className="group-card__tag">{t('Not a member')}</span>}
                         </span>
                     </Link>;
                 })}

@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.1
+
+- Groups: one card per row, in the same frames as the rest of PlainShow, tinted with the group's colour.
+- New background: embers from orange to yellow that move away from the pointer, so you can chase them (kit 1.9).
+
 ## v1.4.0
 
 - English, Dutch and Swedish: the browser's language by default, or chosen in the account menu (the choice follows you to every PlainShow site).

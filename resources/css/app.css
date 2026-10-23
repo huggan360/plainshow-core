@@ -459,24 +459,22 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 /* Groups: cards, a group's page and its editor */
 .group-mark { display: inline-grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--group-color); color: #fff; font: 600 1.25rem var(--ps-font-title); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
 .group-mark--lg { width: 64px; height: 64px; border-radius: 18px; font-size: 1.8rem; }
-.group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-.group-card { position: relative; display: grid; gap: 14px; padding: 18px; overflow: hidden; border: 1px solid var(--ps-panel-border); border-radius: 18px; background: var(--ps-panel); color: var(--ps-text); text-decoration: none; transition: border-color .15s, transform .15s, box-shadow .15s; }
-.group-card::before { content: ''; position: absolute; inset: 0 0 auto; height: 3px; background: var(--group-color); }
-.group-card:hover { border-color: color-mix(in srgb, var(--group-color) 55%, var(--ps-panel-border)); transform: translateY(-2px); box-shadow: var(--ps-shadow); }
-.group-card:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: 2px; }
-.group-card__top { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.group-card__title { display: grid; flex: 1; min-width: 0; }
+.group-list { display: grid; gap: 12px; }
+.group-card { display: block; color: var(--ps-text); text-decoration: none; transition: border-color .15s, transform .15s; }
+.group-card__panel { display: flex; align-items: center; gap: 14px; --ps-glow: color-mix(in srgb, var(--group-color) 22%, transparent); transition: background-color .15s; }
+.group-card:hover { border-color: color-mix(in srgb, var(--group-color) 45%, var(--ps-shell-border)); transform: translateY(-1px); }
+.group-card:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: 3px; }
+.group-card__title { display: grid; flex: 1; gap: 2px; min-width: 0; }
 .group-card__title strong { overflow: hidden; font: 600 var(--ps-text-lg) var(--ps-font-title); text-overflow: ellipsis; white-space: nowrap; }
-.group-card__title span { color: var(--ps-text-muted); font-size: var(--ps-text-sm); }
-.group-card__go { color: var(--ps-text-faint); font-size: 1.4rem; transition: transform .15s, color .15s; }
-.group-card:hover .group-card__go { color: var(--group-color); transform: translateX(3px); }
-.group-card__people { display: flex; align-items: center; gap: 8px; min-height: 28px; }
-.group-stack { display: flex; }
-.group-stack .ps-avatar { margin-left: -6px; box-shadow: 0 0 0 2px var(--ps-panel); }
-.group-stack .ps-avatar:first-child { margin-left: 0; }
+.group-card__title span { overflow: hidden; color: var(--ps-text-muted); font-size: var(--ps-text-sm); text-overflow: ellipsis; white-space: nowrap; }
+.group-card__people { display: flex; flex: none; align-items: center; gap: 10px; }
 .group-card__more { color: var(--ps-text-muted); font-size: var(--ps-text-xs); }
-.group-card__foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 12px; border-top: 1px solid var(--ps-line); color: var(--ps-text-muted); font-size: var(--ps-text-xs); }
-.group-card__tag { padding: 2px 8px; border-radius: 999px; background: var(--ps-btn-bg); }
+.group-card__tag { padding: 2px 8px; border-radius: 999px; background: var(--ps-btn-bg); color: var(--ps-text-muted); font-size: var(--ps-text-xs); }
+.group-card__go { flex: none; color: var(--ps-text-faint); font-size: 1.4rem; transition: transform .15s, color .15s; }
+.group-card:hover .group-card__go { color: var(--group-color); transform: translateX(3px); }
+.group-stack { display: flex; }
+.group-stack .ps-avatar { margin-left: -6px; box-shadow: 0 0 0 2px var(--ps-shell); }
+.group-stack .ps-avatar:first-child { margin-left: 0; }
 .group-page { display: grid; gap: 18px; }
 .group-page > .ps-btn { justify-self: start; }
 .group-hero { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -501,6 +499,7 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .group-swatch--pick::-webkit-color-swatch { border: 0; border-radius: 50%; }
 @media (max-width: 760px) {
     .group-edit { grid-template-columns: minmax(0, 1fr); }
+    .group-card__people .group-stack, .group-card__more { display: none; }
     .group-member { flex-wrap: wrap; }
     .group-member__badges { width: 100%; justify-content: flex-start; padding-left: 44px; }
 }
