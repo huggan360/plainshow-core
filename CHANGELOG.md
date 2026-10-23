@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.1
+
+- Server is back to the bars from PlainShow Web, now with a dark look in the dark theme: a dark tint of each bar's colour instead of the pale track.
+
 ## v1.5.0
 
 - Widgets were cleaned up. Lists hold a fixed number of rows. On a computer they scroll one row at a time like the notices on PlainShow Web, with the rounded corners following the rows on screen, and load more as you go. On a phone they show the first rows and how many more there are. Corners no longer break on phones.

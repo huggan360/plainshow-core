@@ -442,6 +442,17 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .widget-app__text span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: var(--ps-text-muted); font-size: var(--ps-text-xs); }
 .widget-apps--described { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
 
+/* Server: the bars from PlainShow Web share the body equally. In the dark
+   theme the pale tracks become a dark tint of the bar's colour. */
+.widget-bars { --ps-join: 5px; --ps-cap: 14px; flex: 1; min-height: 0; display: grid; grid-template-rows: repeat(var(--bars), minmax(0, 1fr)); gap: 3px; }
+.widget-bars .ps-gauge { min-height: 0; }
+.widget-bars .ps-gauge { background: color-mix(in srgb, var(--ps-gauge) 16%, var(--ps-raised)) !important; color: #fff; }
+.widget-bars .ps-gauge__fill { background: linear-gradient(90deg, color-mix(in srgb, var(--ps-gauge) 78%, #000), var(--ps-gauge)); }
+.widget-bars .ps-gauge > span:not(.ps-gauge__fill) { text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+[data-theme='light'] .widget-bars .ps-gauge { background: var(--ps-gauge-track) !important; color: #2a0f06; }
+[data-theme='light'] .widget-bars .ps-gauge__fill { background: var(--ps-gauge); }
+[data-theme='light'] .widget-bars .ps-gauge > span:not(.ps-gauge__fill) { text-shadow: none; }
+
 /* Photos: rows by height, columns by width, filling the body exactly. */
 .widget-gallery { flex: 1; min-height: 0; display: grid; gap: 3px; grid-template-rows: repeat(var(--rows), minmax(0, 1fr)); grid-template-columns: repeat(var(--columns), minmax(0, 1fr)); }
 .widget-gallery__photo { position: relative; display: block; min-height: 0; overflow: hidden; border-radius: 5px; background: var(--ps-raised); }
@@ -615,6 +626,8 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
     .widget-list--static .widget-row, .widget-list--static .widget-figures { flex: 0 0 auto; height: auto; min-height: 52px; padding-top: 8px; padding-bottom: 8px; }
     .widget-list--loading .widget-row { flex: 0 0 52px; }
     .widget-gallery { min-height: 210px; }
+    .widget-bars { flex: none; grid-template-rows: none; grid-auto-rows: minmax(52px, auto); }
+    .widget-bars .ps-gauge { min-height: 52px; }
     .widget-month { min-height: 280px; }
     .widget-weather, .widget-radar { min-height: 260px; }
     .widget-weather--forecast { min-height: 420px; }

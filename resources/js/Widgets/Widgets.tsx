@@ -72,34 +72,43 @@ export function GreetingWidget({ definition }: { definition: WidgetDefinition })
     );
 }
 
-/* ---------- Server: one row per figure, filled as far as it is used ---------- */
+/* ---------- Server: the bars from PlainShow Web ---------- */
 type SystemData = { system: { model: string; hostname: string; cpuPercent: number; load: number[]; cores: number; memoryPercent: number; memoryUsed: string; memoryTotal: string; diskPercent: number; diskFree: string; diskTotal: string; temperature: number | null; uptime: string }; detailed: boolean };
-function level(value: number): Row['tone'] {
-    return value >= 85 ? 'red' : value >= 65 ? 'orange' : 'green';
-}
-function Lead({ icon }: { icon: string }) {
-    return <span className="widget-icon"><i className={`bx ${icon}`} aria-hidden="true" /></span>;
+function Gauge({ label, value, display, tone }: { label: string; value: number; display: string; tone: string }) {
+    return (
+        <div className={`ps-gauge ps-gauge--${tone}`} style={{ '--value': Math.max(0, Math.min(100, value)) } as CSSProperties} role="meter" aria-label={label} aria-valuenow={Math.round(value)} aria-valuemin={0} aria-valuemax={100}>
+            <span className="ps-gauge__fill" />
+            <span>{label}</span>
+            <span>{display}</span>
+        </div>
+    );
 }
 export function PiHealthWidget({ definition }: { definition: WidgetDefinition }) {
     const state = useWidgetData<SystemData>(definition.extension, definition.id, 15);
     const height = useHeight(definition);
-    const shown = useSetting<string[]>(definition, 'metrics') ?? ['cpu', 'memory', 'disk', 'temperature', 'uptime'];
+    const metrics = useSetting<string[]>(definition, 'metrics') ?? ['memory', 'disk', 'cpu'];
+    const details = useSetting<boolean>(definition, 'details') ?? true;
+    const system = state.data?.system;
     return (
-        <WidgetFrame definition={definition}>
-            <Body state={state} height={height}>{({ system: s }) => {
-                const rows: Row[] = [];
-                if (shown.includes('cpu')) rows.push({ key: 'cpu', lead: <Lead icon="bx-chip" />, title: t('Processor'), meta: t('Load {load} on {cores} cores', { load: (s.load[0] ?? 0).toFixed(2), cores: s.cores }), trail: `${s.cpuPercent}%`, fill: s.cpuPercent, tone: level(s.cpuPercent) });
-                if (shown.includes('memory')) rows.push({ key: 'memory', lead: <Lead icon="bx-memory-card" />, title: t('Memory'), meta: t('{used} of {total}', { used: s.memoryUsed, total: s.memoryTotal }), trail: `${s.memoryPercent}%`, fill: s.memoryPercent, tone: level(s.memoryPercent) });
-                if (shown.includes('disk')) rows.push({ key: 'disk', lead: <Lead icon="bx-hdd" />, title: t('Storage'), meta: t('{free} free of {total}', { free: s.diskFree, total: s.diskTotal }), trail: `${s.diskPercent}%`, fill: s.diskPercent, tone: level(s.diskPercent) });
-                if (shown.includes('temperature') && s.temperature !== null) {
-                    const percent = (s.temperature / 90) * 100;
-                    rows.push({ key: 'temp', lead: <Lead icon="bx-hot" />, title: t('Temperature'), meta: s.temperature >= 75 ? t('Hot') : s.temperature >= 62 ? t('Warm') : t('Cool'), trail: `${s.temperature.toFixed(0)} °C`, fill: percent, tone: s.temperature >= 75 ? 'red' : s.temperature >= 62 ? 'orange' : 'green' });
-                }
-                if (shown.includes('uptime')) rows.push({ key: 'uptime', lead: <Lead icon="bx-time-five" />, title: t('Uptime'), meta: s.hostname || s.model, trail: s.uptime });
-                return <List height={height} rows={rows} empty={t('Choose what to show in the Design studio.')} />;
+        <WidgetFrame definition={definition} action={details && system ? <span className="widget-note">{t('Up')}{' '}{system.uptime}</span> : undefined}>
+            <Body state={state} height={height}>{() => {
+                const s = system!;
+                const bars = [
+                    metrics.includes('memory') && <Gauge key="m" tone="red" label={t('RAM used')} value={s.memoryPercent} display={`${s.memoryPercent}%`} />,
+                    metrics.includes('disk') && <Gauge key="d" tone="orange" label={t('Disk used')} value={s.diskPercent} display={details ? t('{free} free', { free: s.diskFree }) : `${s.diskPercent}%`} />,
+                    metrics.includes('cpu') && <Gauge key="c" tone="yellow" label={t('CPU load')} value={s.cpuPercent} display={`${s.cpuPercent}%`} />,
+                    metrics.includes('temperature') && s.temperature !== null && <Gauge key="t" tone={s.temperature >= 75 ? 'red' : s.temperature >= 62 ? 'orange' : 'green'} label={t('Temperature')} value={(s.temperature / 90) * 100} display={`${s.temperature.toFixed(0)} °C`} />,
+                ].filter(Boolean);
+                // A short widget has room for two bars; they are left out here rather than hidden, so the corners stay right.
+                const shown = bars.slice(0, height === 'short' ? 2 : 4);
+                return shown.length ? <div className="widget-bars ps-chain" style={{ '--bars': shown.length } as CSSProperties}>{shown}</div> : <Fill>{t('Choose bars in the Design studio.')}</Fill>;
             }}</Body>
         </WidgetFrame>
     );
+}
+
+function Lead({ icon }: { icon: string }) {
+    return <span className="widget-icon"><i className={`bx ${icon}`} aria-hidden="true" /></span>;
 }
 
 /* ---------- Services ---------- */

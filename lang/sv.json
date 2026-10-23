@@ -681,5 +681,6 @@
     "Moderator": "Moderator",
     "Status": "Status",
     "Live": "Live",
-    "Offline": "Offline"
+    "Offline": "Offline",
+    "{free} free": "{free} ledigt"
 }
