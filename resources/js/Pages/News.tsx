@@ -1,6 +1,7 @@
 import AppShell from '@/Layouts/AppShell';
 import { relativeTime } from '@/Components/ui';
 import { CSSProperties, ReactNode, Ref, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { t, locale } from '@/i18n';
 import { expanding, settleExpand } from '@/Widgets/expand';
 import { Place, PlaceSearch, send } from '@/Widgets/weatherKit';
@@ -117,13 +118,31 @@ export default function News({ preferences: start, region: startRegion, catalogu
                                                 : <Front stories={stories} order={preferences.topics} onRead={readStory} onTopic={(next) => open({ topic: next })} />}
                     </div>
 
-                    {reading && <Reader reading={reading} stories={stories ?? []} onRead={readStory} onClose={() => setReading(null)} />}
-                    {settings && <Settings preferences={preferences} catalogue={catalogue} region={region} onSave={save} onClose={() => setSettings(false)} />}
-                    {!preferences.setup && <Setup preferences={preferences} catalogue={catalogue} onSave={save} />}
+                    {reading && <Layer><Reader reading={reading} stories={stories ?? []} onRead={readStory} onClose={() => setReading(null)} /></Layer>}
+                    {settings && <Layer><Settings preferences={preferences} catalogue={catalogue} region={region} onSave={save} onClose={() => setSettings(false)} /></Layer>}
+                    {!preferences.setup && <Layer><Setup preferences={preferences} catalogue={catalogue} onSave={save} /></Layer>}
                 </div>
             </section>
         </AppShell>
     );
+}
+
+/**
+ * The reader, the settings and the setup. On a computer they lie over the
+ * frame, which fills the window. On phones and tablets the page scrolls, and
+ * the frame's glass would hold them inside it (far up a long page, with square
+ * corners over its round ones), so there they cover the whole screen from the
+ * top, and the page behind them stays still.
+ */
+function Layer({ children }: { children: ReactNode }) {
+    const [narrow] = useState(() => window.matchMedia('(max-width: 991px)').matches);
+    useEffect(() => {
+        if (!narrow) return;
+        const before = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = before; };
+    }, [narrow]);
+    return narrow ? createPortal(<div className="nwa-layer">{children}</div>, document.body) : <>{children}</>;
 }
 
 /** The paper's colours behind the page, following the time of day. */

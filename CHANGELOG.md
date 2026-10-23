@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.11.2
+
+- News on phones and tablets: the search icon, Top news and Local, and settings fit on one row. The reader, the settings and the setup cover the whole screen from the top, so an article opens where you see it, the page behind stays still, and no square corners lie over the frame.
+
 ## v1.11.1
 
 - Page headings are a real frame with its inner panel; the main page's heading has the orange ring around the panel, as on widgets (kit 1.11.1).
