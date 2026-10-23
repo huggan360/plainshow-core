@@ -1,159 +1,26 @@
 import { Avatar, Badge, relativeTime, RoleBadge } from '@/Components/ui';
 import { Link } from '@inertiajs/react';
-import { createContext, CSSProperties, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { CSSProperties, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { t, locale } from '@/i18n';
+import { Fill, Height, List, Row } from './List';
+import { Body, LayoutItem, More, useBorder, useHeight, usePaging, useSetting, useWidgetData, WidgetDefinition, WidgetFrame, WidgetItem } from './base';
+import { ForecastWidget, RadarWidget, WeatherWidget } from './Weather';
 
-export type SettingField = {
-    name: string; type: 'text' | 'links' | 'choices' | 'toggle' | 'select'; label: string; max?: number;
-    options?: { value: string; label: string }[]; default?: unknown;
-};
-export type Height = 'short' | 'normal' | 'tall';
-export type WidgetDefinition = { key: string; extension: string; extensionName: string; id: string; title: string; description?: string; icon: string; sizes: string[]; default: string; height?: Height; settings?: SettingField[]; admin: boolean };
-export type Glow = 'accent' | 'green' | 'blue' | 'violet' | 'pink' | 'warm' | 'cyan' | 'none';
-export type Bookmark = { label: string; url: string };
-export type LayoutItem = { key: string; size: string; height?: Height; title?: string; glow?: Glow; settings?: { text?: string; links?: Bookmark[]; [name: string]: unknown } };
+export type { Height } from './List';
+export { SLOTS } from './List';
+export type { Border, Bookmark, LayoutItem, SettingField, WidgetDefinition } from './base';
+export { WidgetItem } from './base';
 
 /*
  * How every widget is laid out.
  *
  * The grid has one row height. A widget is one, two or three rows tall
- * (short, normal, tall), always with the same frame, padding and title. The
- * space under the title is cut into equal slots: two when short, six when
- * normal, ten when tall. A list row, a strip of figures, a loading line and
- * an empty place each take one slot, so content always ends exactly where
- * the padding begins, never cut off and never with a gap below. Lists that
- * have more than fits end in a "more" slot; lists with less keep their
- * remaining slots as quiet placeholders. Bars, tiles and photos stretch to
- * fill the same space instead.
+ * (short, normal, tall), always with the same frame, padding and title, in
+ * the visitor's language (titles cannot be renamed). Lists hold a fixed
+ * number of rows at once and scroll on a computer (see List.tsx). A widget
+ * can have a gradient border instead of the plain one.
  */
-export const SLOTS: Record<Height, number> = { short: 2, normal: 6, tall: 10 };
 const PHOTO_COLUMNS: Record<string, number> = { s: 2, m: 3, l: 4, xl: 5, full: 8 };
-
-/** The placed widget's own title, glow and settings, from the saved layout. */
-export const WidgetItem = createContext<LayoutItem | null>(null);
-
-function useSetting<T>(definition: WidgetDefinition, name: string): T {
-    const item = useContext(WidgetItem);
-    const saved = item?.settings?.[name];
-    if (saved !== undefined) return saved as T;
-    return definition.settings?.find((field) => field.name === name)?.default as T;
-}
-function useHeight(definition: WidgetDefinition): Height {
-    return useContext(WidgetItem)?.height ?? definition.height ?? 'normal';
-}
-
-type State<T> = { data: T | null; error: string | null; loading: boolean };
-
-function useWidgetData<T>(extension: string, id: string, refreshSeconds?: number): State<T> {
-    const [state, setState] = useState<State<T>>({ data: null, error: null, loading: true });
-    const load = useCallback(async () => {
-        try {
-            const response = await fetch(`/widgets/${extension}/${id}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
-            if (!response.ok) throw new Error(response.status === 404 ? t('Not available.') : t('Could not load.'));
-            setState({ data: (await response.json()) as T, error: null, loading: false });
-        } catch (error) {
-            setState((current) => ({ ...current, error: error instanceof Error ? error.message : t('Could not load.'), loading: false }));
-        }
-    }, [extension, id]);
-
-    useEffect(() => {
-        load();
-        if (!refreshSeconds) return;
-        const timer = window.setInterval(() => { if (document.visibilityState === 'visible') load(); }, refreshSeconds * 1000);
-        return () => window.clearInterval(timer);
-    }, [load, refreshSeconds]);
-
-    return state;
-}
-
-export function WidgetFrame({ definition, children, glow, action }: { definition: WidgetDefinition; children: ReactNode; glow?: Glow; action?: ReactNode }) {
-    const item = useContext(WidgetItem);
-    const tone = item?.glow ?? glow;
-    return (
-        <section className="ps-frame ps-widget" data-glow={tone === 'none' ? undefined : tone}>
-            <div className="ps-frame__panel">
-                <header className="ps-widget__head">
-                    <h2 className="ps-widget__title">{item?.title || definition.title}</h2>
-                    {action && <span className="ps-widget__action">{action}</span>}
-                </header>
-                <div className="ps-widget__body">{children}</div>
-            </div>
-        </section>
-    );
-}
-
-function More({ href, children }: { href: string; children: ReactNode }) {
-    return /^https?:/.test(href)
-        ? <a className="widget-more" href={href}>{children}<i className="bx bx-right-arrow-alt" aria-hidden="true" /></a>
-        : <Link className="widget-more" href={href}>{children}<i className="bx bx-right-arrow-alt" aria-hidden="true" /></Link>;
-}
-
-/** A body that fills its space with one message, for errors and empty widgets. */
-function Fill({ icon, children }: { icon?: string; children: ReactNode }) {
-    return <div className="widget-fill">{icon && <i className={`bx ${icon}`} aria-hidden="true" />}<div>{children}</div></div>;
-}
-
-/** Loading, failure, or the content, all in the widget's own shape. */
-function Body<T>({ state, height, children }: { state: State<T>; height: Height; children: (data: T) => ReactNode }) {
-    if (state.loading && !state.data) {
-        return <div className="widget-slots ps-chain" style={{ '--slots': SLOTS[height] } as CSSProperties} aria-busy="true">{Array.from({ length: SLOTS[height] }, (_, index) => <div key={index} className="widget-slot widget-slot--loading" />)}</div>;
-    }
-    if (state.error && !state.data) return <Fill icon="bx-error-circle">{state.error}</Fill>;
-    return <>{children(state.data as T)}</>;
-}
-
-/* ---------- Slots: rows, figures, placeholders and "more" ---------- */
-type Row = { key: string | number; title: ReactNode; meta?: ReactNode; lead?: ReactNode; trail?: ReactNode; href?: string };
-type Figure = { label: string; value: ReactNode; tone?: 'warn' | 'alert' | 'good' };
-
-function RowContent({ row }: { row: Row }) {
-    return <>
-        {row.lead && <span className="widget-row__lead">{row.lead}</span>}
-        <span className="widget-row__text"><span className="widget-row__title">{row.title}</span>{row.meta && <span className="widget-row__meta">{row.meta}</span>}</span>
-        {row.trail !== undefined && row.trail !== null && <span className="widget-row__trail">{row.trail}</span>}
-    </>;
-}
-
-function Slots({ height, rows, figures, empty, more }: { height: Height; rows: Row[]; figures?: Figure[]; empty?: ReactNode; more?: { href: string; label?: string } }) {
-    const total = SLOTS[height];
-    const hasFigures = !!figures && figures.length > 0;
-    const capacity = total - (hasFigures ? 1 : 0);
-    if (!hasFigures && rows.length === 0) return <Fill>{empty ?? t('Nothing yet.')}</Fill>;
-
-    const overflow = rows.length > capacity;
-    const shown = overflow ? rows.slice(0, Math.max(0, capacity - 1)) : rows;
-    const placeholders = overflow ? 0 : capacity - shown.length;
-
-    return (
-        <ul className="widget-slots ps-chain" style={{ '--slots': total } as CSSProperties}>
-            {hasFigures && (
-                <li className="widget-slot widget-figures">
-                    {figures!.map((figure) => <div key={t(figure.label)} className={figure.tone ? `is-${figure.tone}` : undefined}><strong>{figure.value}</strong><span>{t(figure.label)}</span></div>)}
-                </li>
-            )}
-            {shown.map((row) => (
-                <li key={row.key} className="widget-slot">
-                    {row.href ? <a className="widget-row" href={row.href}><RowContent row={row} /></a> : <div className="widget-row"><RowContent row={row} /></div>}
-                </li>
-            ))}
-            {overflow && rows.slice(shown.length).map((row) => (
-                <li key={`mobile-${row.key}`} className="widget-slot widget-slot--mobile">
-                    {row.href ? <a className="widget-row" href={row.href}><RowContent row={row} /></a> : <div className="widget-row"><RowContent row={row} /></div>}
-                </li>
-            ))}
-            {overflow && (
-                <li className="widget-slot widget-slot--more">
-                    {more ? <a className="widget-row widget-row--more" href={more.href}>{rows.length - shown.length} more<i className="bx bx-right-arrow-alt" aria-hidden="true" /></a>
-                        : <div className="widget-row widget-row--more">{rows.length - shown.length} more</div>}
-                </li>
-            )}
-            {placeholders > 0 && rows.length === 0 && (
-                <li className="widget-slot widget-slot--empty" style={{ gridRow: `span ${placeholders}` }}>{empty ?? t('Nothing yet.')}</li>
-            )}
-            {placeholders > 0 && rows.length > 0 && Array.from({ length: placeholders }, (_, index) => <li key={`p${index}`} className="widget-slot widget-slot--placeholder" aria-hidden="true" />)}
-        </ul>
-    );
-}
 
 /* ---------- Welcome: greeting, clock and date ---------- */
 type GreetingData = { firstName: string; role: string; services: number };
@@ -173,67 +40,63 @@ function useNow(everySecond: boolean): Date {
 }
 export function GreetingWidget({ definition }: { definition: WidgetDefinition }) {
     const state = useWidgetData<GreetingData>(definition.extension, definition.id);
-    const item = useContext(WidgetItem);
+    const border = useBorder(definition.border);
     const display = useSetting<string>(definition, 'display') ?? 'greeting';
     const showDate = useSetting<boolean>(definition, 'date') ?? true;
     const seconds = useSetting<boolean>(definition, 'seconds') ?? false;
     const showRole = useSetting<boolean>(definition, 'role') ?? false;
     const now = useNow(seconds && display !== 'greeting');
-    const glow = item?.glow ?? 'accent';
     const clock = now.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: seconds ? '2-digit' : undefined });
     const date = now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
 
     return (
-        <section className="ps-frame ps-widget widget-greeting" data-glow={glow === 'none' ? undefined : glow}>
+        <section className="ps-frame ps-widget widget-greeting" data-border={border}>
             <div className="ps-frame__panel">
                 <div className="widget-greeting__inner">
                     <div className="widget-greeting__main">
-                        {showDate && <p className="ps-eyebrow ps-eyebrow--accent">{date}</p>}
+                        {showDate && <p className="widget-greeting__date">{date}</p>}
                         {display !== 'clock'
-                            ? <h2 className="ps-title ps-title--hero widget-greeting__title">{greetingFor(now.getHours())}{state.data ? t(', {firstName}', { firstName: state.data.firstName }) : ''}</h2>
-                            : <p className="widget-clock">{clock}</p>}
+                            ? <h2 className="widget-greeting__title">{greetingFor(now.getHours())}{state.data ? t(', {firstName}', { firstName: state.data.firstName }) : ''}</h2>
+                            : <p className="widget-greeting__title widget-clock">{clock}</p>}
                         {showRole && state.data && (
                             <div className="ps-inline widget-greeting__badges">
                                 <RoleBadge role={state.data.role} />
-                                <Badge>{state.data.services} {state.data.services === 1 ? 'service' : 'services'}</Badge>
+                                <Badge>{state.data.services === 1 ? t('1 service') : t('{n} services', { n: state.data.services })}</Badge>
                             </div>
                         )}
                     </div>
-                    {display === 'both' && <p className="widget-clock widget-clock--side">{clock}</p>}
+                    {display === 'both' && <p className="widget-greeting__title widget-clock">{clock}</p>}
                 </div>
             </div>
         </section>
     );
 }
 
-/* ---------- Server: the bars from PlainShow Web ---------- */
+/* ---------- Server: one row per figure, filled as far as it is used ---------- */
 type SystemData = { system: { model: string; hostname: string; cpuPercent: number; load: number[]; cores: number; memoryPercent: number; memoryUsed: string; memoryTotal: string; diskPercent: number; diskFree: string; diskTotal: string; temperature: number | null; uptime: string }; detailed: boolean };
-function Gauge({ label, value, display, tone }: { label: string; value: number; display: string; tone: string }) {
-    return (
-        <div className={`ps-gauge ps-gauge--${tone}`} style={{ '--value': Math.max(0, Math.min(100, value)) } as CSSProperties} role="meter" aria-label={label} aria-valuenow={Math.round(value)} aria-valuemin={0} aria-valuemax={100}>
-            <span className="ps-gauge__fill" />
-            <span>{label}</span>
-            <span>{display}</span>
-        </div>
-    );
+function level(value: number): Row['tone'] {
+    return value >= 85 ? 'red' : value >= 65 ? 'orange' : 'green';
+}
+function Lead({ icon }: { icon: string }) {
+    return <span className="widget-icon"><i className={`bx ${icon}`} aria-hidden="true" /></span>;
 }
 export function PiHealthWidget({ definition }: { definition: WidgetDefinition }) {
     const state = useWidgetData<SystemData>(definition.extension, definition.id, 15);
     const height = useHeight(definition);
-    const metrics = useSetting<string[]>(definition, 'metrics') ?? ['memory', 'disk', 'cpu'];
-    const details = useSetting<boolean>(definition, 'details') ?? true;
-    const system = state.data?.system;
+    const shown = useSetting<string[]>(definition, 'metrics') ?? ['cpu', 'memory', 'disk', 'temperature', 'uptime'];
     return (
-        <WidgetFrame definition={definition} action={details && system ? <span className="widget-note">{t('Up')}{' '}{system.uptime}</span> : undefined}>
-            <Body state={state} height={height}>{() => {
-                const s = system!;
-                const bars = [
-                    metrics.includes('memory') && <Gauge key="m" tone="red" label={t('RAM used')} value={s.memoryPercent} display={`${s.memoryPercent}%`} />,
-                    metrics.includes('disk') && <Gauge key="d" tone="orange" label={t('Disk used')} value={s.diskPercent} display={details ? `${s.diskFree} free` : `${s.diskPercent}%`} />,
-                    metrics.includes('cpu') && <Gauge key="c" tone="yellow" label={t('CPU load')} value={s.cpuPercent} display={`${s.cpuPercent}%`} />,
-                    metrics.includes('temperature') && s.temperature !== null && <Gauge key="t" tone={s.temperature >= 75 ? 'red' : s.temperature >= 62 ? 'orange' : 'green'} label={t('Temperature')} value={(s.temperature / 90) * 100} display={`${s.temperature.toFixed(0)} °C`} />,
-                ].filter(Boolean);
-                return bars.length ? <div className="widget-bars ps-chain" data-height={height} style={{ '--bars': Math.min(bars.length, height === 'short' ? 2 : 4) } as CSSProperties}>{bars}</div> : <Fill>{t('Choose bars in the Design studio.')}</Fill>;
+        <WidgetFrame definition={definition}>
+            <Body state={state} height={height}>{({ system: s }) => {
+                const rows: Row[] = [];
+                if (shown.includes('cpu')) rows.push({ key: 'cpu', lead: <Lead icon="bx-chip" />, title: t('Processor'), meta: t('Load {load} on {cores} cores', { load: (s.load[0] ?? 0).toFixed(2), cores: s.cores }), trail: `${s.cpuPercent}%`, fill: s.cpuPercent, tone: level(s.cpuPercent) });
+                if (shown.includes('memory')) rows.push({ key: 'memory', lead: <Lead icon="bx-memory-card" />, title: t('Memory'), meta: t('{used} of {total}', { used: s.memoryUsed, total: s.memoryTotal }), trail: `${s.memoryPercent}%`, fill: s.memoryPercent, tone: level(s.memoryPercent) });
+                if (shown.includes('disk')) rows.push({ key: 'disk', lead: <Lead icon="bx-hdd" />, title: t('Storage'), meta: t('{free} free of {total}', { free: s.diskFree, total: s.diskTotal }), trail: `${s.diskPercent}%`, fill: s.diskPercent, tone: level(s.diskPercent) });
+                if (shown.includes('temperature') && s.temperature !== null) {
+                    const percent = (s.temperature / 90) * 100;
+                    rows.push({ key: 'temp', lead: <Lead icon="bx-hot" />, title: t('Temperature'), meta: s.temperature >= 75 ? t('Hot') : s.temperature >= 62 ? t('Warm') : t('Cool'), trail: `${s.temperature.toFixed(0)} °C`, fill: percent, tone: s.temperature >= 75 ? 'red' : s.temperature >= 62 ? 'orange' : 'green' });
+                }
+                if (shown.includes('uptime')) rows.push({ key: 'uptime', lead: <Lead icon="bx-time-five" />, title: t('Uptime'), meta: s.hostname || s.model, trail: s.uptime });
+                return <List height={height} rows={rows} empty={t('Choose what to show in the Design studio.')} />;
             }}</Body>
         </WidgetFrame>
     );
@@ -252,8 +115,8 @@ export function LauncherWidget({ definition }: { definition: WidgetDefinition })
                 const shown = apps.filter((app) => !hidden.includes(app.id));
                 return shown.length === 0
                     ? <Fill>{t('No services to show.')}</Fill>
-                    : <div className={`widget-apps${descriptions ? ' widget-apps--described' : ''}`}>{shown.map((app) => (
-                        <a key={app.id} href={app.url} className="widget-app">
+                    : <div className={`widget-apps${descriptions ? ' widget-apps--described' : ''}`}>{shown.map((app, index) => (
+                        <a key={app.id} href={app.url} className={`widget-app${index === 0 ? ' is-first' : ''}${index === shown.length - 1 ? ' is-last' : ''}`}>
                             <span className="widget-app__icon"><i className={`bx ${app.icon}`} aria-hidden="true" /></span>
                             <span className="widget-app__text"><strong>{app.name}</strong>{descriptions && <span>{t(app.description)}</span>}</span>
                         </a>
@@ -269,27 +132,29 @@ function eventRows(events: EventItem[], showActor = false): Row[] {
     return events.map((event) => ({ key: event.id, title: event.label, meta: showActor && event.actor ? event.actor : undefined, trail: relativeTime(event.at) }));
 }
 export function ActivityWidget({ definition }: { definition: WidgetDefinition }) {
-    const state = useWidgetData<{ events: EventItem[] }>(definition.extension, definition.id, 60);
+    const [limit, more] = usePaging();
+    const state = useWidgetData<{ events: EventItem[] }>(definition.extension, definition.id, 60, { limit });
     const height = useHeight(definition);
-    return <WidgetFrame definition={definition}><Body state={state} height={height}>{({ events }) => <Slots height={height} rows={eventRows(events)} empty="Nothing yet." />}</Body></WidgetFrame>;
+    return <WidgetFrame definition={definition}><Body state={state} height={height}>{({ events }) => <List height={height} rows={eventRows(events)} empty={t('Nothing yet.')} onEnd={() => more(events.length)} />}</Body></WidgetFrame>;
 }
 
 /* ---------- Admin: accounts ---------- */
 type UsersData = { total: number; byRole: Record<string, number>; disabled: number; withoutTwoFactor: number; recent: { id: number; name: string; initials: string; avatar: string | null; username: string; lastLogin: string }[] };
 export function AdminUsersWidget({ definition }: { definition: WidgetDefinition }) {
-    const state = useWidgetData<UsersData>(definition.extension, definition.id, 120);
+    const [limit, more] = usePaging();
+    const state = useWidgetData<UsersData>(definition.extension, definition.id, 120, { limit });
     const height = useHeight(definition);
     return (
         <WidgetFrame definition={definition} action={<More href="/admin/users">{t('All')}</More>}>
             <Body state={state} height={height}>{(data) => (
-                <Slots height={height} more={{ href: '/admin/users' }}
+                <List height={height} more={{ href: '/admin/users' }} onEnd={() => more(data.recent.length)}
                     figures={[
                         { label: t('Accounts'), value: data.total },
                         { label: t('Admins'), value: data.byRole.admin ?? 0 },
                         { label: t('No 2FA'), value: data.withoutTwoFactor, tone: data.withoutTwoFactor > 0 ? 'warn' : undefined },
                     ]}
                     rows={data.recent.map((user) => ({ key: user.id, lead: <Avatar src={user.avatar} initials={user.initials} size="xs" />, title: user.name, trail: relativeTime(user.lastLogin) }))}
-                    empty="Nobody has signed in yet." />
+                    empty={t('Nobody has signed in yet.')} />
             )}</Body>
         </WidgetFrame>
     );
@@ -308,9 +173,11 @@ export function AdminServicesWidget({ definition }: { definition: WidgetDefiniti
                 // Trouble first, so it is never the part that does not fit.
                 const sorted = [...services].sort((a, b) => Number(a.state === 'online') - Number(b.state === 'online'));
                 const shown = problems ? sorted.filter((service) => service.state !== 'online') : sorted;
-                return <Slots height={height} more={{ href: '/admin/services' }} empty="Every service answers." rows={shown.map((service) => ({
+                return <List height={height} more={{ href: '/admin/services' }} empty={t('Every service answers.')} rows={shown.map((service) => ({
                     key: service.id,
+                    lead: <Lead icon={service.icon} />,
                     title: service.name,
+                    meta: service.version ? `v${service.version.replace(/^v/, '')}` : undefined,
                     trail: <span className="widget-state">{service.state === 'online' ? (service.ms !== null ? t('{ms} ms', { ms: service.ms }) : t('Online')) : service.state === 'offline' ? t('Down') : service.state === 'error' ? t('Errors') : t('Unknown')}<span className={`ps-dot ${STATE_DOT[service.state] ?? ''}`} aria-hidden="true" /></span>,
                 }))} />;
             }}</Body>
@@ -321,18 +188,19 @@ export function AdminServicesWidget({ definition }: { definition: WidgetDefiniti
 /* ---------- Admin: sign-in activity ---------- */
 type SecurityData = { failed: number; locked: number; signIns: number; events: EventItem[] };
 export function AdminSecurityWidget({ definition }: { definition: WidgetDefinition }) {
-    const state = useWidgetData<SecurityData>(definition.extension, definition.id, 60);
+    const [limit, more] = usePaging();
+    const state = useWidgetData<SecurityData>(definition.extension, definition.id, 60, { limit });
     const height = useHeight(definition);
     return (
         <WidgetFrame definition={definition} action={<More href="/admin/audit">{t('Log')}</More>}>
             <Body state={state} height={height}>{(data) => (
-                <Slots height={height} more={{ href: '/admin/audit' }}
+                <List height={height} more={{ href: '/admin/audit' }} onEnd={() => more(data.events.length)}
                     figures={[
                         { label: t('Today'), value: data.signIns },
                         { label: t('Failed'), value: data.failed, tone: data.failed > 0 ? 'warn' : undefined },
                         { label: t('Locked'), value: data.locked, tone: data.locked > 0 ? 'alert' : undefined },
                     ]}
-                    rows={eventRows(data.events, true)} empty="No sign-ins yet." />
+                    rows={eventRows(data.events, true)} empty={t('No sign-ins yet.')} />
             )}</Body>
         </WidgetFrame>
     );
@@ -346,9 +214,9 @@ export function AdminUpdatesWidget({ definition }: { definition: WidgetDefinitio
     return (
         <WidgetFrame definition={definition} action={<More href="/admin/updates">{t('Open')}</More>}>
             <Body state={state} height={height}>{(data) => (
-                <Slots height={height} more={{ href: '/admin/updates' }}
-                    empty={<><i className="bx bx-check-circle widget-ok" aria-hidden="true" /> {' '}{t('Up to date')}{data.checkedAt ? t(', checked {when}', { when: relativeTime(data.checkedAt) }) : ''}.{data.failed > 0 && <><br />{data.failed === 1 ? t('One update failed') : t('{failed} updates failed', { failed: data.failed })} {' '}{t('this week.')}</>}</>}
-                    rows={data.available.map((item) => ({ key: item.id, title: item.name, meta: `${item.installed ?? 'unknown'} installed`, trail: <Badge tone="accent">{item.latest}</Badge> }))} />
+                <List height={height} more={{ href: '/admin/updates' }}
+                    empty={<><i className="bx bx-check-circle widget-ok" aria-hidden="true" />{' '}{data.checkedAt ? t('Up to date, checked {when}.', { when: relativeTime(data.checkedAt) }) : t('Up to date.')}{data.failed > 0 && <><br />{data.failed === 1 ? t('One update failed this week.') : t('{failed} updates failed this week.', { failed: data.failed })}</>}</>}
+                    rows={data.available.map((item) => ({ key: item.id, title: item.name, meta: t('{version} installed', { version: item.installed ?? t('unknown') }), trail: <Badge tone="accent">{item.latest}</Badge> }))} />
             )}</Body>
         </WidgetFrame>
     );
@@ -358,7 +226,7 @@ export function AdminUpdatesWidget({ definition }: { definition: WidgetDefinitio
 export function NotesWidget({ definition }: { definition: WidgetDefinition }) {
     const text = (useContext(WidgetItem)?.settings?.text ?? '').trim();
     return (
-        <WidgetFrame definition={definition} glow="warm">
+        <WidgetFrame definition={definition}>
             {text ? <div className="widget-notes">{text}</div> : <Fill>{t('Write a note in the')}{' '}<Link href="/design">{t('Design studio')}</Link>.</Fill>}
         </WidgetFrame>
     );
@@ -368,8 +236,8 @@ export function BookmarksWidget({ definition }: { definition: WidgetDefinition }
     const height = useHeight(definition);
     return (
         <WidgetFrame definition={definition}>
-            <Slots height={height} empty={<>{t('Add links in the')}{' '}<Link href="/design">{t('Design studio')}</Link>.</>}
-                rows={links.map((link, index) => ({ key: index, title: link.label, trail: hostOf(link.url), href: link.url }))} />
+            <List height={height} empty={<>{t('Add links in the')}{' '}<Link href="/design">{t('Design studio')}</Link>.</>}
+                rows={links.map((link, index) => ({ key: index, lead: <Lead icon="bx-link" />, title: link.label, trail: hostOf(link.url), href: link.url }))} />
         </WidgetFrame>
     );
 }
@@ -383,26 +251,39 @@ function NotConnected() {
     return <Fill icon="bx-cloud"><p>{t('You have no Cloud account yet. An administrator can give you access.')}</p></Fill>;
 }
 type CalendarEvent = { title: string; place: string; start: string; end: string; allDay: boolean; calendar: string; color: string | null };
+const CALENDAR_URL = 'https://cloud.plainshow.se/calendar';
 function dayLabel(date: Date): string {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const day = new Date(date); day.setHours(0, 0, 0, 0);
     const diff = Math.round((day.getTime() - today.getTime()) / 86400000);
-    if (diff <= 0) return t('Today');
+    if (diff === 0) return t('Today');
     if (diff === 1) return t('Tomorrow');
     return date.toLocaleDateString(locale, { weekday: 'long' });
 }
+function isoDay(date: Date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+/** The Monday on or before the first of this month: where a month grid starts. */
+function monthStart(): Date {
+    const first = new Date(); first.setDate(1); first.setHours(0, 0, 0, 0);
+    first.setDate(1 - ((first.getDay() + 6) % 7));
+    return first;
+}
 export function CalendarWidget({ definition }: { definition: WidgetDefinition }) {
-    const state = useWidgetData<CloudState & { events?: CalendarEvent[] }>(definition.extension, definition.id, 300);
+    const view = useSetting<string>(definition, 'view') ?? 'list';
     const height = useHeight(definition);
-    const days = Number(useSetting<string>(definition, 'days') ?? 14);
+    const [limit, more] = usePaging();
+    const month = view === 'month';
+    const query = useMemo(() => (month ? { from: isoDay(monthStart()), days: 42, limit: 200 } : { limit }), [month, limit]);
+    const state = useWidgetData<CloudState & { events?: CalendarEvent[] }>(definition.extension, definition.id, 300, query);
     return (
-        <WidgetFrame definition={definition} action={<More href="https://cloud.plainshow.se/calendar">{t('Calendar')}</More>}>
+        <WidgetFrame definition={definition} action={<More href={CALENDAR_URL}>{t('Calendar')}</More>}>
             <Body state={state} height={height}>{(data) => {
                 if (!data.connected) return <NotConnected />;
                 if (data.error) return <Fill icon="bx-error-circle">{data.error}</Fill>;
-                const until = Date.now() + days * 86400000;
-                const events = (data.events ?? []).filter((event) => new Date(event.start).getTime() < until);
-                return <Slots height={height} more={{ href: 'https://cloud.plainshow.se/calendar' }} empty="Nothing planned." rows={events.map((event, index) => {
+                const events = data.events ?? [];
+                if (month) return <MonthGrid events={events} height={height} />;
+                return <List height={height} more={{ href: CALENDAR_URL }} empty={t('Nothing planned.')} onEnd={() => more(events.length)} rows={events.map((event, index) => {
                     const start = new Date(event.start);
                     return {
                         key: index,
@@ -415,6 +296,56 @@ export function CalendarWidget({ definition }: { definition: WidgetDefinition })
         </WidgetFrame>
     );
 }
+
+/** This month, Monday first, six weeks; a short widget shows only this week. Days with events get their colours. */
+function MonthGrid({ events, height }: { events: CalendarEvent[]; height: Height }) {
+    const [picked, setPicked] = useState<string | null>(null);
+    const today = isoDay(new Date());
+    const thisMonth = new Date().getMonth();
+    const start = monthStart();
+    const days = Array.from({ length: 42 }, (_, index) => { const day = new Date(start); day.setDate(start.getDate() + index); return day; });
+    const weeks = height === 'short' ? [days.slice(Math.floor(days.findIndex((day) => isoDay(day) === today) / 7) * 7).slice(0, 7)] : Array.from({ length: 6 }, (_, week) => days.slice(week * 7, week * 7 + 7));
+    const byDay = new Map<string, CalendarEvent[]>();
+    for (const event of events) {
+        const first = new Date(event.start);
+        const last = new Date(event.end ? new Date(event.end).getTime() - (event.allDay ? 1 : 0) : first.getTime());
+        for (const day = new Date(first.getFullYear(), first.getMonth(), first.getDate()); day <= last && byDay.size < 400; day.setDate(day.getDate() + 1)) {
+            const key = isoDay(day);
+            byDay.set(key, [...(byDay.get(key) ?? []), event]);
+        }
+    }
+    const names = Array.from({ length: 7 }, (_, index) => new Date(2024, 0, 1 + index).toLocaleDateString(locale, { weekday: 'narrow' }));
+    const chosen = picked ? byDay.get(picked) ?? [] : [];
+
+    return (
+        <div className="widget-month" style={{ '--weeks': weeks.length } as CSSProperties}>
+            <div className="widget-month__names">{names.map((name, index) => <span key={index}>{name}</span>)}</div>
+            <div className="widget-month__grid">
+                {weeks.flat().map((day) => {
+                    const key = isoDay(day);
+                    const list = byDay.get(key) ?? [];
+                    return (
+                        <button key={key} type="button" className={`widget-month__day${key === today ? ' is-today' : ''}${day.getMonth() !== thisMonth ? ' is-other' : ''}${key === picked ? ' is-picked' : ''}`}
+                            onClick={() => setPicked(key === picked ? null : key)} title={list.map((event) => event.title).join('\n') || undefined}
+                            aria-label={`${day.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}${list.length ? `, ${list.length === 1 ? t('1 event') : t('{n} events', { n: list.length })}` : ''}`}>
+                            <span>{day.getDate()}</span>
+                            {list.length > 0 && <span className="widget-month__dots">{list.slice(0, 3).map((event, index) => <i key={index} style={event.color ? { background: event.color } : undefined} />)}</span>}
+                        </button>
+                    );
+                })}
+            </div>
+            {picked && (
+                <div className="widget-month__day-list">
+                    <strong>{new Date(picked).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}</strong>
+                    {chosen.length === 0 ? <span>{t('Nothing planned.')}</span> : chosen.slice(0, 3).map((event, index) => (
+                        <span key={index}><i style={event.color ? { background: event.color } : undefined} />{event.allDay ? t('All day') : new Date(event.start).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}{' '}{event.title}</span>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
 type CloudFile = { name: string; folder: string | null; type: string; changed: string | null; url: string };
 function fileIcon(type: string, name: string): string {
     if (type.startsWith('image/')) return 'bx-image';
@@ -425,14 +356,15 @@ function fileIcon(type: string, name: string): string {
     return 'bx-file-blank';
 }
 export function FilesWidget({ definition }: { definition: WidgetDefinition }) {
-    const state = useWidgetData<CloudState & { files?: CloudFile[] }>(definition.extension, definition.id, 300);
+    const [limit, more] = usePaging();
+    const state = useWidgetData<CloudState & { files?: CloudFile[] }>(definition.extension, definition.id, 300, { limit });
     const height = useHeight(definition);
     return (
         <WidgetFrame definition={definition} action={<More href="https://cloud.plainshow.se/">{t('Files')}</More>}>
             <Body state={state} height={height}>{(data) => !data.connected ? <NotConnected /> : data.error ? <Fill icon="bx-error-circle">{data.error}</Fill> : (
-                <Slots height={height} more={{ href: 'https://cloud.plainshow.se/' }} empty="No files yet." rows={(data.files ?? []).map((file, index) => ({
+                <List height={height} more={{ href: 'https://cloud.plainshow.se/' }} empty={t('No files yet.')} onEnd={() => more((data.files ?? []).length)} rows={(data.files ?? []).map((file, index) => ({
                     key: index, href: file.url,
-                    lead: <i className={`bx ${fileIcon(file.type, file.name)} widget-row__icon`} aria-hidden="true" />,
+                    lead: <Lead icon={fileIcon(file.type, file.name)} />,
                     title: file.name,
                     meta: file.folder ?? t('Home'),
                     trail: file.changed ? relativeTime(file.changed) : undefined,
@@ -441,6 +373,7 @@ export function FilesWidget({ definition }: { definition: WidgetDefinition }) {
         </WidgetFrame>
     );
 }
+
 /* ---------- Extension widgets: typed data from Blog, LaTeX, Split and others ---------- */
 type ExtItem = { title?: string; meta?: string; url?: string; icon?: string; image?: string; avatar?: string; initials?: string; badge?: string; tone?: 'plus' | 'minus' | 'accent' };
 type ExtData = {
@@ -453,31 +386,33 @@ type ExtData = {
     error?: boolean;
 };
 export function ExtensionWidget({ definition }: { definition: WidgetDefinition }) {
-    const state = useWidgetData<ExtData>(definition.extension, definition.id, 120);
+    const [limit, more] = usePaging();
+    const state = useWidgetData<ExtData>(definition.extension, definition.id, 120, { limit });
     const item = useContext(WidgetItem);
     const height = useHeight(definition);
-    const more = state.data?.more;
+    const link = state.data?.more;
     return (
-        <WidgetFrame definition={definition} action={more ? <More href={more.url}>{t(more.label)}</More> : undefined}>
+        <WidgetFrame definition={definition} action={link ? <More href={link.url}>{t(link.label)}</More> : undefined}>
             <Body state={state} height={height}>{(data) => {
                 if (data.type === 'gallery' && data.images && data.images.length > 0) {
                     const rows = { short: 1, normal: 2, tall: 3 }[height];
                     // As many columns as the width allows, but never more than the photos can fill.
                     const columns = Math.max(1, Math.min(PHOTO_COLUMNS[item?.size ?? definition.default] ?? 4, Math.floor(data.images.length / rows) || 1));
+                    const shown = data.images.slice(0, rows * columns);
                     return (
                         <div className="widget-gallery" style={{ '--rows': rows, '--columns': columns } as CSSProperties}>
-                            {data.images.slice(0, rows * columns).map((image, index) => (
-                                <a key={image.src + index} href={image.url ?? image.src} className="widget-gallery__photo"><img src={image.src} alt={image.alt ?? ''} loading="lazy" /></a>
+                            {shown.map((image, index) => (
+                                <a key={image.src + index} href={image.url ?? image.src} className={`widget-gallery__photo${index === 0 ? ' is-first' : ''}${index === columns - 1 ? ' is-top-end' : ''}${index === shown.length - columns ? ' is-bottom-start' : ''}${index === shown.length - 1 ? ' is-last' : ''}`}><img src={image.src} alt={image.alt ?? ''} loading="lazy" /></a>
                             ))}
                         </div>
                     );
                 }
                 if (data.error) return <Fill icon="bx-error-circle">{data.empty ?? t('Could not load.')}</Fill>;
-                return <Slots height={height} more={more ? { href: more.url } : undefined} empty={data.empty ?? t('Nothing here yet.')}
+                return <List height={height} more={link ? { href: link.url } : undefined} empty={data.empty ?? t('Nothing here yet.')} onEnd={() => more((data.items ?? []).length)}
                     figures={data.metrics?.map((metric) => ({ label: metric.label, value: metric.value, tone: metric.tone === 'minus' ? 'alert' : metric.tone === 'plus' ? 'good' : undefined }))}
                     rows={(data.items ?? []).map((entry, index) => ({
                         key: index, href: entry.url, title: entry.title, meta: entry.meta,
-                        lead: entry.image ? <span className="widget-thumb"><img src={entry.image} alt="" loading="lazy" /></span> : entry.avatar || entry.initials ? <Avatar src={entry.avatar ?? null} initials={entry.initials ?? '?'} size="xs" /> : undefined,
+                        lead: entry.image ? <span className="widget-thumb"><img src={entry.image} alt="" loading="lazy" /></span> : entry.avatar || entry.initials ? <Avatar src={entry.avatar ?? null} initials={entry.initials ?? '?'} size="xs" /> : entry.icon ? <Lead icon={entry.icon} /> : undefined,
                         trail: entry.badge ? <Badge tone={entry.tone === 'minus' ? 'red' : entry.tone === 'plus' ? 'green' : undefined}>{entry.badge}</Badge> : undefined,
                     }))} />;
             }}</Body>
@@ -488,6 +423,9 @@ export function ExtensionWidget({ definition }: { definition: WidgetDefinition }
 export const WIDGETS: Record<string, (props: { definition: WidgetDefinition }) => ReactNode> = {
     'core.greeting': GreetingWidget,
     'core.pi-health': PiHealthWidget,
+    'core.weather': WeatherWidget,
+    'core.forecast': ForecastWidget,
+    'core.radar': RadarWidget,
     'core.launcher': LauncherWidget,
     'core.activity': ActivityWidget,
     'core.admin-users': AdminUsersWidget,
@@ -500,7 +438,7 @@ export const WIDGETS: Record<string, (props: { definition: WidgetDefinition }) =
     'cloud.files': FilesWidget,
 };
 
-/** Renders one placed widget with its own title, glow and settings. */
+/** Renders one placed widget with its own size, border and settings. */
 export function PlacedWidget({ item, definition }: { item: LayoutItem; definition: WidgetDefinition }) {
     const Component = WIDGETS[item.key] ?? (definition.extension !== 'core' ? ExtensionWidget : undefined);
     if (!Component) return null;

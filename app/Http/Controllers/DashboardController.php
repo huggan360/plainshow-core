@@ -61,10 +61,12 @@ class DashboardController extends Controller
         $user = $request->user();
         $allowed = collect(Dashboard::catalogue($user))->firstWhere('key', $extension.'.'.$widget);
         abort_unless($allowed, 404);
+        // Lists ask for more as they are scrolled; widgets that cannot page answer their usual amount.
+        $limit = $request->filled('limit') ? max(1, min(50, (int) $request->query('limit'))) : null;
         $data = match ($extension) {
-            'core' => CoreWidgets::data($widget, $user),
-            'cloud' => \App\Support\CloudWidgets::data($widget, $user),
-            default => ExtensionWidgets::data(Extension::findOrFail($extension), $widget, $user),
+            'core' => CoreWidgets::data($widget, $user, $limit),
+            'cloud' => \App\Support\CloudWidgets::data($widget, $user, $limit, $request->query('from'), $request->query('days')),
+            default => ExtensionWidgets::data(Extension::findOrFail($extension), $widget, $user, null, $limit),
         };
         abort_if($data === null, 404);
 
@@ -77,6 +79,33 @@ class DashboardController extends Controller
         DashboardLayout::updateOrCreate(['user_id' => $request->user()->id], ['widgets' => $widgets]);
 
         return back()->with('status', __('Dashboard saved.'));
+    }
+
+    /**
+     * Settings changed from the widget itself (a weather place, say). The
+     * person's layout is saved with it, starting from the one they see. A
+     * place goes to every weather widget that has none yet.
+     */
+    public function saveWidgetSettings(Request $request, string $key): JsonResponse
+    {
+        $settings = $request->validate(['settings' => ['required', 'array']])['settings'];
+        $user = $request->user();
+        $catalogue = Dashboard::catalogue($user);
+        $layout = Dashboard::layout($user);
+        abort_unless(collect($layout)->contains('key', $key), 404);
+        $layout = array_map(function (array $item) use ($key, $settings) {
+            if ($item['key'] === $key) {
+                $item['settings'] = array_merge($item['settings'] ?? [], $settings);
+            } elseif (isset($settings['place']) && in_array($item['key'], Dashboard::WEATHER, true) && empty($item['settings']['place'])) {
+                $item['settings'] = array_merge($item['settings'] ?? [], ['place' => $settings['place']]);
+            }
+
+            return $item;
+        }, $layout);
+        $layout = Dashboard::sanitize($layout, $catalogue);
+        DashboardLayout::updateOrCreate(['user_id' => $user->id], ['widgets' => $layout]);
+
+        return response()->json(['layout' => $layout]);
     }
 
     public function resetLayout(Request $request): RedirectResponse
@@ -112,8 +141,7 @@ class DashboardController extends Controller
             'widgets.*.key' => ['required', 'string', 'max:80'],
             'widgets.*.size' => ['required', 'string', 'in:'.implode(',', Dashboard::SIZES)],
             'widgets.*.height' => ['nullable', 'string', 'in:'.implode(',', Dashboard::HEIGHTS)],
-            'widgets.*.title' => ['nullable', 'string', 'max:60'],
-            'widgets.*.glow' => ['nullable', 'string', 'in:'.implode(',', Dashboard::GLOWS)],
+            'widgets.*.border' => ['nullable', 'string', 'in:'.implode(',', Dashboard::BORDERS)],
             'widgets.*.settings' => ['nullable', 'array'],
         ])['widgets'];
     }

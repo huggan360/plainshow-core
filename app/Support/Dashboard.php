@@ -15,10 +15,14 @@ class Dashboard
 {
     public const SIZES = ['s', 'm', 'l', 'xl', 'full'];
 
+    /** Widgets that show the weather somewhere; they share a place. */
+    public const WEATHER = ['core.weather', 'core.forecast', 'core.radar'];
+
     /** Heights in grid rows: short is one, normal two, tall three. */
     public const HEIGHTS = ['short', 'normal', 'tall'];
 
-    public const GLOWS = ['accent', 'green', 'blue', 'violet', 'pink', 'warm', 'cyan', 'none'];
+    /** Gradient borders a widget can have (resources/css/app.css, .ps-frame[data-border]). */
+    public const BORDERS = ['none', 'orange', 'sunset', 'ocean', 'forest', 'violet', 'mono'];
 
     /** @return list<array<string, mixed>> every widget this user may use */
     public static function catalogue(User $user): array
@@ -26,7 +30,6 @@ class Dashboard
         return self::catalogueFor($user->role, fn (string $capability) => Permissions::can($user, $capability), Permissions::for($user)['services']);
     }
 
-    /** The widgets someone with only a role's defaults could use, for role layouts. */
     /** The widgets someone with only a role's defaults could use, for role layouts. */
     public static function catalogueForRole(string $role): array
     {
@@ -44,6 +47,7 @@ class Dashboard
     private static function catalogueFor(string $role, callable $can, array $services): array
     {
         $widgets = [];
+        $text = fn ($value) => is_string($value) && $value !== '' ? (string) __($value) : '';
         foreach (Extension::where('enabled', true)->orderBy('sort')->get() as $extension) {
             if ($extension->id !== 'core' && ! in_array($extension->id, $services, true)) {
                 continue;
@@ -57,13 +61,17 @@ class Dashboard
                     'extension' => $extension->id,
                     'extensionName' => $extension->name,
                     'id' => $widget['id'],
-                    'title' => $widget['title'],
-                    'description' => $widget['description'] ?? '',
+                    // Titles, descriptions and settings in the visitor's language.
+                    'title' => $text($widget['title']),
+                    'description' => $text($widget['description'] ?? ''),
                     'icon' => $widget['icon'] ?? $extension->icon,
                     'sizes' => array_values(array_intersect($widget['sizes'] ?? ['m'], self::SIZES)),
                     'default' => $widget['default'] ?? 'm',
                     'height' => in_array($widget['height'] ?? null, self::HEIGHTS, true) ? $widget['height'] : 'normal',
-                    'settings' => $widget['settings'] ?? [],
+                    'settings' => array_map(fn ($field) => array_merge($field, [
+                        'label' => $text($field['label'] ?? ''),
+                    ], isset($field['options']) ? ['options' => array_map(fn ($option) => ['value' => $option['value'], 'label' => $text($option['label'] ?? '')], $field['options'])] : []), $widget['settings'] ?? []),
+                    'border' => in_array($widget['border'] ?? null, self::BORDERS, true) ? $widget['border'] : null,
                     'admin' => isset($widget['capability']),
                 ];
             }
@@ -93,7 +101,9 @@ class Dashboard
 
     /**
      * Keep only widgets the catalogue allows, at a size they support, with
-     * clean optional settings: a title, a glow and per-widget options.
+     * clean optional settings: a gradient border and per-widget options.
+     * Titles are the widget's own, in the visitor's language; they cannot be
+     * renamed.
      *
      * @return list<array<string, mixed>>
      */
@@ -113,12 +123,8 @@ class Dashboard
                 $size = in_array($definition['default'], $definition['sizes'], true) ? $definition['default'] : $definition['sizes'][0];
             }
             $entry = ['key' => $key, 'size' => $size, 'height' => in_array($item['height'] ?? null, self::HEIGHTS, true) ? $item['height'] : $definition['height']];
-            $title = trim(strip_tags((string) ($item['title'] ?? '')));
-            if ($title !== '') {
-                $entry['title'] = mb_substr($title, 0, 60);
-            }
-            if (in_array($item['glow'] ?? null, self::GLOWS, true)) {
-                $entry['glow'] = $item['glow'];
+            if (in_array($item['border'] ?? null, self::BORDERS, true)) {
+                $entry['border'] = $item['border'];
             }
             $settings = self::settings($definition['settings'], is_array($item['settings'] ?? null) ? $item['settings'] : []);
             if ($settings) {
@@ -131,7 +137,7 @@ class Dashboard
         return $clean;
     }
 
-    /** Settings a widget declares in its manifest: text, links or a list of choices. */
+    /** Settings a widget declares in its manifest: text, links, choices, a toggle or a place. */
     private static function settings(array $schema, array $values): array
     {
         $clean = [];
@@ -165,6 +171,18 @@ class Dashboard
                         $clean[$name] = (string) $value;
                     }
                     break;
+                case 'place':
+                    if (is_array($value) && is_numeric($value['lat'] ?? null) && is_numeric($value['lon'] ?? null)
+                        && abs((float) $value['lat']) <= 90 && abs((float) $value['lon']) <= 180) {
+                        $clean[$name] = [
+                            'name' => mb_substr(trim(strip_tags((string) ($value['name'] ?? ''))), 0, 80),
+                            'region' => mb_substr(trim(strip_tags((string) ($value['region'] ?? ''))), 0, 80),
+                            'countryCode' => strtoupper(substr(preg_replace('/[^A-Za-z]/', '', (string) ($value['countryCode'] ?? '')), 0, 2)),
+                            'lat' => round((float) $value['lat'], 4),
+                            'lon' => round((float) $value['lon'], 4),
+                        ];
+                    }
+                    break;
                 case 'choices':
                     $options = array_column($field['options'] ?? [], 'value');
                     $clean[$name] = array_values(array_intersect(is_array($value) ? array_map('strval', $value) : [], $options));
@@ -183,7 +201,7 @@ class Dashboard
             ['core.pi-health', 'm'], ['core.admin-services', 'm'], ['core.admin-users', 'm'],
             ['core.admin-security', 'm'], ['blog.latest-posts', 'm'], ['split.balances', 'm'],
             ['cloud.calendar', 'm'], ['latex.recent-projects', 'm'], ['core.admin-updates', 'm'],
-            ['core.activity', 'm'], ['blog.new-photos', 'xl'],
+            ['core.weather', 'm'], ['core.activity', 'm'], ['blog.new-photos', 'xl'],
         ];
 
         return array_map(fn ($entry) => ['key' => $entry[0], 'size' => $entry[1]], $order);

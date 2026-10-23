@@ -17,7 +17,11 @@ use Throwable;
  */
 class CloudWidgets
 {
-    public static function data(string $widget, User $user): ?array
+    /**
+     * $from and $days pick the calendar's range (a month view starts before
+     * today); $limit how many events or files to send.
+     */
+    public static function data(string $widget, User $user, ?int $limit = null, mixed $from = null, mixed $days = null): ?array
     {
         $extension = Extension::find('cloud');
         if ($extension === null || ! in_array($widget, ['calendar', 'files', 'photos'], true)) {
@@ -26,10 +30,15 @@ class CloudWidgets
         // Cloud answers "connected: false" when no such account exists there.
         $account = CloudAccount::for($user);
         if ($widget === 'photos') {
-            return ExtensionWidgets::data($extension, $widget, $user, $account);
+            return ExtensionWidgets::data($extension, $widget, $user, $account, $limit);
         }
+        $query = array_filter([
+            'limit' => $limit,
+            'from' => is_string($from) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $from) ? $from : null,
+            'days' => is_numeric($days) ? max(1, min(62, (int) $days)) : null,
+        ]);
 
-        $key = "cloud:$widget:{$user->id}:".app()->getLocale();
+        $key = "cloud:$widget:{$user->id}:".app()->getLocale().':'.http_build_query($query);
         if (is_array($cached = Cache::get($key))) {
             return $cached;
         }
@@ -42,7 +51,7 @@ class CloudWidgets
             $host = (string) parse_url($api, PHP_URL_HOST);
             $response = Http::timeout(10)->connectTimeout(3)->acceptJson()->withHeaders(['Accept-Language' => app()->getLocale()])
                 ->withOptions(['curl' => [CURLOPT_RESOLVE => ["$host:443:127.0.0.1"]]])
-                ->get("$api/widgets/$widget", Widgets::sign($user->id, $widget, $secret, null, $account));
+                ->get("$api/widgets/$widget", Widgets::sign($user->id, $widget, $secret, null, $account) + $query);
             $data = $response->json();
             if (! $response->ok() || ! is_array($data) || ! array_key_exists('connected', $data)) {
                 return ['connected' => true, 'error' => 'Could not reach Cloud.'];
@@ -75,7 +84,7 @@ class CloudWidgets
                 'allDay' => (bool) ($event['allDay'] ?? false),
                 'calendar' => $text($event['calendar'] ?? '', 80),
                 'color' => is_string($event['color'] ?? null) && preg_match('/^#[0-9a-f]{6}$/i', $event['color']) ? $event['color'] : null,
-            ], array_slice(array_filter((array) ($data['events'] ?? []), 'is_array'), 0, 30))];
+            ], array_slice(array_filter((array) ($data['events'] ?? []), 'is_array'), 0, 200))];
         }
 
         return ['connected' => true, 'files' => array_map(fn ($file) => [
@@ -84,6 +93,6 @@ class CloudWidgets
             'type' => $text($file['type'] ?? '', 80),
             'changed' => isset($file['changed']) ? $text($file['changed'], 40) : null,
             'url' => $url($file['url'] ?? null) ?? 'https://cloud.plainshow.se/',
-        ], array_slice(array_filter((array) ($data['files'] ?? []), 'is_array'), 0, 12))];
+        ], array_slice(array_filter((array) ($data['files'] ?? []), 'is_array'), 0, 50))];
     }
 }

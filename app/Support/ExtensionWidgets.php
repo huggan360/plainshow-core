@@ -19,7 +19,7 @@ class ExtensionWidgets
 {
     private const TYPES = ['list', 'metrics', 'gallery'];
 
-    public static function data(Extension $extension, string $widget, User $user, ?string $account = null): ?array
+    public static function data(Extension $extension, string $widget, User $user, ?string $account = null, ?int $limit = null): ?array
     {
         $secret = self::secret($extension->id);
         $api = rtrim((string) ($extension->manifest['api'] ?? ''), '/');
@@ -28,18 +28,18 @@ class ExtensionWidgets
         }
 
         // Answers are cached briefly; failures are not, so a slow moment does not stick.
-        $cacheKey = "widget:{$extension->id}:{$widget}:{$user->id}:".app()->getLocale();
+        $cacheKey = "widget:{$extension->id}:{$widget}:{$user->id}:".app()->getLocale().':'.($limit ?? '');
         if (is_array($cached = Cache::get($cacheKey))) {
             return $cached;
         }
-        $data = (function () use ($extension, $widget, $user, $secret, $api, $account) {
+        $data = (function () use ($extension, $widget, $user, $secret, $api, $account, $limit) {
             try {
                 $host = (string) parse_url($api, PHP_URL_HOST);
                 // The service answers in the visitor's language (kit Lang reads Accept-Language).
                 $response = Http::timeout(8)->connectTimeout(3)->retry(2, 200, throw: false)->acceptJson()->withHeaders(['Accept-Language' => app()->getLocale()])
                     // Every extension runs on this machine: go straight there, still over checked TLS.
                     ->withOptions(['curl' => [CURLOPT_RESOLVE => ["$host:443:127.0.0.1"]]])
-                    ->get("$api/widgets/$widget", Widgets::sign($user->id, $widget, $secret, null, $account));
+                    ->get("$api/widgets/$widget", Widgets::sign($user->id, $widget, $secret, null, $account) + array_filter(['limit' => $limit]));
                 $data = $response->json();
                 if (! $response->ok() || ! is_array($data) || ! in_array($data['type'] ?? null, self::TYPES, true)) {
                     return ['type' => 'list', 'items' => [], 'empty' => __('Could not reach :name.', ['name' => $extension->name]), 'error' => true];
@@ -76,7 +76,7 @@ class ExtensionWidgets
 
         return array_filter([
             'type' => $data['type'],
-            'items' => array_values(array_filter(array_map($item, array_slice((array) ($data['items'] ?? []), 0, 12)))),
+            'items' => array_values(array_filter(array_map($item, array_slice((array) ($data['items'] ?? []), 0, 50)))),
             'metrics' => array_values(array_filter(array_map(fn ($m) => is_array($m) ? array_filter([
                 'label' => $text($m['label'] ?? null, 40),
                 'value' => $text($m['value'] ?? null, 40),

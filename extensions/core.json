@@ -48,7 +48,9 @@
             "description": "Create groups, invite members and manage groups the person owns.",
             "tier": "user",
             "group": "Groups",
-            "implies": ["core.groups.view"]
+            "implies": [
+                "core.groups.view"
+            ]
         },
         {
             "name": "core.groups.manage",
@@ -56,7 +58,10 @@
             "description": "Open, change or remove any PlainShow group, including groups owned by someone else.",
             "tier": "moderator",
             "group": "Groups",
-            "implies": ["core.groups.create", "core.groups.view"]
+            "implies": [
+                "core.groups.create",
+                "core.groups.view"
+            ]
         },
         {
             "name": "core.extensions.manage",
@@ -112,7 +117,7 @@
                 "full"
             ],
             "default": "xl",
-            "description": "Date, greeting and your account at a glance.",
+            "description": "Date, greeting and a clock.",
             "settings": [
                 {
                     "name": "display",
@@ -153,7 +158,8 @@
                     "default": false
                 }
             ],
-            "height": "short"
+            "height": "short",
+            "border": "orange"
         },
         {
             "id": "pi-health",
@@ -169,7 +175,7 @@
                 {
                     "name": "metrics",
                     "type": "choices",
-                    "label": "Bars",
+                    "label": "Show",
                     "options": [
                         {
                             "value": "memory",
@@ -186,22 +192,102 @@
                         {
                             "value": "temperature",
                             "label": "Temperature"
+                        },
+                        {
+                            "value": "uptime",
+                            "label": "Uptime"
                         }
                     ],
                     "default": [
+                        "cpu",
                         "memory",
                         "disk",
-                        "cpu"
+                        "temperature",
+                        "uptime"
                     ]
-                },
-                {
-                    "name": "details",
-                    "type": "toggle",
-                    "label": "Uptime and load",
-                    "default": true
                 }
             ],
             "height": "normal"
+        },
+        {
+            "id": "weather",
+            "title": "Weather",
+            "icon": "bx-cloud-light-rain",
+            "sizes": [
+                "s",
+                "m",
+                "l"
+            ],
+            "default": "m",
+            "height": "normal",
+            "description": "The weather where you are, under a sky that follows the time of day.",
+            "settings": [
+                {
+                    "name": "place",
+                    "type": "place",
+                    "label": "Place"
+                }
+            ]
+        },
+        {
+            "id": "forecast",
+            "title": "Forecast",
+            "icon": "bx-cloud",
+            "sizes": [
+                "l",
+                "xl",
+                "full"
+            ],
+            "default": "l",
+            "height": "normal",
+            "description": "The weather now, the coming hours and the week ahead.",
+            "settings": [
+                {
+                    "name": "place",
+                    "type": "place",
+                    "label": "Place"
+                }
+            ]
+        },
+        {
+            "id": "radar",
+            "title": "Rain radar",
+            "icon": "bx-radar",
+            "sizes": [
+                "m",
+                "l",
+                "xl"
+            ],
+            "default": "m",
+            "height": "normal",
+            "description": "Rain on the map around you, the last two hours.",
+            "settings": [
+                {
+                    "name": "place",
+                    "type": "place",
+                    "label": "Place"
+                },
+                {
+                    "name": "area",
+                    "type": "select",
+                    "label": "Area",
+                    "options": [
+                        {
+                            "value": "near",
+                            "label": "Near"
+                        },
+                        {
+                            "value": "region",
+                            "label": "Region"
+                        },
+                        {
+                            "value": "wide",
+                            "label": "Wide"
+                        }
+                    ],
+                    "default": "region"
+                }
+            ]
         },
         {
             "id": "launcher",

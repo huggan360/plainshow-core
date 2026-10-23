@@ -13,16 +13,18 @@ use Throwable;
 /** Data for core's own widgets. Each method returns a JSON-ready array. */
 class CoreWidgets
 {
-    public static function data(string $widget, User $user): ?array
+    public static function data(string $widget, User $user, ?int $limit = null): ?array
     {
+        $limit ??= 12;
+
         return match ($widget) {
             'greeting' => self::greeting($user),
             'pi-health' => ['system' => SystemStats::snapshot(), 'detailed' => Permissions::can($user, 'core.system.view')],
             'launcher' => ['apps' => self::apps($user)],
-            'activity' => ['events' => self::events(AuditEvent::where('user_id', $user->id))],
-            'admin-users' => self::users(),
+            'activity' => ['events' => self::events(AuditEvent::where('user_id', $user->id), $limit)],
+            'admin-users' => self::users($limit),
             'admin-services' => ['services' => self::services()],
-            'admin-security' => self::security(),
+            'admin-security' => self::security($limit),
             'admin-updates' => self::updates(),
             default => null,
         };
@@ -47,9 +49,9 @@ class CoreWidgets
             ->values()->all();
     }
 
-    private static function events($query): array
+    private static function events($query, int $limit = 12): array
     {
-        return $query->orderByDesc('id')->limit(8)->get()->map(fn (AuditEvent $event) => [
+        return $query->orderByDesc('id')->limit($limit)->get()->map(fn (AuditEvent $event) => [
             'id' => $event->id,
             'event' => $event->event,
             'label' => AuditLabels::label($event->event),
@@ -59,7 +61,7 @@ class CoreWidgets
         ])->all();
     }
 
-    private static function users(): array
+    private static function users(int $limit = 12): array
     {
         $byRole = User::query()->select('role', DB::raw('COUNT(*) as total'))->groupBy('role')->pluck('total', 'role');
 
@@ -68,7 +70,7 @@ class CoreWidgets
             'byRole' => $byRole,
             'disabled' => User::where('status', '!=', 'active')->count(),
             'withoutTwoFactor' => User::whereNull('two_factor_confirmed_at')->whereIn('role', ['admin', 'moderator'])->count(),
-            'recent' => User::whereNotNull('last_login_at')->orderByDesc('last_login_at')->limit(5)->get()
+            'recent' => User::whereNotNull('last_login_at')->orderByDesc('last_login_at')->limit($limit)->get()
                 ->map(fn (User $user) => $user->summary() + ['lastLogin' => $user->last_login_at?->toIso8601String()])->all(),
         ];
     }
@@ -102,7 +104,7 @@ class CoreWidgets
         });
     }
 
-    private static function security(): array
+    private static function security(int $limit = 12): array
     {
         $since = now()->subDay();
 
@@ -110,7 +112,7 @@ class CoreWidgets
             'failed' => AuditEvent::where('source', 'login')->whereIn('event', ['login.failed', 'two_factor.failed'])->where('created_at', '>=', $since)->count(),
             'locked' => AuditEvent::where('event', 'login.locked')->where('created_at', '>=', $since)->count(),
             'signIns' => AuditEvent::where('event', 'login.success')->where('created_at', '>=', $since)->count(),
-            'events' => self::events(AuditEvent::where('source', 'login')),
+            'events' => self::events(AuditEvent::where('source', 'login'), $limit),
         ];
     }
 

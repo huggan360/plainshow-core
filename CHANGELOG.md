@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.5.0
+
+- Widgets were cleaned up. Lists hold a fixed number of rows. On a computer they scroll one row at a time like the notices on PlainShow Web, with the rounded corners following the rows on screen, and load more as you go. On a phone they show the first rows and how many more there are. Corners no longer break on phones.
+- Welcome: centred, with the greeting and the clock in the same colour and size, and the date above.
+- Server is now a list like the other widgets: processor, memory, storage, temperature and uptime, each row filled as far as it is used.
+- Widget titles follow your language and can no longer be renamed.
+- Gradient borders instead of the glow: orange, sunset, ocean, forest, violet or grey, as thick as on PlainShow Web.
+- Calendar: a month view, alongside the list.
+- New widgets: Weather (now, with a sky that follows the time of day and the weather), Forecast (the coming hours and seven days) and Rain radar (a map around you with the last two hours of rain). Set the place in the Design studio, or in the widget itself.
+- Weather in the API: `/weather/places`, `/weather/forecast` and `/weather/radar`. Forecasts come from SMHI in the Nordic countries and Open-Meteo elsewhere; radar from SMHI over Sweden and RainViewer elsewhere.
+
 ## v1.4.2
 
 - Background: large soft orange blobs that fade in, drift and fade out, lighting only the glyphs (kit 1.10).

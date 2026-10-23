@@ -1,6 +1,6 @@
 {
     "openapi": "3.1.0",
-    "info": { "title": "PlainShow dashboard", "version": "1", "description": "Your account, the services you can use and the server's health." },
+    "info": { "title": "PlainShow dashboard", "version": "1", "description": "Your account, the services you can use, the server's health and the weather." },
     "servers": [{ "url": "https://plainshow.se/api/core/v1" }],
     "security": [{ "bearer": [] }],
     "components": { "securitySchemes": { "bearer": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" } } },
@@ -8,6 +8,9 @@
         "/health": { "get": { "summary": "Whether the dashboard answers", "security": [], "responses": { "200": { "description": "`{\"status\": \"ok\"}`" } } } },
         "/me": { "get": { "summary": "You", "description": "Your account, role, the services you can use and your capabilities.", "responses": { "200": { "description": "The account" } } } },
         "/extensions": { "get": { "summary": "Your services", "description": "Every turned-on service you can open, with its address and version.", "responses": { "200": { "description": "A list of services" } } } },
-        "/system": { "get": { "summary": "Server health", "description": "Processor, memory, storage, temperature and uptime of the Pi.", "responses": { "200": { "description": "Current figures" } } } }
+        "/system": { "get": { "summary": "Server health", "description": "Processor, memory, storage, temperature and uptime of the Pi.", "responses": { "200": { "description": "Current figures" } } } },
+        "/weather/places": { "get": { "summary": "Find a place", "description": "Places matching a name, with their coordinates (Open-Meteo).", "parameters": [{ "name": "q", "in": "query", "required": true, "description": "A place name, at least two letters", "schema": { "type": "string" } }], "responses": { "200": { "description": "`{\"places\": [{name, region, country, countryCode, lat, lon}]}`" } } } },
+        "/weather/forecast": { "get": { "summary": "Weather and forecast", "description": "The weather now, the next 24 hours and seven days, with sunrise and sunset. From SMHI in the Nordic countries and Open-Meteo elsewhere. Temperatures in °C, wind in m/s, rain in mm. Conditions: clear, partly, cloudy, overcast, fog, drizzle, rain, heavy-rain, sleet, snow, thunder.", "parameters": [{ "name": "lat", "in": "query", "required": true, "description": "Latitude", "schema": { "type": "number" } }, { "name": "lon", "in": "query", "required": true, "description": "Longitude", "schema": { "type": "number" } }], "responses": { "200": { "description": "The forecast" } } } },
+        "/weather/radar": { "get": { "summary": "Rain radar", "description": "The last two hours of rain radar, ten minutes apart. SMHI's Swedish composite (PNG images in SWEREF 99 TM, with their grid) where it covers the place, RainViewer map tiles elsewhere.", "parameters": [{ "name": "lat", "in": "query", "required": true, "description": "Latitude", "schema": { "type": "number" } }, { "name": "lon", "in": "query", "required": true, "description": "Longitude", "schema": { "type": "number" } }], "responses": { "200": { "description": "`{provider, frames: [{time, url}]}`" } } } }
     }
 }

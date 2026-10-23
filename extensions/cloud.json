@@ -42,29 +42,26 @@
             "capability": "cloud.calendar.view",
             "sizes": [
                 "m",
-                "l"
+                "l",
+                "xl"
             ],
             "default": "m",
             "settings": [
                 {
-                    "name": "days",
+                    "name": "view",
                     "type": "select",
-                    "label": "Look ahead",
+                    "label": "View",
                     "options": [
                         {
-                            "value": "7",
-                            "label": "A week"
+                            "value": "list",
+                            "label": "List"
                         },
                         {
-                            "value": "14",
-                            "label": "Two weeks"
-                        },
-                        {
-                            "value": "30",
-                            "label": "A month"
+                            "value": "month",
+                            "label": "Month"
                         }
                     ],
-                    "default": "14"
+                    "default": "list"
                 }
             ]
         },

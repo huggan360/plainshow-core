@@ -40,6 +40,16 @@ React and TypeScript (Vite).
 - Adding a component to Updates: add it to `config/updates.php` with `kind`
   (`release` with a deploy script, or `checkout` with steps) and a `health` URL
   whose host is the site (that host gets the updating page).
+- Widgets: `extensions/*.json` declares them (title, sizes, settings); the
+  dashboard translates titles with `__()`. `resources/js/Widgets/`: `List.tsx`
+  is the one list every widget uses (scrolls on a computer, fixed rows and a
+  "more" row on phones), `base.tsx` the shared hooks and frame,
+  `Weather.tsx` weather, forecast and radar. Data comes from
+  `GET /widgets/{extension}/{widget}` (`?limit=` for more rows).
+- Weather: `App\Support\Weather` (SMHI and Open-Meteo forecasts, SMHI and
+  RainViewer radar, Open-Meteo places), cached; no keys. SMHI radar images are
+  passed through `/weather/radar/smhi/*.png` and kept in `storage/app/radar`
+  for six hours.
 - Another server: set `PLAINSHOW_PROJECTS`, `PLAINSHOW_CLOUD_SOURCE`,
   `PLAINSHOW_LATEX_SOURCE` in `.env` to where its checkouts are.
 

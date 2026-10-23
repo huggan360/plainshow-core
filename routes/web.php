@@ -19,8 +19,17 @@ Route::get('/auth/frontchannel', [SsoController::class, 'frontchannel']);
 Route::match(['get', 'post'], '/auth/logout', [SsoController::class, 'logout'])->name('logout');
 Route::get('/avatars/{user}', AvatarController::class)->whereNumber('user');
 
+// Public radar images (SMHI's own, only passed through and kept for a few hours).
+Route::get('/weather/radar/smhi/{name}.png', [App\Http\Controllers\WeatherController::class, 'radarImage'])->where('name', 'radar_[0-9]{10}')->middleware('throttle:240,1');
+
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'show'])->name('dashboard');
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::get('/weather/places', [App\Http\Controllers\WeatherController::class, 'places']);
+        Route::get('/weather/forecast', [App\Http\Controllers\WeatherController::class, 'forecast']);
+        Route::get('/weather/radar', [App\Http\Controllers\WeatherController::class, 'radar']);
+    });
+    Route::put('/dashboard/widgets/{key}/settings', [DashboardController::class, 'saveWidgetSettings'])->where('key', '[a-z0-9-]+\.[a-z0-9-]+');
     Route::get('/groups', [GroupsController::class, 'index'])->middleware('can.do:core.groups.view')->name('groups');
     Route::get('/groups/{group}', [GroupsController::class, 'show'])->whereNumber('group')->middleware('can.do:core.groups.view');
     Route::get('/groups/{group}/edit', [GroupsController::class, 'edit'])->whereNumber('group')->middleware('can.do:core.groups.view');

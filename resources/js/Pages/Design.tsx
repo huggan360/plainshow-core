@@ -1,7 +1,8 @@
 import AppShell from '@/Layouts/AppShell';
 import { Avatar, Badge, Button, ButtonLink, Empty, Field, Frame, FrameHead, ListRow, Meter, Switch } from '@/Components/ui';
 import { can, SharedProps } from '@/types';
-import { Bookmark, Glow, Height, LayoutItem, PlacedWidget, SettingField, WidgetDefinition } from '@/Widgets/Widgets';
+import { Bookmark, Border, Height, LayoutItem, PlacedWidget, SettingField, WidgetDefinition } from '@/Widgets/Widgets';
+import { Place, PlaceSearch } from '@/Widgets/Weather';
 import { closestCenter, DndContext, DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
 import { router, usePage } from '@inertiajs/react';
@@ -21,9 +22,9 @@ const WIDTHS: Record<Width, { px: number; label: string; icon: string }> = {
 };
 const SIZE_LABELS: Record<string, string> = { s: t('Small'), m: t('Medium'), l: t('Large'), xl: t('Wide'), full: t('Full width') };
 const HEIGHTS: { value: Height; label: string }[] = [{ value: 'short', label: t('Short') }, { value: 'normal', label: t('Normal') }, { value: 'tall', label: t('Tall') }];
-const GLOWS: { value: Glow | undefined; label: string }[] = [
-    { value: undefined, label: t('Default') }, { value: 'none', label: t('None') }, { value: 'accent', label: t('Orange') }, { value: 'warm', label: t('Warm') },
-    { value: 'green', label: t('Green') }, { value: 'blue', label: t('Blue') }, { value: 'violet', label: t('Violet') }, { value: 'pink', label: t('Pink') }, { value: 'cyan', label: t('Cyan') },
+const BORDERS: { value: Border | undefined; label: string }[] = [
+    { value: undefined, label: t('Default') }, { value: 'none', label: t('None') }, { value: 'orange', label: t('Orange') }, { value: 'sunset', label: t('Sunset') },
+    { value: 'ocean', label: t('Ocean') }, { value: 'forest', label: t('Forest') }, { value: 'violet', label: t('Violet') }, { value: 'mono', label: t('Grey') },
 ];
 /** How far the preview is scaled down, so dragged widgets follow the pointer. */
 const ZoomContext = createContext(1);
@@ -152,8 +153,7 @@ function Studio({ layout, catalogue, customised, roles }: Props) {
 /** Drops empty optional fields so saved layouts stay small. */
 function clean(item: LayoutItem): LayoutItem {
     const next: LayoutItem = { key: item.key, size: item.size, height: item.height };
-    if (item.title?.trim()) next.title = item.title;
-    if (item.glow) next.glow = item.glow;
+    if (item.border) next.border = item.border;
     if (item.settings && Object.keys(item.settings).length) next.settings = item.settings;
     return next;
 }
@@ -216,7 +216,7 @@ function SortableWidget({ item, definition, selected, onSelect, onRemove, onSize
 
     return (
         <div ref={setNodeRef} data-size={item.size} data-height={item.height ?? definition.height ?? 'normal'} style={style} className={`studio-widget${selected ? ' is-selected' : ''}${isDragging ? ' is-dragging' : ''}`}
-            {...attributes} {...listeners} aria-label={t('{title}, {value}. Drag to move, Enter to edit.', { title: item.title || definition.title, value: SIZE_LABELS[item.size] })}
+            {...attributes} {...listeners} aria-label={t('{title}, {value}. Drag to move, Enter to edit.', { title: definition.title, value: SIZE_LABELS[item.size] })}
             onClick={onSelect} onKeyDown={(event) => { if (event.key === 'Enter') onSelect(); listeners?.onKeyDown?.(event); }}>
             <div className="studio-widget__tools" {...stop}>
                 <span className="studio-widget__grip" aria-hidden="true"><i className="bx bx-grid-vertical" /></span>
@@ -277,12 +277,9 @@ function WidgetSettings({ item, definition, onChange, onRemove, onClose }: {
 
     return (
         <Frame compact>
-            <FrameHead title={item.title || definition.title} text={t(definition.description)}
+            <FrameHead title={definition.title} text={t(definition.description)}
                 action={<Button size="sm" variant="ghost" iconOnly icon="bx-x" aria-label={t('Close settings')} onClick={onClose} />} />
             <div className="ps-frame__body studio-settings">
-                <Field label={t('Title')} htmlFor="studio-title">
-                    <input id="studio-title" className="ps-input" value={item.title ?? ''} maxLength={60} placeholder={t(definition.title)} onChange={(event) => onChange({ title: event.target.value })} />
-                </Field>
                 <div className="ps-field">
                     <span className="ps-label">{t('Size')}</span>
                     <div className="studio-choices">
@@ -301,11 +298,11 @@ function WidgetSettings({ item, definition, onChange, onRemove, onClose }: {
                     </div>
                 </div>
                 <div className="ps-field">
-                    <span className="ps-label">{t('Glow')}</span>
+                    <span className="ps-label">{t('Border')}</span>
                     <div className="studio-swatches">
-                        {GLOWS.map((glow) => (
-                            <button key={t(glow.label)} type="button" className={`studio-swatch studio-swatch--${glow.value ?? 'default'}${item.glow === glow.value ? ' is-active' : ''}`}
-                                aria-pressed={item.glow === glow.value} title={t(glow.label)} aria-label={t(glow.label)} onClick={() => onChange({ glow: glow.value })} />
+                        {BORDERS.map((border) => (
+                            <button key={border.label} type="button" className={`studio-swatch studio-swatch--${border.value ?? (definition.border ?? 'none')}${border.value === undefined ? ' studio-swatch--default' : ''}${item.border === border.value ? ' is-active' : ''}`}
+                                aria-pressed={item.border === border.value} title={border.label} aria-label={border.label} onClick={() => onChange({ border: border.value })} />
                         ))}
                     </div>
                 </div>
@@ -347,6 +344,22 @@ function SettingInput({ field, value, onChange }: { field: SettingField; value: 
             <Field label={t(field.label)} htmlFor={id}>
                 <textarea id={id} className="ps-textarea" rows={6} maxLength={field.max ?? 2000} value={typeof value === 'string' ? value : ''} onChange={(event) => onChange(event.target.value)} />
             </Field>
+        );
+    }
+    if (field.type === 'place') {
+        const place = value && typeof value === 'object' ? (value as Place) : null;
+        return (
+            <div className="ps-field">
+                <span className="ps-label">{t(field.label)}</span>
+                {place && (
+                    <div className="studio-place">
+                        <i className="bx bxs-map" aria-hidden="true" />
+                        <span><strong>{place.name}</strong>{place.region && <span className="ps-muted">{place.region}</span>}</span>
+                        <Button size="sm" variant="ghost" iconOnly icon="bx-x" aria-label={t('Clear the place')} onClick={() => onChange(undefined)} />
+                    </div>
+                )}
+                <PlaceSearch onPick={(picked) => onChange(picked)} />
+            </div>
         );
     }
     if (field.type === 'links') {

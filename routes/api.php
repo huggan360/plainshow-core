@@ -118,4 +118,7 @@ Route::middleware([AuthenticateBearer::class.':core', 'throttle:120,1'])->group(
     Route::get('/system', function (Request $request) {
         return CoreWidgets::data('pi-health', $request->user());
     });
+    Route::get('/weather/places', [App\Http\Controllers\WeatherController::class, 'places']);
+    Route::get('/weather/forecast', [App\Http\Controllers\WeatherController::class, 'forecast']);
+    Route::get('/weather/radar', [App\Http\Controllers\WeatherController::class, 'radar']);
 });
