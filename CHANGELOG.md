@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.11.1
+
+- Page headings are a real frame with its inner panel; the main page's heading has the orange ring around the panel, as on widgets (kit 1.11.1).
+
 ## v1.11.0
 
 - Account: one head for your account and your groups (you, with your picture and role, and a button to change the picture), with tabs under it: Profile, Security, API tokens and Groups, each only for those who may use it. Account and Groups have left the sidebar.
