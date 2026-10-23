@@ -1,5 +1,5 @@
 import { Badge, Button, ButtonLink, Field, Frame, FrameHead } from '@/Components/ui';
-import AppShell from '@/Layouts/AppShell';
+import AccountShell from '@/Components/AccountShell';
 import { router, useForm } from '@inertiajs/react';
 import { FormEvent, useMemo, useState } from 'react';
 import { Access, ACCESS_LABEL, ColorPicker, Group, GroupMark, MemberAvatar } from './shared';
@@ -39,7 +39,7 @@ export default function GroupEdit({ group, people, viewerId }: { group: Group; p
         if (window.confirm(t('Delete {name}? Everything shared with the group stops being shared with it. This cannot be undone.', { name: group.name }))) router.delete(`/groups/${group.id}`);
     };
 
-    return <AppShell title={t('Edit {name}', { name: group.name })} heading={false}>
+    return <AccountShell section="groups" title={t('Edit {name}', { name: group.name })}>
         <div className="group-page">
             <ButtonLink href={`/groups/${group.id}`} variant="ghost" size="sm" icon="bx-arrow-back">{t('Back to the group')}</ButtonLink>
             <div className="group-hero">
@@ -121,5 +121,5 @@ export default function GroupEdit({ group, people, viewerId }: { group: Group; p
                 </Frame>
             </div>
         </div>
-    </AppShell>;
+    </AccountShell>;
 }

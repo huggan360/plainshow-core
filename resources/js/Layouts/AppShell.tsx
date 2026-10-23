@@ -1,5 +1,5 @@
 import { Avatar } from '@/Components/ui';
-import { can, SharedProps } from '@/types';
+import { SharedProps } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { lang, LANGS, setLang, t } from '@/i18n';
@@ -41,7 +41,6 @@ function useOutside(open: boolean, close: () => void) {
 export default function AppShell({ title, children, wide, actions, description, heading = true, app }: { title: string; children: ReactNode; wide?: boolean; actions?: ReactNode; description?: ReactNode; heading?: boolean; app?: boolean }) {
     const { props, url } = usePage<SharedProps>();
     const user = props.auth.user!;
-    const caps = props.auth.capabilities;
     const [menuOpen, setMenuOpen] = useState(false);
     const [switcherOpen, setSwitcherOpen] = useState(false);
     const [accountOpen, setAccountOpen] = useState(false);
@@ -78,8 +77,6 @@ export default function AppShell({ title, children, wide, actions, description, 
                 </div>
                 <nav className="ps-nav">
                     <Link href="/" className={`ps-nav__item${active('/') ? ' is-active' : ''}`}><i className="bx bx-grid-alt" aria-hidden="true" />{t('Dashboard')}</Link>
-                    <Link href="/account" className={`ps-nav__item${active('/account') ? ' is-active' : ''}`}><i className="bx bx-user-circle" aria-hidden="true" />{t('Account')}</Link>
-                    {can(caps, 'core.groups.view') && <Link href="/groups" className={`ps-nav__item${active('/groups') ? ' is-active' : ''}`}><i className="bx bx-group" aria-hidden="true" />{t('Groups')}</Link>}
                 </nav>
                 {props.coreApps.length > 0 && (
                     <nav className="ps-nav ps-sidebar__section" aria-label={t('Apps')}>

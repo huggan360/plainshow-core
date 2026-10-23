@@ -5,7 +5,7 @@ import { expanding, settleExpand } from '@/Widgets/expand';
 import { RadarMap } from '@/Widgets/Radar';
 import {
     clock, Day, dayName, degrees, esri, Forecast, Hour, hourLabel, icon, label, Phase, phaseOf, Place, PlaceSearch, placeUrl,
-    samePlace, send, Sky, tilesFor, useForecast, useJson, useTheme, Wind, worldPixel, Condition,
+    samePlace, send, Sky, tilesFor, useForecast, useJson, useSwipe, useTheme, Wind, worldPixel, Condition,
 } from '@/Widgets/weatherKit';
 
 type Warning = { id: string; level: 'yellow' | 'orange' | 'red'; event: string; title: string; text: string[]; areas: string[]; here: boolean; km: number; start: string | null; end: string | null };
@@ -65,6 +65,11 @@ export default function Weather({ home: startHome, saved: startSaved, initial }:
         return () => window.removeEventListener('keydown', key);
     }, [list, index, view]);
 
+    // Swiping the top of the page goes to the next or previous of your places.
+    const hero = useRef<HTMLDivElement>(null);
+    const step = (by: number) => { if (list.length > 1) setPlace(list[((index < 0 ? 0 : index) + by + list.length) % list.length]); };
+    useSwipe(hero, () => step(1), () => step(-1));
+
     const change = (request: Promise<Places>) => {
         setBusy(true);
         request.then(setPlaces).catch(() => undefined).finally(() => setBusy(false));
@@ -97,7 +102,7 @@ export default function Weather({ home: startHome, saved: startSaved, initial }:
                                 <div className="wxa__empty"><i className="bx bx-map-pin" aria-hidden="true" /><strong>{t('Search for a place to see its weather.')}</strong></div>
                             ) : (
                                 <div key={`${place.lat},${place.lon}`} className="wxa__body">
-                                    <section className="wxa-hero">
+                                    <section className="wxa-hero" ref={hero}>
                                         <PlaceMap place={place} />
                                         <div className="wxa-hero__text">
                                             <div className="wxa-hero__name">

@@ -1,5 +1,5 @@
 import { Badge, Button, ButtonLink, Frame, FrameHead } from '@/Components/ui';
-import AppShell from '@/Layouts/AppShell';
+import AccountShell from '@/Components/AccountShell';
 import { router } from '@inertiajs/react';
 import { ACCESS_LABEL, Group, GroupMark, MemberAvatar } from './shared';
 import { t, tn } from '@/i18n';
@@ -11,7 +11,7 @@ export default function GroupShow({ group, viewerId }: { group: Group; viewerId:
         if (window.confirm(t('Leave {name}? You lose what is shared with the group.', { name: group.name }))) router.delete(`/groups/${group.id}/members/${viewerId}`);
     };
 
-    return <AppShell title={group.name} heading={false}>
+    return <AccountShell section="groups" title={group.name}>
         <div className="group-page">
             <ButtonLink href="/groups" variant="ghost" size="sm" icon="bx-arrow-back">{t('All groups')}</ButtonLink>
             <div className="group-hero">
@@ -45,5 +45,5 @@ export default function GroupShow({ group, viewerId }: { group: Group; viewerId:
                 </ul>
             </Frame>
         </div>
-    </AppShell>;
+    </AccountShell>;
 }

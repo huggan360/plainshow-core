@@ -1,5 +1,5 @@
 import { Button, Empty, Field, Modal } from '@/Components/ui';
-import AppShell from '@/Layouts/AppShell';
+import AccountShell from '@/Components/AccountShell';
 import { Link, useForm } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 import { ColorPicker, Group, groupStyle, GroupMark, MemberAvatar } from './shared';
@@ -14,7 +14,7 @@ export default function GroupsIndex({ groups, canCreate, viewerId }: { groups: G
         form.post('/groups', { onSuccess: () => { form.reset(); setCreating(false); } });
     };
 
-    return <AppShell title={t('Groups')} description={t('The people you share projects, files and calendars with.')} actions={canCreate && <Button variant="primary" icon="bx-plus" onClick={() => setCreating(true)}>{t('New group')}</Button>}>
+    return <AccountShell section="groups" title={t('Groups')} actions={canCreate && <Button size="sm" variant="primary" icon="bx-plus" onClick={() => setCreating(true)}>{t('New group')}</Button>}>
         {groups.length === 0 ? (
             <Empty icon="bx-group">
                 <p>{t('You are not in any group yet.')}</p>
@@ -53,5 +53,5 @@ export default function GroupsIndex({ groups, canCreate, viewerId }: { groups: G
                 <p className="ps-small ps-muted">{t('You can add people right after.')}</p>
             </form>
         </Modal>
-    </AppShell>;
+    </AccountShell>;
 }

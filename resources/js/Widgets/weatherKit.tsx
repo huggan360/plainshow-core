@@ -1,4 +1,4 @@
-import { CSSProperties, FormEvent, RefObject, useEffect, useLayoutEffect, useState } from 'react';
+import { CSSProperties, FormEvent, RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { t, locale } from '@/i18n';
 
 /*
@@ -40,6 +40,40 @@ export function icon(condition: Condition, day: boolean): string {
 export const degrees = (value: number | null | undefined) => (value === null || value === undefined ? '' : `${Math.round(value)}°`);
 export const samePlace = (a: Place | null | undefined, b: Place | null | undefined) => !!a && !!b && Math.abs(a.lat - b.lat) < 0.01 && Math.abs(a.lon - b.lon) < 0.01;
 export const clock = (iso: string) => new Date(iso).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+
+/**
+ * A sideways swipe on an element: left or right, when the finger (or mouse)
+ * moves at least 50 px across and clearly more across than up or down. A
+ * swipe also swallows the click that would follow it, so a swiped link does
+ * not open.
+ */
+export function useSwipe(ref: RefObject<HTMLElement | null>, onLeft: () => void, onRight: () => void) {
+    const left = useRef(onLeft);
+    const right = useRef(onRight);
+    left.current = onLeft;
+    right.current = onRight;
+    useEffect(() => {
+        const element = ref.current;
+        if (!element) return;
+        let start: { x: number; y: number } | null = null;
+        let swiped = false;
+        const down = (event: PointerEvent) => { if (event.pointerType !== 'mouse' || event.button === 0) { start = { x: event.clientX, y: event.clientY }; swiped = false; } };
+        const up = (event: PointerEvent) => {
+            if (!start) return;
+            const dx = event.clientX - start.x, dy = event.clientY - start.y;
+            start = null;
+            if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+            swiped = true;
+            if (dx < 0) left.current(); else right.current();
+        };
+        const click = (event: MouseEvent) => { if (swiped) { event.preventDefault(); event.stopPropagation(); swiped = false; } };
+        element.addEventListener('pointerdown', down);
+        element.addEventListener('pointerup', up);
+        element.addEventListener('pointercancel', () => { start = null; });
+        element.addEventListener('click', click, true);
+        return () => { element.removeEventListener('pointerdown', down); element.removeEventListener('pointerup', up); element.removeEventListener('click', click, true); };
+    }, [ref]);
+}
 
 /** How wide an element is, kept up to date. */
 export function useWidth(ref: RefObject<HTMLElement | null>): number {

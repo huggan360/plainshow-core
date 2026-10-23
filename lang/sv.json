@@ -838,5 +838,9 @@
     ":n roles": ":n roller",
     ":n waiting": ":n väntar",
     ":n today": ":n i dag",
-    "Login did not answer, so your tokens cannot be shown right now.": "Login svarade inte, så dina tokens kan inte visas just nu."
+    "Login did not answer, so your tokens cannot be shown right now.": "Login svarade inte, så dina tokens kan inte visas just nu.",
+    "Remove picture": "Ta bort bilden",
+    "New picture": "Ny bild",
+    "Add a picture": "Lägg till en bild",
+    "Your groups": "Dina grupper"
 }

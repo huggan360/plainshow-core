@@ -38,6 +38,9 @@ export default function News({ preferences: start, region: startRegion, catalogu
     const [version, setVersion] = useState(0);
     const [grown] = useState(expanding);
     const scroller = useRef<HTMLDivElement>(null);
+    const [searching, setSearching] = useState(false);
+    const searchInput = useRef<HTMLInputElement>(null);
+    useEffect(() => { if (searching) searchInput.current?.focus(); }, [searching]);
 
     // Typing searches after a short pause.
     useEffect(() => {
@@ -85,16 +88,19 @@ export default function News({ preferences: start, region: startRegion, catalogu
                 <div className="ps-frame__panel">
                     <Backdrop />
                     <div className="nwa" ref={scroller}>
-                        <header className="nwa__bar">
+                        <header className={`nwa__bar${searching ? ' is-searching' : ''}`}>
+                            {/* On phones the search is an icon that opens the field over the bar. */}
+                            <button type="button" className="nwa__icon nwa__search-open" onClick={() => setSearching(true)} aria-label={t('Search the news')}><i className="bx bx-search" /></button>
                             <div className="nwa__search">
                                 <div className="ps-input-wrap"><i className="bx bx-search" aria-hidden="true" />
-                                    <input className="ps-input" type="search" value={query} placeholder={t('Search the news')} aria-label={t('Search the news')} onChange={(event) => setQuery(event.target.value)} /></div>
+                                    <input ref={searchInput} className="ps-input" type="search" value={query} placeholder={t('Search the news')} aria-label={t('Search the news')} onChange={(event) => setQuery(event.target.value)} /></div>
+                                <button type="button" className="nwa__icon nwa__search-close" onClick={() => { setSearching(false); setQuery(''); }} aria-label={t('Close')}><i className="bx bx-x" /></button>
                             </div>
                             <nav className="nwa-tabs" aria-label={t('Edition')}>
                                 <button type="button" className={tab === 'top' ? 'is-active' : undefined} aria-pressed={tab === 'top'} onClick={() => open({ tab: 'top' })}>{t('Top news')}</button>
                                 <button type="button" className={tab === 'local' ? 'is-active' : undefined} aria-pressed={tab === 'local'} onClick={() => open({ tab: 'local', topic: null })}>{town ? t('Local, {town}', { town }) : t('Local')}</button>
                             </nav>
-                            <button type="button" className="nwa__settings" onClick={() => setSettings(true)} aria-label={t('News settings')} title={t('News settings')}><i className="bx bx-cog" /></button>
+                            <button type="button" className="nwa__icon nwa__settings" onClick={() => setSettings(true)} aria-label={t('News settings')} title={t('News settings')}><i className="bx bx-cog" /></button>
                         </header>
 
                         {tab === 'top' && !search && <Sections catalogue={catalogue} order={preferences.topics} active={topic} onOpen={(next) => open({ topic: next })} />}

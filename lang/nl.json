@@ -847,5 +847,9 @@
     ":n roles": ":n rollen",
     ":n waiting": ":n wachtend",
     ":n today": ":n vandaag",
-    "Login did not answer, so your tokens cannot be shown right now.": "Login antwoordde niet, dus je tokens kunnen nu niet worden getoond."
+    "Login did not answer, so your tokens cannot be shown right now.": "Login antwoordde niet, dus je tokens kunnen nu niet worden getoond.",
+    "Remove picture": "Afbeelding verwijderen",
+    "New picture": "Nieuwe afbeelding",
+    "Add a picture": "Afbeelding toevoegen",
+    "Your groups": "Jouw groepen"
 }

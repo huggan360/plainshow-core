@@ -1,6 +1,7 @@
 import { Avatar, Badge, relativeTime, RoleBadge } from '@/Components/ui';
 import { Link } from '@inertiajs/react';
-import { CSSProperties, ReactNode, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { CSSProperties, ReactNode, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useSwipe } from './weatherKit';
 import { t, locale } from '@/i18n';
 import { Fill, Height, List, Row } from './List';
 import { Body, ExpandButton, LayoutItem, More, useBorder, useHeight, usePaging, useSetting, useSize, useWidgetData, WidgetDefinition, WidgetFrame, WidgetItem } from './base';
@@ -255,9 +256,12 @@ export function TopStoryWidget({ definition }: { definition: WidgetDefinition })
         return () => window.clearInterval(timer);
     }, [stories.length]);
     const story = stories[at % Math.max(1, stories.length)];
+    // Swipe sideways for the next or previous story.
+    const panel = useRef<HTMLDivElement>(null);
+    useSwipe(panel, () => setAt((current) => (current + 1) % Math.max(1, stories.length)), () => setAt((current) => (current - 1 + Math.max(1, stories.length)) % Math.max(1, stories.length)));
     return (
         <section className={`ps-frame ps-widget widget-top-story${tiny ? ' is-tiny' : ''}`} data-border={border} aria-label={definition.title}>
-            <div className="ps-frame__panel">
+            <div className="ps-frame__panel" ref={panel}>
                 {!story ? (state.loading ? <div className="widget-top-story__wait" /> : <NoNews definition={definition} />) : <>
                     {stories.map((item, index) => <img key={item.id} className={`widget-top-story__picture${index === at ? ' is-shown' : ''}`} src={item.image!} alt="" loading="lazy" />)}
                     <a className="widget-top-story__text" href={story.url} key={story.id}>

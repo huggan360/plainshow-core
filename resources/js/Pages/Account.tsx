@@ -1,6 +1,6 @@
-import AppShell from '@/Layouts/AppShell';
-import { Avatar, Badge, Button, Field, Frame, Modal, relativeTime } from '@/Components/ui';
-import { Link, router, useForm } from '@inertiajs/react';
+import AccountShell from '@/Components/AccountShell';
+import { Badge, Button, Field, Frame, Modal, relativeTime } from '@/Components/ui';
+import { router, useForm } from '@inertiajs/react';
 import { Children, FormEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import { t, locale } from '@/i18n';
 
@@ -15,28 +15,40 @@ type Props = {
 type ApiService = { id: string; name: string; icon: string; base: string; spec: string };
 type ApiToken = { id: string; name: string; scopes: string[]; createdAt: string; expiresAt: string };
 
-const SECTIONS = [
-    { id: 'profile', label: t('Profile'), icon: 'bx-user' },
-    { id: 'security', label: t('Security'), icon: 'bx-shield-quarter' },
-    { id: 'tokens', label: t('API tokens'), icon: 'bx-key' },
-] as const;
-
 export default function Account(props: Props) {
-    const sections = SECTIONS.filter((item) => item.id !== 'tokens' || props.apiAccess);
     return (
-        <AppShell title={t('Account')} description={t('Your profile, sign-in security and API access across PlainShow.')}
-            actions={<nav className="ps-tabs" aria-label={t('Account sections')}>
-                {sections.map((item) => (
-                    <Link key={item.id} href={item.id === 'profile' ? '/account' : `/account/${item.id}`} className={`ps-tab${props.section === item.id ? ' is-active' : ''}`} preserveScroll>{t(item.label)}</Link>
-                ))}
-            </nav>}>
+        <AccountShell section={props.section} title={t('Account')} actions={props.section === 'profile' ? <Picture avatar={props.profile.avatar} /> : undefined}>
             <div className="account">
                 {props.section === 'profile' && <Profile {...props} />}
                 {props.section === 'security' && <Security {...props} />}
                 {props.section === 'tokens' && props.tokens && <Tokens tokens={props.tokens} />}
             </div>
-        </AppShell>
+        </AccountShell>
     );
+}
+
+/** Your picture, changed from the head of the page. */
+function Picture({ avatar }: { avatar: string | null }) {
+    const file = useRef<HTMLInputElement>(null);
+    const [uploading, setUploading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const upload = (picked: File | undefined) => {
+        if (!picked) return;
+        setUploading(true);
+        setError(null);
+        router.post('/account/avatar', { avatar: picked }, {
+            forceFormData: true,
+            preserveScroll: true,
+            onError: (errors) => setError(errors.avatar ?? t('Upload failed.')),
+            onFinish: () => { setUploading(false); if (file.current) file.current.value = ''; },
+        });
+    };
+    return <>
+        {error && <span className="account-hero__error">{error}</span>}
+        {avatar && <Button size="sm" variant="ghost" onClick={() => router.delete('/account/avatar', { preserveScroll: true })}>{t('Remove picture')}</Button>}
+        <Button size="sm" icon="bx-camera" loading={uploading} onClick={() => file.current?.click()}>{avatar ? t('New picture') : t('Add a picture')}</Button>
+        <input ref={file} type="file" accept="image/*" className="ps-sr-only" tabIndex={-1} onChange={(event) => upload(event.target.files?.[0])} />
+    </>;
 }
 
 /** One setting: icon, name, a short line, and what you can do about it, like the admin pages. */
@@ -59,33 +71,10 @@ function Setting({ icon, lead, title, text, action, children, off }: { icon?: st
 
 function Profile({ profile }: Props) {
     const form = useForm({ firstName: profile.firstName, lastName: profile.lastName ?? '', email: profile.email ?? '', phone: profile.phone ?? '' });
-    const file = useRef<HTMLInputElement>(null);
-    const [uploading, setUploading] = useState(false);
-    const [avatarError, setAvatarError] = useState<string | null>(null);
-
     const submit = (event: FormEvent) => { event.preventDefault(); form.put('/account/profile', { preserveScroll: true }); };
-    const upload = (picked: File | undefined) => {
-        if (!picked) return;
-        setUploading(true);
-        setAvatarError(null);
-        router.post('/account/avatar', { avatar: picked }, {
-            forceFormData: true,
-            preserveScroll: true,
-            onError: (errors) => setAvatarError(errors.avatar ?? t('Upload failed.')),
-            onFinish: () => { setUploading(false); if (file.current) file.current.value = ''; },
-        });
-    };
 
     return (
         <div className="ps-stack">
-            <Setting lead={<Avatar src={profile.avatar} initials={profile.initials} size="lg" />} title={t('Profile picture')} text={avatarError ?? t('Shown everywhere in PlainShow. JPG, PNG, WebP or HEIC, cropped to a square.')}
-                action={<div className="ps-inline">
-                    {profile.avatar && <Button size="sm" variant="ghost" onClick={() => router.delete('/account/avatar', { preserveScroll: true })}>{t('Remove')}</Button>}
-                    <Button size="sm" variant="primary" icon="bx-upload" loading={uploading} onClick={() => file.current?.click()}>{t('Upload')}</Button>
-                </div>}>
-                <input ref={file} type="file" accept="image/*" className="ps-sr-only" tabIndex={-1} onChange={(event) => upload(event.target.files?.[0])} />
-            </Setting>
-
             <Frame compact>
                 <form onSubmit={submit} noValidate className="account-form">
                     <div className="account-form__head">
@@ -101,7 +90,7 @@ function Profile({ profile }: Props) {
                     </div>
                 </form>
             </Frame>
-            {profile.groups.length > 0 && <Frame compact><div className="ps-inline" style={{ flexWrap: 'wrap' }}><strong>{t('Groups')}</strong>{profile.groups.map((group) => <Badge key={group} tone="accent">{group}</Badge>)}</div></Frame>}
+            {profile.groups.length > 0 && <Frame compact><div className="account-groups"><strong>{t('Your groups')}</strong><div className="ps-inline">{profile.groups.map((group) => <Badge key={group} tone="accent">{group}</Badge>)}</div></div></Frame>}
         </div>
     );
 }

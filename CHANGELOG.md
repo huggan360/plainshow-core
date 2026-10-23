@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.11.0
+
+- Account: one head for your account and your groups (you, with your picture and role, and a button to change the picture), with tabs under it: Profile, Security, API tokens and Groups, each only for those who may use it. Account and Groups have left the sidebar.
+- Page headings sit in a frame of their own (kit 1.11).
+- News: Top news and Local sit beside the search. On phones the search is an icon on the left, the edition in the middle and settings on the right. A headline above "More" keeps small corners. The reader's right column scrolls on its own.
+- Weather app: swipe the top of the page to go to the next or previous place. Top story: swipe for the next or previous story.
+
 ## v1.10.2
 
 - Administration is at /administration (/admin leads there). An old rule on the server sent /admin to PlainShow Web; it is gone, but browsers remember it, hence the new address.
