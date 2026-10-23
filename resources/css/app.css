@@ -702,7 +702,9 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .wxa__empty { display: grid; place-items: center; gap: 10px; padding: 18vh 0; text-align: center; }
 .wxa__empty i { font-size: 2.4rem; }
 .wxa__empty strong { font: 520 var(--ps-text-xl) var(--ps-font-title); }
-.wxa__body { display: grid; gap: 16px; animation: ps-fade .5s ease; }
+.wxa__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; animation: ps-fade .5s ease; }
+/* Every part takes the frame's width, never its content's: the hours strip holds a whole day and would widen everything. */
+.wxa__body > *, .wxa-report > *, .wxa-rows > * { min-width: 0; }
 
 .wxa-hero { position: relative; min-height: 300px; display: flex; align-items: center; }
 .wxa-hero__text { position: relative; z-index: 1; display: grid; gap: 6px; max-width: min(100%, 560px); }
@@ -754,13 +756,13 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .wxa-fact__note { color: rgba(255, 255, 255, .7); font-size: var(--ps-text-xs); }
 
 /* The full report, by hour or by day. */
-.wxa-report { display: grid; gap: 10px; }
+.wxa-report { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .wxa-report__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .wxa-report__head h2 { margin: 0; font: 520 var(--ps-text-xl) var(--ps-font-title); }
 .wxa-modes { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(255, 255, 255, .13); }
 .wxa-modes button { height: 30px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: rgba(255, 255, 255, .85); font: 600 var(--ps-text-sm) var(--ps-font-ui); cursor: pointer; }
 .wxa-modes button.is-active { background: #fff; color: #1d2433; }
-.wxa-rows { display: grid; gap: 3px; text-shadow: none; }
+.wxa-rows { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; text-shadow: none; }
 .wxa-row { display: grid; align-items: center; gap: 14px; min-height: 48px; padding: 6px 16px; border-radius: 5px; background: rgba(255, 255, 255, .11); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); font-size: var(--ps-text-sm); }
 .wxa-row.is-first { border-top-left-radius: 16px; border-top-right-radius: 16px; }
 .wxa-row.is-last { border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
@@ -817,6 +819,24 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
     .radar__legend { grid-column: 1 / -1; }
     .radar__timeline { left: 12px; right: 12px; bottom: 22px; gap: 8px; padding: 8px 10px; }
     .radar__now { min-width: 0; font-size: var(--ps-text-md); }
+}
+@media (max-width: 520px) {
+    /* Phones: the frame's own padding is thin, and each row keeps only what fits. */
+    .wxa-frame { --ps-frame-pad: 6px; --ps-frame-radius: 22px; }
+    .wxa { padding: 12px 10px 16px; }
+    .wxa-hero__temp { font-size: 76px; }
+    .wxa-hero__name h1 { font-size: 26px; }
+    .wxa-row { gap: 8px; padding: 6px 10px; }
+    .wxa-row--hour { grid-template-columns: 44px 22px 40px minmax(0, 1fr); }
+    .wxa-row--hour .wxa-row__wind { display: none; }
+    .wxa-row--hour .wxa-row__rain { text-align: right; }
+    .wxa-row--day { grid-template-columns: minmax(56px, auto) 22px minmax(0, 1fr); }
+    .wxa-row__range { grid-template-columns: 30px minmax(30px, 1fr) 30px; gap: 6px; }
+    .wxa-row__when small { display: none; }
+    .wxa-row--hour.is-new-day { margin-top: 6px; }
+    .wxa-fact strong, .wxa-fact .wx-wind { font-size: var(--ps-text-md); }
+    .wxa-modes button { padding: 0 12px; }
+    .radar__speed { display: none; }
 }
 
 @media (max-width: 700px) {

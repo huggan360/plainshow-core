@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.2
+
+- Weather app on phones: the report rows no longer run out of the frame (the hours strip widened everything to a whole day's width). Narrow screens get a thinner frame and rows that keep only what fits.
+
 ## v1.6.1
 
 - Weather icons: one outline set that the icon font really has, so light rain, drizzle and snow show a symbol.
