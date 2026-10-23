@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.10.1
+
+- On phones the bar at the bottom is Home, News and Weather. Groups and Account are in the menu.
+
 ## v1.10.0
 
 - Administration: one page for the admin area, with a card per part you may open (accounts, services, permissions, updates, audit log) and a figure on each. It is in the account menu for people who may use it; the sidebar no longer lists the admin pages. The admin pages have tabs to move between them.

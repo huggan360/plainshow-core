@@ -160,8 +160,7 @@ export default function AppShell({ title, children, wide, actions, description, 
 
             <nav className="ps-tabbar" aria-label={t('Quick navigation')}>
                 <Link href="/" className={`ps-tabbar__item${active('/') ? ' is-active' : ''}`}><i className="bx bx-grid-alt" />{t('Home')}</Link>
-                {can(caps, 'core.groups.view') && <Link href="/groups" className={`ps-tabbar__item${active('/groups') ? ' is-active' : ''}`}><i className="bx bx-group" />{t('Groups')}</Link>}
-                <Link href="/account" className={`ps-tabbar__item${active('/account') ? ' is-active' : ''}`}><i className="bx bx-user-circle" />{t('Account')}</Link>
+                {props.coreApps.map((app) => <Link key={app.id} href={app.url} className={`ps-tabbar__item${active(app.url) ? ' is-active' : ''}`}><i className={`bx ${app.icon}`} />{app.name}</Link>)}
             </nav>
 
             <div className="ps-toasts" aria-live="polite">
