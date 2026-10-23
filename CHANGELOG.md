@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.5.2
+
+- Rain radar: the map is Esri's quiet grey canvas (the old map now asked for a key). The rain is drawn from the radar's own values in calm blues to violet, blended between radar cells so it is smooth, with the place names above it. Your place is a larger dot that no longer pulses.
+- Weather: rain falls as single drops, more of them the harder it rains; snow falls as drifting flakes.
+
 ## v1.5.1
 
 - Server is back to the bars from PlainShow Web, now with a dark look in the dark theme: a dark tint of each bar's colour instead of the pale track.

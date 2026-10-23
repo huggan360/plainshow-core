@@ -522,22 +522,22 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .wx-sky__cloud--c { top: 2%; left: -40%; width: 380px; height: 110px; opacity: .55; animation-duration: 64s; animation-delay: -40s; }
 .wx-sky--night .wx-sky__cloud { background: rgba(160, 170, 196, .28); }
 .wx-sky--rain .wx-sky__cloud, .wx-sky--thunder .wx-sky__cloud { background: rgba(200, 208, 220, .32); }
-.wx-sky__rain { inset: -40px -20px; background-image: repeating-linear-gradient(105deg, transparent 0 14px, rgba(220, 232, 255, .38) 14px 15px, transparent 15px 31px); background-size: 60px 90px; animation: wx-rain .5s linear infinite; mask-image: linear-gradient(transparent, #000 30%); }
-.wx-sky__rain--far { opacity: .45; background-size: 40px 70px; animation-duration: .8s; }
-.wx-sky--heavy .wx-sky__rain { opacity: 1; background-size: 44px 80px; }
-.wx-sky__snow { inset: -60px 0 0; background-image: radial-gradient(2.4px 2.4px at 10% 20%, #fff, transparent), radial-gradient(2px 2px at 40% 60%, #fff, transparent), radial-gradient(2.6px 2.6px at 70% 30%, #fff, transparent), radial-gradient(2px 2px at 85% 80%, #fff, transparent), radial-gradient(1.8px 1.8px at 25% 90%, #fff, transparent); background-size: 140px 140px; animation: wx-snow 7s linear infinite; opacity: .9; }
-.wx-sky__snow--far { background-size: 90px 90px; opacity: .5; animation-duration: 11s; }
+.wx-sky { container-type: size; }
+/* Rain: single drops, slanted, each at its own speed; nearer drops are longer, brighter and faster. */
+.wx-drop { position: absolute; top: 0; left: var(--x); z-index: 1; width: 1.5px; height: var(--len); border-radius: 1px; background: linear-gradient(transparent, rgba(225, 236, 255, var(--alpha))); transform: translate3d(0, -40px, 0) rotate(14deg); animation: wx-fall var(--speed) linear var(--delay) infinite; pointer-events: none; }
+@keyframes wx-fall { to { transform: translate3d(-34px, calc(100cqh + 40px), 0) rotate(14deg); } }
+/* Snow: flakes drifting from side to side as they fall. */
+.wx-flake { position: absolute; top: 0; left: var(--x); z-index: 1; width: var(--size); height: var(--size); border-radius: 50%; background: rgba(255, 255, 255, var(--alpha)); transform: translate3d(0, -12px, 0); animation: wx-flake var(--speed) linear var(--delay) infinite; pointer-events: none; }
+@keyframes wx-flake { 25% { transform: translate3d(10px, 25cqh, 0); } 50% { transform: translate3d(-6px, 50cqh, 0); } 75% { transform: translate3d(8px, 75cqh, 0); } to { transform: translate3d(-4px, calc(100cqh + 12px), 0); } }
 .wx-sky__flash { inset: 0; background: rgba(255, 255, 255, .7); opacity: 0; animation: wx-flash 9s ease-out infinite; }
 .wx-sky__fog { left: -20%; right: -20%; height: 34%; top: 38%; background: linear-gradient(90deg, transparent, rgba(235, 238, 242, .55), transparent); filter: blur(10px); animation: wx-fog 22s ease-in-out infinite alternate; }
 .wx-sky__fog--b { top: 64%; opacity: .7; animation-duration: 30s; animation-direction: alternate-reverse; }
 @keyframes wx-glow { to { transform: scale(1.06); opacity: .9; } }
 @keyframes wx-twinkle { to { opacity: .45; } }
 @keyframes wx-drift { from { transform: translateX(0); } to { transform: translateX(260%); } }
-@keyframes wx-rain { to { background-position: -24px 90px; } }
-@keyframes wx-snow { to { background-position: 30px 140px, -20px 140px, 10px 140px, -30px 140px, 20px 140px; } }
 @keyframes wx-flash { 0%, 90%, 94%, 100% { opacity: 0; } 91%, 95% { opacity: .55; } }
 @keyframes wx-fog { to { transform: translateX(12%); } }
-@media (prefers-reduced-motion: reduce) { .wx-sky > span { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .wx-sky > span, .wx-drop, .wx-flake { animation: none !important; } .wx-drop { transform: translate3d(0, 40cqh, 0) rotate(14deg); } }
 
 .wx { position: relative; display: flex; flex: 1; flex-direction: column; gap: 10px; min-height: 0; padding: 20px; color: #fff; text-shadow: 0 1px 12px rgba(0, 0, 0, .25); }
 .wx-wait, .widget-radar__wait { flex: 1; display: grid; place-items: center; font-size: 1.6rem; opacity: .8; }
@@ -605,10 +605,10 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .radar { position: absolute; inset: 0; overflow: hidden; background: var(--ps-raised); }
 .radar__tile { position: absolute; width: 256px; height: 256px; max-width: none; user-select: none; pointer-events: none; }
 .radar__layer { position: absolute; inset: 0; transition: opacity .25s ease; }
-.radar__rain { position: absolute; inset: 0; width: 100%; height: 100%; }
+.radar__rain { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(3px); }
+.radar__layer .radar__tile { filter: blur(2px); }
 .radar__tile--labels { opacity: .9; }
-.radar__you { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border: 2px solid #fff; border-radius: 50%; background: var(--ps-accent); box-shadow: 0 0 0 0 rgba(252, 80, 0, .5); animation: radar-pulse 2.4s ease-out infinite; }
-@keyframes radar-pulse { to { box-shadow: 0 0 0 18px rgba(252, 80, 0, 0); } }
+.radar__you { position: absolute; top: 50%; left: 50%; z-index: 2; width: 20px; height: 20px; margin: -10px 0 0 -10px; border: 3px solid #fff; border-radius: 50%; background: var(--ps-accent); box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
 .radar__bar { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; pointer-events: none; }
 .radar__place, .radar__time { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--ps-shell) 78%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--ps-text); font-size: var(--ps-text-xs); font-weight: 600; }
 .radar__time { font-variant-numeric: tabular-nums; }

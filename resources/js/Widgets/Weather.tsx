@@ -162,17 +162,61 @@ function groupOf(condition: Condition | undefined): string {
     }
 }
 
-function Sky({ phase, condition }: { phase: Phase; condition?: Condition }) {
+/** A number from 0 to 1 that is the same for the same drop, so drops do not jump between renders. */
+function seeded(index: number, salt: number) {
+    const n = Math.sin(index * 127.1 + salt * 311.7) * 43758.5453;
+    return n - Math.floor(n);
+}
+
+/*
+ * Rain and snow fall as single drops and flakes. How many follows the weather:
+ * a few for light rain, a curtain for heavy rain, more as the millimetres
+ * per hour go up.
+ */
+function fallCount(condition: Condition | undefined, precip: number): { drops: number; flakes: number } {
+    const extra = Math.min(60, Math.round(precip * 12));
+    switch (condition) {
+        case 'drizzle': return { drops: 18 + extra, flakes: 0 };
+        case 'rain': return { drops: 45 + extra, flakes: 0 };
+        case 'heavy-rain': return { drops: 95 + extra, flakes: 0 };
+        case 'thunder': return { drops: 80 + extra, flakes: 0 };
+        case 'sleet': return { drops: 28 + extra / 2, flakes: 18 };
+        case 'snow': return { drops: 0, flakes: 34 + extra };
+        default: return { drops: 0, flakes: 0 };
+    }
+}
+
+function Sky({ phase, condition, precip = 0 }: { phase: Phase; condition?: Condition; precip?: number }) {
     const group = groupOf(condition);
     const night = phase === 'night';
     const clouds = group !== 'clear';
+    const { drops, flakes } = fallCount(condition, precip);
+    const heavy = condition === 'heavy-rain' || condition === 'thunder';
     return (
-        <div className={`wx-sky wx-sky--${phase} wx-sky--${group}${condition === 'heavy-rain' ? ' wx-sky--heavy' : ''}`} aria-hidden="true">
+        <div className={`wx-sky wx-sky--${phase} wx-sky--${group}${heavy ? ' wx-sky--heavy' : ''}`} aria-hidden="true">
             {night && (group === 'clear' || group === 'partly') && <span className="wx-sky__stars" />}
             {(group === 'clear' || group === 'partly') && <span className={night ? 'wx-sky__moon' : 'wx-sky__sun'} />}
             {clouds && <><span className="wx-sky__cloud wx-sky__cloud--a" /><span className="wx-sky__cloud wx-sky__cloud--b" />{group !== 'partly' && <span className="wx-sky__cloud wx-sky__cloud--c" />}</>}
-            {(group === 'rain' || group === 'thunder') && <><span className="wx-sky__rain" /><span className="wx-sky__rain wx-sky__rain--far" /></>}
-            {group === 'snow' && <><span className="wx-sky__snow" /><span className="wx-sky__snow wx-sky__snow--far" /></>}
+            {Array.from({ length: drops }, (_, index) => {
+                const depth = seeded(index, 1);
+                return <i key={`d${index}`} className="wx-drop" style={{
+                    '--x': `${seeded(index, 2) * 115 - 5}%`,
+                    '--len': `${Math.round(10 + depth * (heavy ? 16 : 12))}px`,
+                    '--speed': `${(heavy ? 0.42 : 0.6) + (1 - depth) * 0.35}s`,
+                    '--delay': `${-seeded(index, 3) * 2}s`,
+                    '--alpha': (0.25 + depth * 0.5).toFixed(2),
+                } as CSSProperties} />;
+            })}
+            {Array.from({ length: flakes }, (_, index) => {
+                const depth = seeded(index, 4);
+                return <i key={`f${index}`} className="wx-flake" style={{
+                    '--x': `${seeded(index, 5) * 105 - 2}%`,
+                    '--size': `${(2 + depth * 3).toFixed(1)}px`,
+                    '--speed': `${6 + (1 - depth) * 6}s`,
+                    '--delay': `${-seeded(index, 6) * 12}s`,
+                    '--alpha': (0.45 + depth * 0.5).toFixed(2),
+                } as CSSProperties} />;
+            })}
             {group === 'thunder' && <span className="wx-sky__flash" />}
             {group === 'fog' && <><span className="wx-sky__fog" /><span className="wx-sky__fog wx-sky__fog--b" /></>}
         </div>
@@ -184,7 +228,7 @@ function WeatherFrame({ definition, forecast, className, children }: { definitio
     return (
         <section className={`ps-frame ps-widget widget-weather ${className}`} data-border={border}>
             <div className="ps-frame__panel">
-                <Sky phase={phaseOf(forecast)} condition={forecast?.current.condition} />
+                <Sky phase={phaseOf(forecast)} condition={forecast?.current.condition} precip={forecast?.current.precip ?? 0} />
                 <div className="wx">{children}</div>
             </div>
         </section>
@@ -356,6 +400,51 @@ function utm33(lat: number, lon: number): [number, number] {
     return [east, north];
 }
 
+/*
+ * SMHI's radar colours, back to the radar's own values (0.4 dBZ steps from
+ * -30), worked out from its PNG and GeoTIFF of the same moment. Anything else
+ * (no rain, outside the radar, borders) is 0.
+ */
+const SMHI_LEVELS: [number, number, number, number][] = [
+    [0, 50, 255, 89], [0, 70, 255, 91], [0, 90, 255, 92], [0, 110, 255, 95], [0, 130, 255, 98], [0, 150, 255, 101], [0, 170, 255, 104],
+    [0, 128, 0, 105], [0, 138, 0, 109], [0, 148, 0, 111], [0, 158, 0, 113], [0, 163, 0, 116], [0, 168, 0, 119], [0, 173, 0, 121], [0, 178, 0, 124],
+    [10, 208, 10, 125], [10, 218, 10, 129], [10, 228, 10, 131], [10, 238, 10, 132], [10, 248, 10, 136],
+    [255, 255, 15, 137], [255, 246, 15, 141], [255, 238, 15, 144], [255, 229, 15, 145], [255, 220, 15, 148],
+    [255, 200, 0, 150], [255, 180, 0, 152], [255, 160, 0, 155], [255, 140, 0, 157], [255, 120, 0, 160],
+    [255, 35, 35, 162], [255, 15, 15, 165], [255, 0, 0, 167], [235, 0, 0, 170], [215, 0, 0, 172], [195, 0, 0, 175], [175, 0, 0, 178], [155, 0, 0, 180], [135, 0, 0, 184], [115, 0, 0, 186],
+    [175, 0, 175, 188], [184, 0, 184, 190], [211, 0, 211, 198], [219, 0, 219, 200],
+];
+const LEVEL_BY_COLOUR = new Map(SMHI_LEVELS.map(([r, g, b, value]) => [(r << 16) | (g << 8) | b, value]));
+function intensity(r: number, g: number, b: number, a: number): number {
+    if (a < 128 || (r === g && g === b)) return 0;
+    const exact = LEVEL_BY_COLOUR.get((r << 16) | (g << 8) | b);
+    if (exact !== undefined) return exact;
+    let best = 0, distance = Infinity;
+    for (const [lr, lg, lb, value] of SMHI_LEVELS) {
+        const d = (lr - r) ** 2 + (lg - g) ** 2 + (lb - b) ** 2;
+        if (d < distance) { distance = d; best = value; }
+    }
+    return distance < 3000 ? best : 0;
+}
+/* Our own scale, calm blues to violet and pink for the heaviest rain; the faintest rain fades out. */
+const RAIN_STOPS: [number, number, number, number, number][] = [
+    [60, 150, 205, 255, 0], [89, 150, 205, 255, 95], [104, 95, 170, 255, 140], [120, 60, 128, 250, 170],
+    [137, 82, 92, 240, 190], [150, 128, 72, 232, 205], [165, 196, 72, 205, 220], [185, 255, 92, 150, 235],
+];
+function rainColour(value: number): [number, number, number, number] {
+    if (value <= RAIN_STOPS[0][0]) return [RAIN_STOPS[0][1], RAIN_STOPS[0][2], RAIN_STOPS[0][3], 0];
+    for (let i = 1; i < RAIN_STOPS.length; i++) {
+        const [at, r, g, b, a] = RAIN_STOPS[i];
+        if (value <= at) {
+            const [pat, pr, pg, pb, pa] = RAIN_STOPS[i - 1];
+            const f = (value - pat) / (at - pat);
+            return [pr + (r - pr) * f, pg + (g - pg) * f, pb + (b - pb) * f, pa + (a - pa) * f];
+        }
+    }
+    const last = RAIN_STOPS[RAIN_STOPS.length - 1];
+    return [last[1], last[2], last[3], last[4]];
+}
+
 export function RadarWidget({ definition }: { definition: WidgetDefinition }) {
     const place = usePlace(definition);
     const area = useSetting<string>(definition, 'area') ?? 'region';
@@ -394,7 +483,7 @@ function RadarMap({ place, radar, zoom }: { place: Place; radar: Radar; zoom: nu
     const left = cx - size.width / 2;
     const top = cy - size.height / 2;
 
-    // The map: CARTO's tiles without names, the rain, then the names on top.
+    // The map: the land without names, the rain, then the names on top.
     const tiles = useMemo(() => {
         if (!size.width) return [];
         const count = 2 ** zoom;
@@ -407,10 +496,11 @@ function RadarMap({ place, radar, zoom }: { place: Place; radar: Radar; zoom: nu
         }
         return list;
     }, [left, top, size.width, size.height, zoom]);
-    const retina = window.devicePixelRatio > 1 ? '@2x' : '';
-    const carto = (style: string, tile: { tx: number; ty: number }) => `https://${'abcd'[(tile.tx + tile.ty) % 4]}.basemaps.cartocdn.com/${theme === 'dark' ? 'dark' : 'light'}_${style}/${zoom}/${tile.tx}/${tile.ty}${retina}.png`;
+    // Esri's grey canvas: a quiet map, with its names as a separate layer above the rain. No key needed.
+    const esri = (layer: 'Base' | 'Reference', tile: { tx: number; ty: number }) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${theme === 'dark' ? 'Dark' : 'Light'}_Gray_${layer}/MapServer/tile/${zoom}/${tile.ty}/${tile.tx}`;
 
-    // SMHI: each frame redrawn onto the map's own grid, at half resolution and smoothed.
+    // SMHI: each frame turned back into rain intensity, then redrawn onto the map's own grid.
+    // Intensities are blended between radar cells, so the rain has soft edges instead of squares.
     const scale = 0.5;
     const outWidth = Math.ceil(size.width * scale);
     const outHeight = Math.ceil(size.height * scale);
@@ -419,16 +509,17 @@ function RadarMap({ place, radar, zoom }: { place: Place; radar: Radar; zoom: nu
         let alive = true;
         const grid = radar.grid;
         const world = TILE * 2 ** zoom;
-        const index = new Int32Array(outWidth * outHeight);
+        // Where each pixel of the map falls in the radar grid, in fractions of a cell.
+        const cols = new Float32Array(outWidth * outHeight);
+        const rows = new Float32Array(outWidth * outHeight);
         for (let py = 0; py < outHeight; py++) {
             const y = top + py / scale;
             const lat = (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / world))) * 180) / Math.PI;
             for (let px = 0; px < outWidth; px++) {
                 const lon = ((left + px / scale) / world) * 360 - 180;
                 const [east, north] = utm33(lat, lon);
-                const col = Math.floor((east - grid.x0) / grid.cell);
-                const row = Math.floor((grid.y0 - north) / grid.cell);
-                index[py * outWidth + px] = col >= 0 && col < grid.width && row >= 0 && row < grid.height ? row * grid.width + col : -1;
+                cols[py * outWidth + px] = (east - grid.x0) / grid.cell - 0.5;
+                rows[py * outWidth + px] = (grid.y0 - north) / grid.cell - 0.5;
             }
         }
         const source = document.createElement('canvas');
@@ -440,15 +531,18 @@ function RadarMap({ place, radar, zoom }: { place: Place; radar: Radar; zoom: nu
                 read.clearRect(0, 0, grid.width, grid.height);
                 read.drawImage(image, 0, 0);
                 const pixels = read.getImageData(0, 0, grid.width, grid.height).data;
+                const level = new Float32Array(grid.width * grid.height);
+                for (let i = 0; i < level.length; i++) level[i] = intensity(pixels[i * 4], pixels[i * 4 + 1], pixels[i * 4 + 2], pixels[i * 4 + 3]);
                 const out = new ImageData(outWidth, outHeight);
-                for (let i = 0; i < index.length; i++) {
-                    const from = index[i];
-                    if (from < 0) continue;
-                    const p = from * 4;
-                    const alpha = pixels[p + 3];
-                    // Transparent outside the radar, faint where there is no rain, black on borders: leave out.
-                    if (alpha < 128 || (pixels[p] + pixels[p + 1] + pixels[p + 2] === 0)) continue;
-                    out.data[i * 4] = pixels[p]; out.data[i * 4 + 1] = pixels[p + 1]; out.data[i * 4 + 2] = pixels[p + 2]; out.data[i * 4 + 3] = 200;
+                for (let i = 0; i < cols.length; i++) {
+                    const x = cols[i], y = rows[i];
+                    const x0 = Math.floor(x), y0 = Math.floor(y);
+                    if (x0 < 0 || y0 < 0 || x0 + 1 >= grid.width || y0 + 1 >= grid.height) continue;
+                    const fx = x - x0, fy = y - y0, at = y0 * grid.width + x0;
+                    const value = (level[at] * (1 - fx) + level[at + 1] * fx) * (1 - fy) + (level[at + grid.width] * (1 - fx) + level[at + grid.width + 1] * fx) * fy;
+                    if (value < 2) continue;
+                    const [r, g, b, alpha] = rainColour(value);
+                    out.data[i * 4] = r; out.data[i * 4 + 1] = g; out.data[i * 4 + 2] = b; out.data[i * 4 + 3] = alpha;
                 }
                 resolve(out);
             };
@@ -484,7 +578,7 @@ function RadarMap({ place, radar, zoom }: { place: Place; radar: Radar; zoom: nu
     const current = radar.frames[frame];
     return (
         <div ref={box} className="radar">
-            {tiles.map((tile) => <img key={`b${tile.key}`} className="radar__tile" src={carto('nolabels', tile)} alt="" style={{ left: tile.x, top: tile.y }} />)}
+            {tiles.map((tile) => <img key={`b${tile.key}`} className="radar__tile" src={esri('Base', tile)} alt="" style={{ left: tile.x, top: tile.y }} />)}
             {radar.provider === 'smhi'
                 ? <canvas ref={canvas} className="radar__rain" />
                 : radar.frames.map((item, index) => (
@@ -492,14 +586,14 @@ function RadarMap({ place, radar, zoom }: { place: Place; radar: Radar; zoom: nu
                         {tiles.map((tile) => <img key={tile.key} className="radar__tile" src={item.url.replace('{z}', String(zoom)).replace('{x}', String(tile.tx)).replace('{y}', String(tile.ty))} alt="" style={{ left: tile.x, top: tile.y }} />)}
                     </div>
                 ))}
-            {tiles.map((tile) => <img key={`l${tile.key}`} className="radar__tile radar__tile--labels" src={carto('only_labels', tile)} alt="" style={{ left: tile.x, top: tile.y }} />)}
+            {tiles.map((tile) => <img key={`l${tile.key}`} className="radar__tile radar__tile--labels" src={esri('Reference', tile)} alt="" style={{ left: tile.x, top: tile.y }} />)}
             <span className="radar__you" aria-hidden="true" />
             <div className="radar__bar">
                 <span className="radar__place"><i className="bx bxs-map" aria-hidden="true" />{place.name}</span>
                 <span className="radar__time">{current ? new Date(current.time).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
             </div>
             <div className="radar__progress" aria-hidden="true">{radar.frames.map((item, index) => <span key={item.time} className={index <= frame ? 'is-done' : undefined} />)}</div>
-            <span className="radar__credit">{radar.providerName}, © OpenStreetMap, © CARTO</span>
+            <span className="radar__credit">{radar.providerName}, Esri</span>
         </div>
     );
 }

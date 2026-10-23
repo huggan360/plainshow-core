@@ -26,8 +26,8 @@ class SecurityHeaders
             "script-src 'self' 'nonce-$nonce'",
             // React sets inline style attributes (widths of meters and the like).
             "style-src 'self' 'unsafe-inline'",
-            // Map tiles for the rain radar widget (CARTO, and RainViewer outside SMHI's radar).
-            "img-src 'self' data: blob: https://*.plainshow.se https://*.basemaps.cartocdn.com https://tilecache.rainviewer.com",
+            // Map tiles for the rain radar widget (Esri's grey canvas, and RainViewer outside SMHI's radar).
+            "img-src 'self' data: blob: https://*.plainshow.se https://server.arcgisonline.com https://tilecache.rainviewer.com",
             "font-src 'self'",
             "connect-src 'self'",
             "frame-ancestors 'none'",
