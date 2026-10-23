@@ -25,6 +25,7 @@ class User extends Authenticatable
             'password_changed_at' => 'datetime',
             'last_login_at' => 'datetime',
             'weather' => 'array',
+            'news' => 'array',
         ];
     }
 

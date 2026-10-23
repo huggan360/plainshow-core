@@ -38,6 +38,8 @@ export function expandWidget(from: Element | null, href: string) {
     const end = appArea();
     const copy = document.createElement('div');
     copy.className = 'widget-ghost';
+    // Which app it grows into, so a widget without a sky can take on the app's own colours.
+    copy.dataset.app = href.split('?')[0].replace(/^\//, '');
     copy.setAttribute('aria-hidden', 'true');
     // The sky if the widget has one, else the widget's own box; its text fades out as it grows.
     const sky = from.querySelector('.wx-sky');

@@ -24,6 +24,10 @@ Route::get('/weather/radar/smhi/{name}.png', [App\Http\Controllers\WeatherContro
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'show'])->name('dashboard');
+    Route::get('/news', [App\Http\Controllers\NewsController::class, 'app'])->middleware('can.do:core.dashboard.use')->name('news');
+    Route::get('/news/stories', [App\Http\Controllers\NewsController::class, 'stories'])->middleware('throttle:60,1');
+    Route::put('/news/preferences', [App\Http\Controllers\NewsController::class, 'savePreferences']);
+    Route::get('/news/image/{key}', [App\Http\Controllers\NewsController::class, 'image'])->where('key', '[a-f0-9]{32}');
     Route::get('/weather', [App\Http\Controllers\WeatherController::class, 'app'])->middleware('can.do:core.dashboard.use')->name('weather');
     Route::put('/weather/home', [App\Http\Controllers\WeatherController::class, 'setHome']);
     Route::delete('/weather/home', [App\Http\Controllers\WeatherController::class, 'clearHome']);

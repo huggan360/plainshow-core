@@ -210,6 +210,27 @@
             "height": "normal"
         },
         {
+            "id": "news",
+            "title": "News",
+            "icon": "bx-news",
+            "sizes": [
+                "m",
+                "l",
+                "xl"
+            ],
+            "default": "m",
+            "height": "normal",
+            "description": "The latest headlines from your news sources.",
+            "settings": [
+                {
+                    "name": "pictures",
+                    "type": "toggle",
+                    "label": "Pictures",
+                    "default": true
+                }
+            ]
+        },
+        {
             "id": "weather",
             "title": "Weather",
             "icon": "bx-cloud-light-rain",

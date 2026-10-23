@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.7.0
+
+- News: a news app in the dashboard, laid out like a paper. A lead story in large type, the next stories beside it, the latest headlines in a narrow column, then a section per topic with a feature and a column of headlines. Two editions: Top news and Local (SVT's regional desk for your county, and stories that name your town). Search on top, settings in the corner (town, topics, sources), a short setup the first time, and a reader with the story's summary and a link to the whole story.
+- Sources are open RSS feeds, no keys: SVT, Sveriges Radio Ekot, DN, SvD, Dagens industri, Aftonbladet, Expressen, Sydsvenskan, BBC, The Guardian, Al Jazeera, NOS, Ars Technica and The Verge. Sweden comes first. Stories without a picture in their feed get the one their page shares. Pictures are passed through plainshow.se and kept for three days.
+- News widget: the latest headlines with pictures; it expands into the News app.
+
 ## v1.6.2
 
 - Weather app on phones: the report rows no longer run out of the frame (the hours strip widened everything to a whole day's width). Narrow screens get a thinner frame and rows that keep only what fits.

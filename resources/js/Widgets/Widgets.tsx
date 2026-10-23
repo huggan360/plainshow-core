@@ -135,6 +135,27 @@ export function LauncherWidget({ definition }: { definition: WidgetDefinition })
     );
 }
 
+/* ---------- News: the latest headlines; expands into the News app ---------- */
+type NewsStory = { id: string; title: string; url: string; image: string | null; time: string; sourceName: string; topicName: string };
+export function NewsWidget({ definition }: { definition: WidgetDefinition }) {
+    const [limit, more] = usePaging();
+    const state = useWidgetData<{ stories: NewsStory[] }>(definition.extension, definition.id, 600, { limit });
+    const height = useHeight(definition);
+    const pictures = useSetting<boolean>(definition, 'pictures') ?? true;
+    return (
+        <WidgetFrame definition={definition} expand="/news">
+            <Body state={state} height={height}>{({ stories }) => (
+                <List height={height} empty={t('No news right now.')} more={{ href: '/news' }} onEnd={() => more(stories.length)} rows={stories.map((story) => ({
+                    key: story.id, href: story.url,
+                    lead: pictures ? (story.image ? <span className="widget-thumb"><img src={story.image} alt="" loading="lazy" /></span> : <Lead icon="bx-news" />) : undefined,
+                    title: story.title,
+                    meta: `${story.sourceName}, ${relativeTime(story.time)}`,
+                }))} />
+            )}</Body>
+        </WidgetFrame>
+    );
+}
+
 /* ---------- Activity ---------- */
 type EventItem = { id: number; label: string; actor: string | null; source: string; at: string };
 function eventRows(events: EventItem[], showActor = false): Row[] {
@@ -432,6 +453,7 @@ export function ExtensionWidget({ definition }: { definition: WidgetDefinition }
 export const WIDGETS: Record<string, (props: { definition: WidgetDefinition }) => ReactNode> = {
     'core.greeting': GreetingWidget,
     'core.pi-health': PiHealthWidget,
+    'core.news': NewsWidget,
     'core.weather': WeatherWidget,
     'core.forecast': ForecastWidget,
     'core.radar': RadarWidget,

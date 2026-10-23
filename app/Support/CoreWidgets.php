@@ -21,6 +21,7 @@ class CoreWidgets
             'greeting' => self::greeting($user),
             'pi-health' => ['system' => SystemStats::snapshot(), 'detailed' => Permissions::can($user, 'core.system.view')],
             'launcher' => ['apps' => self::apps($user)],
+            'news' => ['stories' => News::stories($user, 'top', '', $limit)],
             'activity' => ['events' => self::events(AuditEvent::where('user_id', $user->id), $limit)],
             'admin-users' => self::users($limit),
             'admin-services' => ['services' => self::services()],

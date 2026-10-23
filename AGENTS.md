@@ -51,6 +51,11 @@ React and TypeScript (Vite).
   content area with one large frame (`Pages/Weather.tsx`); widgets that belong
   to an app pass `expand` to `WidgetFrame` (or use `ExpandButton`), which grows
   the widget into the app (`Widgets/expand.ts`; the app calls `settleExpand()`).
+- News: `App\Support\News` (RSS feeds by source and topic, SVT's regional
+  desks for local news, og:image for stories without a picture, pictures
+  through `/news/image/{key}` kept in `storage/app/news-images`). Feeds are
+  re-read after ten minutes in the background while the old copy is served.
+  Preferences in `users.news`. Page: `Pages/News.tsx`.
 - Weather places: `users.weather` holds `home` and `saved` (`WeatherController`).
   Weather widgets show their own `place` setting, else home.
 - Weather: `App\Support\Weather` (SMHI and Open-Meteo forecasts, SMHI and
