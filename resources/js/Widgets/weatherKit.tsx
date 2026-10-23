@@ -1,4 +1,4 @@
-import { CSSProperties, FormEvent, useEffect, useState } from 'react';
+import { CSSProperties, FormEvent, RefObject, useEffect, useLayoutEffect, useState } from 'react';
 import { t, locale } from '@/i18n';
 
 /*
@@ -24,20 +24,37 @@ const LABELS: Record<Condition, string> = {
 export function label(condition: Condition): string {
     return t(LABELS[condition] ?? 'Cloudy');
 }
+/** One icon set for every condition: the outline weather icons, which all exist in the font. */
 export function icon(condition: Condition, day: boolean): string {
     switch (condition) {
-        case 'clear': return day ? 'bxs-sun' : 'bxs-moon';
+        case 'clear': return day ? 'bx-sun' : 'bx-moon';
         case 'fog': return 'bx-water';
-        case 'drizzle': return 'bxs-cloud-light-rain';
-        case 'rain': case 'heavy-rain': case 'sleet': return 'bxs-cloud-rain';
-        case 'snow': return 'bxs-cloud-snow';
-        case 'thunder': return 'bxs-cloud-lightning';
-        default: return 'bxs-cloud';
+        case 'drizzle': return 'bx-cloud-drizzle';
+        case 'rain': return 'bx-cloud-light-rain';
+        case 'heavy-rain': case 'sleet': return 'bx-cloud-rain';
+        case 'snow': return 'bx-cloud-snow';
+        case 'thunder': return 'bx-cloud-lightning';
+        default: return 'bx-cloud';
     }
 }
 export const degrees = (value: number | null | undefined) => (value === null || value === undefined ? '' : `${Math.round(value)}°`);
 export const samePlace = (a: Place | null | undefined, b: Place | null | undefined) => !!a && !!b && Math.abs(a.lat - b.lat) < 0.01 && Math.abs(a.lon - b.lon) < 0.01;
 export const clock = (iso: string) => new Date(iso).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+
+/** How wide an element is, kept up to date. */
+export function useWidth(ref: RefObject<HTMLElement | null>): number {
+    const [width, setWidth] = useState(0);
+    useLayoutEffect(() => {
+        const element = ref.current;
+        if (!element) return;
+        const measure = () => setWidth(element.clientWidth);
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, [ref]);
+    return width;
+}
 
 /* ---------- Data ---------- */
 export function useJson<T>(url: string | null, refreshSeconds: number): { data: T | null; error: boolean } {

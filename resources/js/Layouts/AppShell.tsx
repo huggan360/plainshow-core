@@ -34,7 +34,11 @@ function useOutside(open: boolean, close: () => void) {
  * The page title sits on the page as a heading, not in the top bar. Pages
  * with their own heading (the dashboard greeting) pass `heading={false}`.
  */
-export default function AppShell({ title, children, wide, actions, description, heading = true }: { title: string; children: ReactNode; wide?: boolean; actions?: ReactNode; description?: ReactNode; heading?: boolean }) {
+/**
+ * `app`: a core app (Weather, News). On a computer its frame fills the window
+ * below the top bar and the page does not scroll; on phones it scrolls as usual.
+ */
+export default function AppShell({ title, children, wide, actions, description, heading = true, app }: { title: string; children: ReactNode; wide?: boolean; actions?: ReactNode; description?: ReactNode; heading?: boolean; app?: boolean }) {
     const { props, url } = usePage<SharedProps>();
     const user = props.auth.user!;
     const caps = props.auth.capabilities;
@@ -69,7 +73,7 @@ export default function AppShell({ title, children, wide, actions, description, 
     ].filter(Boolean) as { href: string; icon: string; label: string }[];
 
     return (
-        <div className={`ps-shell${menuOpen ? ' is-menu-open' : ''}`}>
+        <div className={`ps-shell${menuOpen ? ' is-menu-open' : ''}${app ? ' ps-shell--app' : ''}`}>
             <Head title={title} />
             <aside className="ps-sidebar" aria-label={t('Main')}>
                 <div className="ps-sidebar__brand">

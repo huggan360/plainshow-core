@@ -632,6 +632,8 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .radar__tools button:last-child { border-radius: 5px 5px 12px 12px; }
 .radar__tools button:hover:not(:disabled) { background: var(--ps-shell); }
 .radar__tools button:disabled { opacity: .45; cursor: default; }
+.radar__tools button.is-on { color: var(--ps-accent-text); }
+.radar__panel[hidden] { display: none; }
 .radar__panel { position: absolute; top: 70px; left: 18px; z-index: 3; display: grid; gap: 12px; width: 230px; padding: 14px; border: 1px solid var(--ps-shell-border); border-radius: 16px; background: color-mix(in srgb, var(--ps-shell) 82%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--ps-text); font-size: var(--ps-text-xs); cursor: default; }
 .radar__setting { display: grid; gap: 6px; }
 .radar__setting > span { color: var(--ps-text-muted); font-weight: 600; }
@@ -661,16 +663,31 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .widget-radar .widget-expand { background: color-mix(in srgb, var(--ps-shell) 78%, transparent); color: var(--ps-text); }
 .widget-weather .widget-expand:hover { background: rgba(255, 255, 255, .26); }
 .widget-weather .wx__top, .widget-weather .wx__head { padding-right: 34px; }
-.widget-ghost { position: fixed !important; z-index: 60; margin: 0; pointer-events: none; transition: left .36s cubic-bezier(.2, .8, .2, 1), top .36s cubic-bezier(.2, .8, .2, 1), width .36s cubic-bezier(.2, .8, .2, 1), height .36s cubic-bezier(.2, .8, .2, 1), opacity .36s ease; }
-.widget-ghost .widget-expand { display: none; }
-.widget-ghost.is-leaving { opacity: 0; }
+.widget-ghost { position: fixed; z-index: 60; overflow: hidden; border-radius: var(--ps-frame-radius); background: var(--ps-panel); box-shadow: var(--ps-shadow); transform-origin: 0 0; pointer-events: none; will-change: transform; }
+.widget-ghost.is-growing { transform: none !important; transition: transform .42s cubic-bezier(.22, .8, .24, 1), border-radius .42s ease; }
+.widget-ghost.is-leaving { opacity: 0; transition: opacity .45s ease; }
+.widget-ghost > .wx-sky { z-index: 0; }
+.widget-ghost--plain { border: 1px solid var(--ps-shell-border); }
+.widget-ghost__face { position: fixed !important; z-index: 61; margin: 0; pointer-events: none; }
+.widget-ghost__face.is-growing { opacity: 0; transition: opacity .2s ease; }
+.widget-ghost__face .widget-expand { display: none; }
+
+/* Core apps: on a computer the frame fills the window below the top bar, and the page does not scroll. */
+@media (min-width: 992px) {
+    .ps-shell--app .ps-main { height: 100vh; height: 100dvh; }
+    .ps-shell--app .ps-content { display: flex; flex: 1; flex-direction: column; min-height: 0; padding-top: 16px; padding-bottom: 16px; }
+    .ps-shell--app .ps-content > .ps-frame { flex: 1; min-height: 0; }
+}
 
 /* ---------- The Weather app: one frame filling the content area ---------- */
-.wxa-frame { position: relative; display: flex; min-height: 520px; animation: ps-fade .3s ease; }
+.wxa-frame { position: relative; display: flex; min-height: 520px; }
+.wxa-frame.is-entering { animation: ps-fade .3s ease; }
+@media (min-width: 992px) { .ps-shell--app .wxa-frame { min-height: 0; } }
 .wxa-frame > .ps-frame__panel { position: relative; flex: 1; padding: 0; overflow: hidden; isolation: isolate; color: #fff; }
 .wxa__skies { position: absolute; inset: 0; z-index: -1; }
 .wxa__sky { position: absolute; inset: 0; animation: wxa-sky-in .9s ease both; transition: opacity .9s ease; }
 .wxa__sky.is-leaving { opacity: 0; }
+.wxa__sky.is-instant { animation: none; }
 .wxa__sky .wx-sky { z-index: 0; }
 @keyframes wxa-sky-in { from { opacity: 0; } to { opacity: 1; } }
 .wxa { position: absolute; inset: 0; overflow-y: auto; padding: 22px 28px 28px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .3) transparent; text-shadow: 0 1px 14px rgba(0, 0, 0, .2); }
@@ -729,10 +746,8 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .wxa-line__wind { color: rgba(255, 255, 255, .7); font-size: 1rem; }
 
 /* Figures for now. */
-.wxa-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 3px; }
+.wxa-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 3px; overflow: hidden; border-radius: 16px; }
 .wxa-fact { display: grid; gap: 2px; padding: 12px 14px; border-radius: 5px; background: rgba(255, 255, 255, .13); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); text-shadow: none; }
-.wxa-fact.is-first { border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
-.wxa-fact.is-last { border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
 .wxa-fact__label { display: inline-flex; align-items: center; gap: 5px; color: rgba(255, 255, 255, .78); font-size: var(--ps-text-xs); }
 .wxa-fact strong { font-size: var(--ps-text-lg); font-weight: 600; }
 .wxa-fact .wx-wind { font-size: var(--ps-text-lg); }
@@ -768,13 +783,40 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .wxa-frame.is-radar > .ps-frame__panel { color: var(--ps-text); }
 .wxa-frame.is-radar .wxa__skies { display: none; }
 
-@media (max-width: 900px) {
-    .radar__panel { top: auto; bottom: 96px; width: auto; right: 18px; grid-template-columns: 1fr 1fr; }
-    .radar__legend { grid-column: 1 / -1; }
-    .wxa-row--hour { grid-template-columns: 70px minmax(0, 1fr) 46px 70px; }
-    .wxa-row--hour .wxa-row__wind { display: none; }
-    .wxa-row--day { grid-template-columns: 90px minmax(0, 1fr) minmax(120px, 1fr); }
+@media (max-width: 991px) {
+    /* Phones and tablets: the app is a normal page that scrolls; the radar keeps a fixed height. */
+    .wxa-frame { min-height: 0; }
+    .wxa { position: relative; inset: auto; overflow: visible; padding: 14px 14px 20px; }
+    .wxa__bar { width: 100%; }
+    .wxa__bar .wx-search .ps-input { height: 40px; }
+    .wxa__body { gap: 12px; }
+    .wxa-hero { min-height: 0; padding: 16px 0 6px; align-items: flex-start; }
+    .wxa-map { top: -10px; right: -14px; bottom: -6px; width: 100%; opacity: .3; }
+    .wxa-hero__name { gap: 6px; }
+    .wxa-hero__name h1 { flex-basis: 100%; margin: 0 0 4px; font-size: 30px; }
+    .wxa-icon { width: 34px; height: 34px; font-size: 1.15rem; }
+    .wxa-radar-button { height: 34px; margin-left: 0; }
+    .wxa-hero__temp { font-size: 88px; }
+    .wxa-hero__condition { font-size: var(--ps-text-md); }
+    .wxa-line__arrow { display: none; }
+    .wxa-line__hour { padding: 10px 2px; }
+    .wxa-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .wxa-fact { padding: 10px 12px; }
+    .wxa-report__head { flex-wrap: wrap; }
+    .wxa-report__head h2 { font-size: var(--ps-text-lg); }
+    .wxa-row { gap: 10px; min-height: 46px; padding: 6px 12px; }
+    .wxa-row__what > span { display: none; }
+    .wxa-row--hour { grid-template-columns: 56px 26px 48px minmax(0, 1fr) auto; }
+    .wxa-row--hour .wxa-row__wind { font-size: 11px; }
+    .wxa-row--day { grid-template-columns: minmax(70px, auto) 26px minmax(0, 1fr); }
     .wxa-row--day .wxa-row__rain, .wxa-row--day .wxa-row__wind { display: none; }
+    .wxa-frame.is-radar { height: calc(100dvh - 190px); min-height: 420px; }
+    .radar--tool .radar__bar { top: 12px; left: 12px; right: 12px; }
+    .radar__tools { top: 58px; right: 12px; }
+    .radar__panel { top: auto; left: 12px; right: 12px; bottom: 96px; width: auto; grid-template-columns: 1fr 1fr; }
+    .radar__legend { grid-column: 1 / -1; }
+    .radar__timeline { left: 12px; right: 12px; bottom: 22px; gap: 8px; padding: 8px 10px; }
+    .radar__now { min-width: 0; font-size: var(--ps-text-md); }
 }
 
 @media (max-width: 700px) {
@@ -792,14 +834,6 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
     .widget-weather, .widget-radar { min-height: 260px; }
     .widget-weather--forecast { min-height: 420px; }
     .widget-radar { height: 320px; }
-    .wxa-frame { min-height: 0; }
-    .wxa { position: relative; inset: auto; overflow: visible; padding: 16px; }
-    .wxa-frame.is-radar { height: 78vh; }
-    .wxa-map { width: 100%; right: -16px; opacity: .35; }
-    .wxa-hero { min-height: 240px; }
-    .wxa-line__arrow { display: none; }
-    .radar__panel { display: none; }
-    .radar__tools { top: 64px; }
     .widget-weather > .ps-frame__panel, .widget-radar > .ps-frame__panel { min-height: inherit; }
     .wx-week { min-height: 300px; }
 }

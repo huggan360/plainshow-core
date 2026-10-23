@@ -1,7 +1,7 @@
 import AppShell from '@/Layouts/AppShell';
 import { CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { t, locale } from '@/i18n';
-import { settleExpand } from '@/Widgets/expand';
+import { expanding, settleExpand } from '@/Widgets/expand';
 import { RadarMap } from '@/Widgets/Radar';
 import {
     clock, Day, dayName, degrees, esri, Forecast, Hour, hourLabel, icon, label, Phase, phaseOf, Place, PlaceSearch, placeUrl,
@@ -19,7 +19,7 @@ import {
  */
 type Props = { home: Place | null; saved: Place[]; initial: Place | null };
 type Places = { home: Place | null; saved: Place[] };
-type Layer = { id: number; phase: Phase; condition: Condition; precip: number; leaving?: boolean };
+type Layer = { id: number; phase: Phase; condition: Condition; precip: number; leaving?: boolean; instant?: boolean };
 
 export default function Weather({ home: startHome, saved: startSaved, initial }: Props) {
     const [places, setPlaces] = useState<Places>({ home: startHome, saved: startSaved });
@@ -28,22 +28,11 @@ export default function Weather({ home: startHome, saved: startSaved, initial }:
     const [mode, setMode] = useState<'hours' | 'days'>('hours');
     const [busy, setBusy] = useState(false);
     const { data, error } = useForecast(place);
-    const frame = useRef<HTMLElement>(null);
-
-    useEffect(() => { settleExpand(); }, []);
-
-    // The frame fills the content area down to the bottom of the window (not on phones).
-    useLayoutEffect(() => {
-        const fit = () => {
-            const element = frame.current;
-            if (!element) return;
-            if (window.innerWidth <= 700) { element.style.height = ''; return; }
-            element.style.height = `${Math.max(520, window.innerHeight - element.getBoundingClientRect().top - window.scrollY - 28)}px`;
-        };
-        fit();
-        window.addEventListener('resize', fit);
-        return () => window.removeEventListener('resize', fit);
-    }, []);
+    // Opened from a widget: no fade of our own, and the growing widget fades once the sky is drawn.
+    const [grown] = useState(expanding);
+    useEffect(() => {
+        if (data || error || !place || view === 'radar') settleExpand();
+    }, [data, error, place, view]);
 
     // The address follows the place and the view, so it can be shared and reloaded.
     useEffect(() => {
@@ -79,10 +68,10 @@ export default function Weather({ home: startHome, saved: startSaved, initial }:
     const toggleHome = () => place && change(isHome ? send<Places>('DELETE', '/weather/home') : send<Places>('PUT', '/weather/home', { place }));
 
     return (
-        <AppShell title={place ? t('Weather in {place}', { place: place.name }) : t('Weather')} wide heading={false}>
-            <section ref={frame} className={`ps-frame wxa-frame${view === 'radar' ? ' is-radar' : ''}`}>
+        <AppShell title={place ? t('Weather in {place}', { place: place.name }) : t('Weather')} wide heading={false} app>
+            <section className={`ps-frame wxa-frame${view === 'radar' ? ' is-radar' : ''}${grown ? '' : ' is-entering'}`}>
                 <div className="ps-frame__panel">
-                    <Skies forecast={data} />
+                    <Skies forecast={data} instant={grown} />
                     {view === 'radar' && place
                         ? <RadarMap place={place} zoom={7} interactive onClose={() => setView('weather')} />
                         : <div className="wxa">
@@ -154,11 +143,13 @@ export default function Weather({ home: startHome, saved: startSaved, initial }:
 }
 
 /** The sky crossfades when the place or its weather changes. */
-function Skies({ forecast }: { forecast: Forecast | null }) {
+function Skies({ forecast, instant }: { forecast: Forecast | null; instant?: boolean }) {
     const [layers, setLayers] = useState<Layer[]>([]);
     useEffect(() => {
         if (!forecast) return;
         const next: Layer = { id: Date.now(), phase: phaseOf(forecast), condition: forecast.current.condition, precip: forecast.current.precip };
+        // The first sky after growing from a widget is already showing in the widget's copy: no fade in.
+        if (instant) next.instant = true;
         setLayers((current) => {
             const last = current[current.length - 1];
             if (last && !last.leaving && last.phase === next.phase && last.condition === next.condition && Math.round(last.precip) === Math.round(next.precip)) return current;
@@ -166,11 +157,11 @@ function Skies({ forecast }: { forecast: Forecast | null }) {
         });
         const timer = window.setTimeout(() => setLayers((current) => current.filter((layer) => !layer.leaving)), 1000);
         return () => window.clearTimeout(timer);
-    }, [forecast]);
+    }, [forecast]); // eslint-disable-line react-hooks/exhaustive-deps
     return (
         <div className="wxa__skies">
             {layers.length === 0 && <div className="wxa__sky"><Sky phase={phaseOf(null)} /></div>}
-            {layers.map((layer) => <div key={layer.id} className={`wxa__sky${layer.leaving ? ' is-leaving' : ''}`}><Sky phase={layer.phase} condition={layer.condition} precip={layer.precip} /></div>)}
+            {layers.map((layer, at) => <div key={layer.id} className={`wxa__sky${layer.leaving ? ' is-leaving' : ''}${layer.instant && at === 0 ? ' is-instant' : ''}`}><Sky phase={layer.phase} condition={layer.condition} precip={layer.precip} /></div>)}
         </div>
     );
 }
@@ -214,8 +205,9 @@ function Timeline({ hours }: { hours: Hour[] }) {
     const [width, setWidth] = useState(0);
     const [first, setFirst] = useState(0);
     const gap = 3;
-    const count = Math.max(3, Math.floor((width + gap) / (88 + gap)));
-    const item = width ? (width - gap * (count - 1)) / count : 88;
+    const least = width < 520 ? 70 : 88;
+    const count = Math.max(3, Math.floor((width + gap) / (least + gap)));
+    const item = width ? (width - gap * (count - 1)) / count : least;
     const step = item + gap;
     const maxFirst = Math.max(0, hours.length - count);
 
@@ -287,8 +279,8 @@ function Facts({ forecast }: { forecast: Forecast }) {
     ].filter((fact) => fact.value !== '');
     return (
         <section className="wxa-facts">
-            {facts.map((fact, at) => (
-                <div key={fact.label} className={`wxa-fact${at === 0 ? ' is-first' : ''}${at === facts.length - 1 ? ' is-last' : ''}`}>
+            {facts.map((fact) => (
+                <div key={fact.label} className="wxa-fact">
                     <span className="wxa-fact__label"><i className={`bx ${fact.icon}`} aria-hidden="true" />{fact.label}</span>
                     <strong>{fact.value}</strong>
                     {fact.note && <span className="wxa-fact__note">{fact.note}</span>}
@@ -309,7 +301,7 @@ function HourRows({ hours }: { hours: Hour[] }) {
                 return (
                     <div key={hour.time} className={`wxa-row wxa-row--hour${at === 0 ? ' is-first' : ''}${at === hours.length - 1 ? ' is-last' : ''}${newDay ? ' is-new-day' : ''}`}>
                         <span className="wxa-row__when">{at === 0 ? t('Now') : clock(hour.time)}{newDay && <small>{day}</small>}</span>
-                        <span className="wxa-row__what"><i className={`bx ${icon(hour.condition, hour.isDay)}`} aria-hidden="true" />{label(hour.condition)}</span>
+                        <span className="wxa-row__what" title={label(hour.condition)}><i className={`bx ${icon(hour.condition, hour.isDay)}`} aria-hidden="true" /><span>{label(hour.condition)}</span></span>
                         <strong className="wxa-row__temp">{degrees(hour.temp)}</strong>
                         <span className="wxa-row__rain">{hour.precip >= 0.1 ? t('{mm} mm', { mm: hour.precip.toFixed(1) }) : ''}{hour.chance !== null && hour.chance > 0 ? ` ${hour.chance}%` : ''}</span>
                         <span className="wxa-row__wind"><Wind speed={hour.wind} from={hour.windDir} /></span>
@@ -329,7 +321,7 @@ function DayRows({ days }: { days: Day[] }) {
             {days.map((day, at) => (
                 <div key={day.date} className={`wxa-row wxa-row--day${at === 0 ? ' is-first' : ''}${at === days.length - 1 ? ' is-last' : ''}`}>
                     <span className="wxa-row__when">{dayName(day.date, at, true)}</span>
-                    <span className="wxa-row__what"><i className={`bx ${icon(day.condition, true)}`} aria-hidden="true" />{label(day.condition)}</span>
+                    <span className="wxa-row__what" title={label(day.condition)}><i className={`bx ${icon(day.condition, true)}`} aria-hidden="true" /><span>{label(day.condition)}</span></span>
                     <span className="wxa-row__rain">{day.precip >= 0.5 ? t('{mm} mm', { mm: Math.round(day.precip) }) : ''}</span>
                     <span className="wxa-row__range">
                         <span className="wxa-row__low">{degrees(day.min)}</span>

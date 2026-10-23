@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.6.1
+
+- Weather icons: one outline set that the icon font really has, so light rain, drizzle and snow show a symbol.
+- Weather widgets show as many hours and days as fit at a readable size, so they no longer shrink on phones.
+- Core apps on a computer fill the window below the top bar without the page scrolling; on phones and tablets they are normal pages with the usual margins.
+- Weather app on phones and tablets: stacked hero, smaller hours you can swipe, figures two by two, compact hour and day rows, and a radar with its settings behind a button.
+- Opening the Weather app from a widget: the widget's sky now grows smoothly into the app (a scaled copy instead of a resized one), its text fades as it grows, and the copy only fades once the app has drawn its own sky.
+
 ## v1.6.0
 
 - Core apps: apps inside the dashboard itself, listed in the sidebar above Services. They open in the content area in one large frame, and their widgets have an expand button in the corner that grows the widget into the app. Weather is the first; News comes next.

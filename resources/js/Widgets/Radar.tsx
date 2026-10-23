@@ -45,6 +45,8 @@ function RadarView({ place, radar, startZoom, interactive, hours, setHours, onCl
     const [strength, setStrength] = useState(1);
     const [levels, setLevels] = useState<Uint8Array[]>([]);
     const [hover, setHover] = useState<{ x: number; y: number; rate: number } | null>(null);
+    // The settings panel starts open on a computer and closed on a phone.
+    const [panel, setPanel] = useState(() => window.innerWidth > 991);
     const minZoom = 4;
     const maxZoom = radar.provider === 'rainviewer' ? (radar.maxZoom ?? 7) : 10;
 
@@ -235,8 +237,9 @@ function RadarView({ place, radar, startZoom, interactive, hours, setHours, onCl
                     <button type="button" onClick={() => zoomBy(1)} aria-label={t('Zoom in')} disabled={zoom >= maxZoom}><i className="bx bx-plus" /></button>
                     <button type="button" onClick={() => zoomBy(-1)} aria-label={t('Zoom out')} disabled={zoom <= minZoom}><i className="bx bx-minus" /></button>
                     <button type="button" onClick={() => { setCenter({ lat: place.lat, lon: place.lon }); setZoom(startZoom); }} aria-label={t('Back to the place')}><i className="bx bx-current-location" /></button>
+                    <button type="button" className={panel ? 'is-on' : undefined} onClick={() => setPanel((open) => !open)} aria-label={t('Settings')} aria-pressed={panel}><i className="bx bx-slider-alt" /></button>
                 </div>
-                <div className="radar__panel">
+                <div className="radar__panel" hidden={!panel}>
                     <label className="radar__setting"><span>{t('Hours')}</span>
                         <select value={hours} onChange={(event) => setHours(Number(event.target.value))} disabled={radar.provider !== 'smhi'}>
                             {[1, 2, 3, 6].map((value) => <option key={value} value={value}>{value === 1 ? t('1 hour') : t('{n} hours', { n: value })}</option>)}

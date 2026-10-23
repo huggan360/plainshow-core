@@ -1,11 +1,11 @@
 import { router, usePage } from '@inertiajs/react';
-import { CSSProperties, ReactNode, useContext, useState } from 'react';
+import { CSSProperties, ReactNode, useContext, useRef, useState } from 'react';
 import { t } from '@/i18n';
 import { SharedProps } from '@/types';
 import { Fill } from './List';
 import { ExpandButton, useBorder, useHeight, useSetting, WidgetDefinition, WidgetItem } from './base';
 import { RadarMap } from './Radar';
-import { Day, dayName, degrees, Forecast, Hour, hourLabel, icon, label, phaseOf, Place, PlaceSearch, placeUrl, send, Sky, useForecast, Wind } from './weatherKit';
+import { Day, dayName, degrees, Forecast, Hour, hourLabel, icon, label, phaseOf, Place, PlaceSearch, placeUrl, send, Sky, useForecast, useWidth, Wind } from './weatherKit';
 
 export type { Place } from './weatherKit';
 export { PlaceSearch } from './weatherKit';
@@ -53,9 +53,13 @@ function WeatherFrame({ definition, forecast, className, place, children }: { de
     );
 }
 
-export function Hours({ hours, count }: { hours: Hour[]; count: number }) {
+/** As many hours as fit at a readable size (about 64 px each), at most `count`. */
+export function Hours({ hours, count: most }: { hours: Hour[]; count: number }) {
+    const box = useRef<HTMLDivElement>(null);
+    const width = useWidth(box);
+    const count = width ? Math.max(3, Math.min(most, Math.floor((width + 3) / 67))) : most;
     return (
-        <div className="wx-hours" style={{ '--count': count } as CSSProperties}>
+        <div ref={box} className="wx-hours" style={{ '--count': count } as CSSProperties}>
             {hours.slice(0, count).map((hour, index) => (
                 <div key={hour.time} className={`wx-hour${index === 0 ? ' is-first' : ''}${index === count - 1 ? ' is-last' : ''}`}>
                     <span className="wx-hour__time">{hourLabel(hour.time, index)}</span>
@@ -136,13 +140,17 @@ export function ForecastWidget({ definition }: { definition: WidgetDefinition })
     );
 }
 
-export function Days({ days, rows }: { days: Day[]; rows: boolean }) {
+export function Days({ days: all, rows }: { days: Day[]; rows: boolean }) {
+    const box = useRef<HTMLDivElement>(null);
+    const width = useWidth(box);
+    // Tiles need about 58 px each; rows always show the whole week.
+    const days = rows || !width ? all : all.slice(0, Math.max(3, Math.floor((width + 3) / 61)));
     const low = Math.min(...days.map((day) => day.min));
     const high = Math.max(...days.map((day) => day.max));
     const span = Math.max(1, high - low);
     if (!rows) {
         return (
-            <div className="wx-days" style={{ '--count': days.length } as CSSProperties}>
+            <div ref={box} className="wx-days" style={{ '--count': days.length } as CSSProperties}>
                 {days.map((day, index) => (
                     <div key={day.date} className={`wx-day${index === 0 ? ' is-first' : ''}${index === days.length - 1 ? ' is-last' : ''}`}>
                         <span>{dayName(day.date, index)}</span>
@@ -155,7 +163,7 @@ export function Days({ days, rows }: { days: Day[]; rows: boolean }) {
         );
     }
     return (
-        <div className="wx-week">
+        <div ref={box} className="wx-week">
             {days.map((day, index) => (
                 <div key={day.date} className={`wx-week__row${index === 0 ? ' is-first' : ''}${index === days.length - 1 ? ' is-last' : ''}`}>
                     <span className="wx-week__name">{dayName(day.date, index)}</span>
