@@ -6,7 +6,7 @@ import { Place, PlaceSearch } from '@/Widgets/Weather';
 import { router, usePage } from '@inertiajs/react';
 import ReactGridLayout from 'react-grid-layout/legacy';
 import type { Layout, ResizeHandleAxis } from 'react-grid-layout/legacy';
-import { CSSProperties, Ref, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, memo, Ref, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { t } from '@/i18n';
 
 /*
@@ -296,6 +296,18 @@ function useWidth(): [Ref<HTMLDivElement>, number] {
     return [ref, width];
 }
 
+/**
+ * When sizing starts, the widget's contents keep the size they have (the
+ * grid item clips them) until the edge is let go: redrawing a widget for
+ * every pixel of the drag made the edge lag behind the pointer.
+ */
+function freeze(...args: unknown[]) {
+    const element = args.find((arg): arg is HTMLElement => arg instanceof HTMLElement);
+    if (!element) return;
+    element.style.setProperty('--frozen-w', `${element.offsetWidth}px`);
+    element.style.setProperty('--frozen-h', `${element.offsetHeight}px`);
+}
+
 /** An orange bar on each edge, shown on hover, to size the widget from that side. */
 const handle = (axis: ResizeHandleAxis, ref: Ref<HTMLElement>) => <span ref={ref as Ref<HTMLSpanElement>} className={`studio-handle studio-handle--${axis}`} aria-hidden="true" />;
 
@@ -304,6 +316,8 @@ type CanvasProps = { items: LayoutItem[]; byKey: Map<string, WidgetDefinition>; 
 function DesktopGrid({ items, byKey, selected, onChange, onSelect, onRemove }: CanvasProps) {
     const [ref, width] = useWidth();
     const [moving, setMoving] = useState(false);
+    // Sizing stops at the neighbours; moving pushes them aside, so a packed dashboard can still be rearranged.
+    const [sizing, setSizing] = useState(false);
     const known = items.filter((item) => byKey.has(item.key));
     const grid: Layout = known.map((item) => {
         const definition = byKey.get(item.key)!;
@@ -326,9 +340,9 @@ function DesktopGrid({ items, byKey, selected, onChange, onSelect, onRemove }: C
             {known.length === 0 && <div className="studio-empty"><i className="bx bx-grid-alt" aria-hidden="true" /></div>}
             {width > 0 && (
                 <ReactGridLayout width={width} layout={grid} cols={COLS} rowHeight={ROW} margin={[GAP, GAP]} containerPadding={[0, 0]}
-                    compactType={null} preventCollision isResizable isDraggable resizeHandles={['n', 'e', 's', 'w']} resizeHandle={handle}
-                    draggableCancel=".studio-tools,.studio-handle" onDragStart={() => setMoving(true)} onResizeStart={() => setMoving(true)}
-                    onDragStop={(next) => { setMoving(false); apply(next); }} onResizeStop={(next) => { setMoving(false); apply(next); }}>
+                    compactType={null} preventCollision={sizing} isResizable isDraggable resizeHandles={['n', 'e', 's', 'w']} resizeHandle={handle}
+                    draggableCancel=".studio-tools,.studio-handle" onDragStart={() => setMoving(true)} onResizeStart={(...args) => { setMoving(true); setSizing(true); freeze(...args); }}
+                    onDragStop={(next) => { setMoving(false); apply(next); }} onResizeStop={(next) => { setMoving(false); setSizing(false); apply(next); }}>
                     {known.map((item) => <div key={item.key}><StudioItem item={item} definition={byKey.get(item.key)!} selected={selected === item.key} onSelect={onSelect} onRemove={onRemove} /></div>)}
                 </ReactGridLayout>
             )}
@@ -356,22 +370,24 @@ function PhoneColumn({ items, byKey, selected, onChange, onSelect, onRemove }: C
     };
     return (
         <div className="studio-phone">
-            <div ref={ref} className="studio-phone__screen">
+            <div className="studio-phone__screen">
+              <div ref={ref} className="studio-phone__grid">
                 {known.length === 0 && <div className="studio-empty"><i className="bx bx-mobile" aria-hidden="true" /></div>}
                 {width > 0 && (
                     <ReactGridLayout width={width} layout={grid} cols={1} rowHeight={ROW} margin={[GAP, GAP]} containerPadding={[0, 0]}
                         compactType="vertical" isResizable isDraggable resizeHandles={['n', 's']} resizeHandle={handle}
-                        draggableCancel=".studio-tools,.studio-handle" onDragStop={apply} onResizeStop={apply}>
+                        draggableCancel=".studio-tools,.studio-handle" onDragStop={apply} onResizeStart={freeze} onResizeStop={apply}>
                         {known.map((item) => <div key={item.key}><StudioItem item={{ ...item, w: PHONE_COLUMNS }} definition={byKey.get(item.key)!} selected={selected === item.key} onSelect={onSelect} onRemove={onRemove} /></div>)}
                     </ReactGridLayout>
                 )}
+              </div>
             </div>
         </div>
     );
 }
 
-/** A widget as it will look, with its tools on hover: settings and remove. */
-function StudioItem({ item, definition, selected, onSelect, onRemove }: { item: LayoutItem; definition: WidgetDefinition; selected: boolean; onSelect: (key: string | null) => void; onRemove: (key: string) => void }) {
+/** A widget as it will look, with its tools on hover: settings and remove. Only redrawn when its own item changes. */
+const StudioItem = memo(function StudioItem({ item, definition, selected, onSelect, onRemove }: { item: LayoutItem; definition: WidgetDefinition; selected: boolean; onSelect: (key: string | null) => void; onRemove: (key: string) => void }) {
     return (
         <div className={`studio-item${selected ? ' is-selected' : ''}`}>
             <div className="studio-tools">
@@ -383,7 +399,7 @@ function StudioItem({ item, definition, selected, onSelect, onRemove }: { item: 
             </div>
         </div>
     );
-}
+}, (before, after) => before.selected === after.selected && before.definition === after.definition && JSON.stringify(before.item) === JSON.stringify(after.item));
 
 /* ---------- A widget's settings, in a drawer ---------- */
 
@@ -399,8 +415,8 @@ function WidgetSettings({ item, definition, onChange, onRemove, onClose }: {
                 <button type="button" className="studio-icon" onClick={onClose} aria-label={t('Close settings')}><i className="bx bx-x" /></button>
             </header>
             <div className="studio-drawer__body">
-                <div className="ps-field">
-                    <span className="ps-label">{t('Border')}</span>
+                <div className="studio-group">
+                    <span className="studio-group__label">{t('Border')}</span>
                     <div className="studio-swatches">
                         {BORDERS.map((border) => (
                             <button key={border.label} type="button" className={`studio-swatch studio-swatch--${border.value ?? (definition.border ?? 'none')}${border.value === undefined ? ' studio-swatch--default' : ''}${item.border === border.value ? ' is-active' : ''}`}
@@ -419,48 +435,54 @@ function WidgetSettings({ item, definition, onChange, onRemove, onClose }: {
 }
 
 
+/**
+ * One setting, as a group in the drawer: a choice of a few is a row of
+ * segmented buttons, on and off is a switch, several things to show are a
+ * list of rows with a switch each.
+ */
 function SettingInput({ field, value, onChange }: { field: SettingField; value: unknown; onChange: (value: unknown) => void }) {
     const id = `studio-setting-${field.name}`;
     const current = value === undefined ? field.default : value;
     if (field.type === 'toggle') {
         return (
-            <div className="studio-toggle">
-                <span>{t(field.label)}</span>
-                <Switch checked={Boolean(current)} onChange={(checked) => onChange(checked)} label={t(field.label)} />
+            <div className="studio-group">
+                <label className="studio-rows__row is-only" htmlFor={id}>
+                    <span>{t(field.label)}</span>
+                    <Switch checked={Boolean(current)} onChange={(checked) => onChange(checked)} label={t(field.label)} />
+                </label>
             </div>
         );
     }
     if (field.type === 'select') {
+        const options = field.options ?? [];
         return (
-            <div className="ps-field">
-                <span className="ps-label">{t(field.label)}</span>
-                <div className="studio-choices">
-                    {(field.options ?? []).map((option) => (
-                        <button key={option.value} type="button" className={`studio-choice${String(current) === option.value ? ' is-active' : ''}`} aria-pressed={String(current) === option.value} onClick={() => onChange(option.value)}>{t(option.label)}</button>
-                    ))}
+            <div className="studio-group">
+                <span className="studio-group__label">{t(field.label)}</span>
+                <div className={`studio-segment${options.length > 3 ? ' is-wrapping' : ''}`} role="radiogroup" aria-label={t(field.label)}>
+                    {options.map((option) => {
+                        const on = String(current) === option.value;
+                        return <button key={option.value} type="button" role="radio" aria-checked={on} className={on ? 'is-on' : undefined} onClick={() => onChange(option.value)}>{t(option.label)}</button>;
+                    })}
                 </div>
             </div>
         );
     }
     if (field.type === 'text') {
         return (
-            <Field label={t(field.label)} htmlFor={id}>
+            <div className="studio-group">
+                <label className="studio-group__label" htmlFor={id}>{t(field.label)}</label>
                 <textarea id={id} className="ps-textarea" rows={6} maxLength={field.max ?? 2000} value={typeof value === 'string' ? value : ''} onChange={(event) => onChange(event.target.value)} />
-            </Field>
+            </div>
         );
     }
     if (field.type === 'place') {
         const place = value && typeof value === 'object' ? (value as Place) : null;
         return (
-            <div className="ps-field">
-                <span className="ps-label">{t(field.label)}</span>
-                {place && (
-                    <div className="studio-place">
-                        <i className="bx bxs-map" aria-hidden="true" />
-                        <span><strong>{place.name}</strong>{place.region && <span className="ps-muted">{place.region}</span>}</span>
-                        <Button size="sm" variant="ghost" iconOnly icon="bx-x" aria-label={t('Clear the place')} onClick={() => onChange(undefined)} />
-                    </div>
-                )}
+            <div className="studio-group">
+                <span className="studio-group__label">{t(field.label)}</span>
+                {place
+                    ? <div className="studio-place"><i className="bx bxs-map" aria-hidden="true" /><span><strong>{place.name}</strong>{place.region && <span className="ps-muted">{place.region}</span>}</span><Button size="sm" variant="ghost" iconOnly icon="bx-x" aria-label={t('Clear the place')} onClick={() => onChange(undefined)} /></div>
+                    : <p className="studio-group__note">{t('Your home place')}</p>}
                 <PlaceSearch onPick={(picked) => onChange(picked)} />
             </div>
         );
@@ -469,8 +491,8 @@ function SettingInput({ field, value, onChange }: { field: SettingField; value: 
         const links = Array.isArray(value) ? (value as Bookmark[]) : [];
         const set = (index: number, patch: Partial<Bookmark>) => onChange(links.map((link, at) => (at === index ? { ...link, ...patch } : link)));
         return (
-            <div className="ps-field">
-                <span className="ps-label">{t(field.label)}</span>
+            <div className="studio-group">
+                <span className="studio-group__label">{t(field.label)}</span>
                 <div className="studio-links">
                     {links.map((link, index) => (
                         <div key={index} className="studio-links__row">
@@ -485,15 +507,19 @@ function SettingInput({ field, value, onChange }: { field: SettingField; value: 
         );
     }
     const chosen = Array.isArray(current) ? (current as string[]) : [];
+    const options = field.options ?? [];
     return (
-        <div className="ps-field">
-            <span className="ps-label">{t(field.label)}</span>
-            {(field.options ?? []).map((option) => (
-                <label key={option.value} className="ps-check">
-                    <input type="checkbox" checked={chosen.includes(option.value)} onChange={(event) => onChange(event.target.checked ? [...chosen, option.value] : chosen.filter((entry) => entry !== option.value))} />
-                    {t(option.label)}
-                </label>
-            ))}
+        <div className="studio-group">
+            <span className="studio-group__label">{t(field.label)}</span>
+            <div className="studio-rows">
+                {options.map((option, index) => (
+                    <label key={option.value} className={`studio-rows__row${index === 0 ? ' is-first' : ''}${index === options.length - 1 ? ' is-last' : ''}`}>
+                        <span>{t(option.label)}</span>
+                        <Switch checked={chosen.includes(option.value)} label={t(option.label)}
+                            onChange={(on) => onChange(on ? [...chosen, option.value] : chosen.filter((entry) => entry !== option.value))} />
+                    </label>
+                ))}
+            </div>
         </div>
     );
 }

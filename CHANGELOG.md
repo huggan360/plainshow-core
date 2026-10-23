@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.9.1
+
+- Design studio: moving a widget works on a full dashboard; it pushes the others aside. Sizing still stops at the neighbours.
+- Design studio: sizing follows the pointer smoothly; the widget's contents keep their size until the edge is let go.
+- Design studio: the phone screen fits its widgets.
+- Widget settings: choices are segmented buttons, on and off and the things to show are switches in rows.
+
 ## v1.9.0
 
 - Design studio rebuilt: the dashboard itself at full size, with a bar on top: Desktop or Phone, the widgets in menus by kind (Dashboard, News, Weather, then each service), and for admins the dashboard being edited (yours, or a role's default). No light and dark switch and no text; the design tokens are behind the palette button.
