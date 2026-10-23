@@ -75,7 +75,9 @@ Route::middleware('auth')->group(function () {
     Route::put('/dashboard/layout/roles/{role}', [DashboardController::class, 'saveRoleLayout'])->middleware('can.do:core.permissions.manage');
     Route::delete('/dashboard/layout/roles/{role}', [DashboardController::class, 'resetRoleLayout'])->middleware('can.do:core.permissions.manage');
 
-    Route::get('/admin', [App\Http\Controllers\Admin\AdminController::class, 'index'])->name('admin');
+    // /administration, not /admin: browsers remember an old permanent redirect of /admin to PlainShow Web.
+    Route::get('/administration', [App\Http\Controllers\Admin\AdminController::class, 'index'])->name('admin');
+    Route::redirect('/admin', '/administration');
     Route::prefix('admin')->group(function () {
         Route::middleware('can.do:core.users.manage')->group(function () {
             Route::get('/users', [UsersController::class, 'index'])->name('admin.users');

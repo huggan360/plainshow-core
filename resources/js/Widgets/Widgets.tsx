@@ -1,6 +1,6 @@
 import { Avatar, Badge, relativeTime, RoleBadge } from '@/Components/ui';
 import { Link } from '@inertiajs/react';
-import { CSSProperties, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { CSSProperties, ReactNode, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { t, locale } from '@/i18n';
 import { Fill, Height, List, Row } from './List';
 import { Body, ExpandButton, LayoutItem, More, useBorder, useHeight, usePaging, useSetting, useSize, useWidgetData, WidgetDefinition, WidgetFrame, WidgetItem } from './base';
@@ -95,6 +95,55 @@ function Gauge({ label, value, display, tone }: { label: string; value: number; 
         </div>
     );
 }
+/**
+ * The bars share the body evenly when they all fit (at least BAR pixels
+ * each); when they do not, as many as fit show at once and the rest scroll,
+ * one bar at a time, like the lists. The bars at the edges of the view take
+ * the rounded corners.
+ */
+const BAR = 44;
+function Bars({ children }: { children: ReactNode[] }) {
+    const [box, setBox] = useState<HTMLDivElement | null>(null);
+    const [space, setSpace] = useState(0);
+    const [first, setFirst] = useState(0);
+    useLayoutEffect(() => {
+        if (!box) return;
+        const measure = () => setSpace(box.clientHeight);
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(box);
+        return () => observer.disconnect();
+    }, [box]);
+    const total = children.length;
+    const fit = Math.max(1, Math.min(total, Math.floor((space + 3) / (BAR + 3)) || total));
+    const height = space ? (space - 3 * (fit - 1)) / fit : BAR;
+    const step = height + 3;
+    useEffect(() => {
+        if (!box || fit >= total) return;
+        let lock = false;
+        const wheel = (event: WheelEvent) => {
+            if (Math.abs(event.deltaY) < 2) return;
+            const current = Math.round(box.scrollTop / step);
+            const next = Math.min(total - fit, Math.max(0, current + (event.deltaY > 0 ? 1 : -1)));
+            if (next === current) return;
+            event.preventDefault();
+            if (lock) return;
+            lock = true;
+            box.scrollTo({ top: next * step, behavior: 'smooth' });
+            window.setTimeout(() => { lock = false; }, 220);
+        };
+        box.addEventListener('wheel', wheel, { passive: false });
+        return () => box.removeEventListener('wheel', wheel);
+    }, [box, fit, total, step]);
+    const last = Math.min(total - 1, first + fit - 1);
+    return (
+        <div ref={setBox} className={`widget-bars${fit < total ? ' is-scrolling' : ''}`} style={{ '--bar': `${height}px` } as CSSProperties}
+            onScroll={(event) => setFirst(Math.min(total - fit, Math.max(0, Math.round(event.currentTarget.scrollTop / step))))}>
+            {children.map((bar, index) => <div key={index} className={`widget-bars__bar${index === first ? ' is-first' : ''}${index === last ? ' is-last' : ''}`}>{bar}</div>)}
+        </div>
+    );
+}
+
 export function PiHealthWidget({ definition }: { definition: WidgetDefinition }) {
     const state = useWidgetData<SystemData>(definition.extension, definition.id, 15);
     const height = useHeight(definition);
@@ -111,9 +160,7 @@ export function PiHealthWidget({ definition }: { definition: WidgetDefinition })
                     metrics.includes('cpu') && <Gauge key="c" tone="yellow" label={t('CPU load')} value={s.cpuPercent} display={`${s.cpuPercent}%`} />,
                     metrics.includes('temperature') && s.temperature !== null && <Gauge key="t" tone={s.temperature >= 75 ? 'red' : s.temperature >= 62 ? 'orange' : 'green'} label={t('Temperature')} value={(s.temperature / 90) * 100} display={`${s.temperature.toFixed(0)} °C`} />,
                 ].filter(Boolean);
-                // A short widget has room for two bars; they are left out here rather than hidden, so the corners stay right.
-                const shown = bars.slice(0, height === 'short' ? 2 : 4);
-                return shown.length ? <div className="widget-bars ps-chain" style={{ '--bars': shown.length } as CSSProperties}>{shown}</div> : <Fill>{t('Choose bars in the Design studio.')}</Fill>;
+                return bars.length ? <Bars>{bars}</Bars> : <Fill>{t('Choose bars in the Design studio.')}</Fill>;
             }}</Body>
         </WidgetFrame>
     );

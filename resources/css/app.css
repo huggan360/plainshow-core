@@ -517,8 +517,16 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 
 /* Server: the bars from PlainShow Web share the body equally. In the dark
    theme the pale tracks become a dark tint of the bar's colour. */
-.widget-bars { --ps-join: 5px; --ps-cap: 14px; flex: 1; min-height: 0; display: grid; grid-template-rows: repeat(var(--bars), minmax(0, 1fr)); gap: 3px; }
-.widget-bars .ps-gauge { min-height: 0; }
+.widget-bars { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 3px; }
+.widget-bars.is-scrolling { overflow-y: auto; overscroll-behavior: contain; scroll-snap-type: y mandatory; scrollbar-width: none; }
+.widget-bars.is-scrolling::-webkit-scrollbar { display: none; }
+.widget-bars__bar { flex: 0 0 var(--bar); height: var(--bar); min-height: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+.widget-bars .ps-gauge { height: 100%; min-height: 0; border-radius: 5px; transition: border-radius .2s ease; }
+.widget-bars .ps-gauge__fill { border-radius: 3px; }
+.widget-bars__bar.is-first .ps-gauge { border-top-left-radius: 14px; border-top-right-radius: 14px; }
+.widget-bars__bar.is-first .ps-gauge__fill { border-top-left-radius: 10px; }
+.widget-bars__bar.is-last .ps-gauge { border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; }
+.widget-bars__bar.is-last .ps-gauge__fill { border-bottom-left-radius: 10px; }
 .widget-bars .ps-gauge { background: color-mix(in srgb, var(--ps-gauge) 16%, var(--ps-raised)) !important; color: #fff; }
 .widget-bars .ps-gauge__fill { background: linear-gradient(90deg, color-mix(in srgb, var(--ps-gauge) 78%, #000), var(--ps-gauge)); }
 .widget-bars .ps-gauge > span:not(.ps-gauge__fill) { text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }

@@ -65,7 +65,7 @@ export default function AppShell({ title, children, wide, actions, description, 
     const path = url.split('?')[0];
     const active = (prefix: string) => (prefix === '/' ? path === '/' : path.startsWith(prefix));
     const admin = props.adminAreas;
-    const inAdmin = path === '/admin' || path.startsWith('/admin/');
+    const inAdmin = path === '/administration' || path.startsWith('/admin/');
 
     return (
         <div className={`ps-shell${menuOpen ? ' is-menu-open' : ''}${app ? ' ps-shell--app' : ''}`}>
@@ -107,7 +107,7 @@ export default function AppShell({ title, children, wide, actions, description, 
                         {accountOpen && (
                             <div className="ps-dropdown__menu ps-dropdown__menu--up">
                                 <Link href="/account" className="ps-dropdown__item"><i className="bx bx-user" />{t('Account')}</Link>
-                                {admin.length > 0 && <Link href="/admin" className="ps-dropdown__item"><i className="bx bx-shield-quarter" />{t('Administration')}</Link>}
+                                {admin.length > 0 && <Link href="/administration" className="ps-dropdown__item"><i className="bx bx-shield-quarter" />{t('Administration')}</Link>}
                                 <LanguageSwitch />
                                 <button type="button" className="ps-dropdown__item" onClick={toggleTheme}><i className={`bx ${theme === 'light' ? 'bx-moon' : 'bx-sun'}`} />{theme === 'light' ? t('Dark theme') : t('Light theme')}</button>
                                 <div className="ps-dropdown__sep" />
@@ -141,7 +141,7 @@ export default function AppShell({ title, children, wide, actions, description, 
                 <main className={`ps-content${wide ? ' ps-content--wide' : ''}`}>
                     {inAdmin && admin.length > 0 && (
                         <nav className="admin-tabs" aria-label={t('Administration')}>
-                            <Link href="/admin" className={`admin-tabs__item${path === '/admin' ? ' is-active' : ''}`}><i className="bx bx-shield-quarter" aria-hidden="true" />{t('Administration')}</Link>
+                            <Link href="/administration" className={`admin-tabs__item${path === '/administration' ? ' is-active' : ''}`}><i className="bx bx-shield-quarter" aria-hidden="true" />{t('Administration')}</Link>
                             {admin.map((area) => <Link key={area.id} href={area.href} className={`admin-tabs__item${active(area.href) ? ' is-active' : ''}`}><i className={`bx ${area.icon}`} aria-hidden="true" />{area.label}</Link>)}
                         </nav>
                     )}

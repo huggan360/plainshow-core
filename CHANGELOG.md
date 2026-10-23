@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.10.2
+
+- Administration is at /administration (/admin leads there). An old rule on the server sent /admin to PlainShow Web; it is gone, but browsers remember it, hence the new address.
+- Server widget: when its bars do not all fit, as many as fit show and the rest scroll, one bar at a time.
+
 ## v1.10.1
 
 - On phones the bar at the bottom is Home, News and Weather. Groups and Account are in the menu.
