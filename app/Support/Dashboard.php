@@ -172,15 +172,8 @@ class Dashboard
                     }
                     break;
                 case 'place':
-                    if (is_array($value) && is_numeric($value['lat'] ?? null) && is_numeric($value['lon'] ?? null)
-                        && abs((float) $value['lat']) <= 90 && abs((float) $value['lon']) <= 180) {
-                        $clean[$name] = [
-                            'name' => mb_substr(trim(strip_tags((string) ($value['name'] ?? ''))), 0, 80),
-                            'region' => mb_substr(trim(strip_tags((string) ($value['region'] ?? ''))), 0, 80),
-                            'countryCode' => strtoupper(substr(preg_replace('/[^A-Za-z]/', '', (string) ($value['countryCode'] ?? '')), 0, 2)),
-                            'lat' => round((float) $value['lat'], 4),
-                            'lon' => round((float) $value['lon'], 4),
-                        ];
+                    if (($place = Weather::cleanPlace($value)) !== null) {
+                        $clean[$name] = $place;
                     }
                     break;
                 case 'choices':

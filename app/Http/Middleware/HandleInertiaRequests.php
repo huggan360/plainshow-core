@@ -34,6 +34,9 @@ class HandleInertiaRequests extends Middleware
                 ->filter(fn (Extension $extension) => $extension->id === 'core' || in_array($extension->id, $permissions['services'], true))
                 ->map(fn (Extension $extension) => $extension->only(['id', 'name', 'icon', 'url']))
                 ->values() : [],
+            // Apps inside the dashboard (sidebar, widget expand), and the person's home for the weather widgets.
+            'coreApps' => $user ? fn () => \App\Support\CoreApps::for($user) : [],
+            'weatherHome' => $user ? fn () => $user->weather['home'] ?? null : null,
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
                 'error' => fn () => $request->session()->get('error'),

@@ -82,6 +82,11 @@ export default function AppShell({ title, children, wide, actions, description, 
                     <Link href="/account" className={`ps-nav__item${active('/account') ? ' is-active' : ''}`}><i className="bx bx-user-circle" aria-hidden="true" />{t('Account')}</Link>
                     {can(caps, 'core.groups.view') && <Link href="/groups" className={`ps-nav__item${active('/groups') ? ' is-active' : ''}`}><i className="bx bx-group" aria-hidden="true" />{t('Groups')}</Link>}
                 </nav>
+                {props.coreApps.length > 0 && (
+                    <nav className="ps-nav ps-sidebar__section" aria-label={t('Apps')}>
+                        {props.coreApps.map((app) => <Link key={app.id} href={app.url} className={`ps-nav__item${active(app.url) ? ' is-active' : ''}`}><i className={`bx ${app.icon}`} aria-hidden="true" />{app.name}</Link>)}
+                    </nav>
+                )}
                 {services.length > 0 && (
                     <div className="ps-sidebar__section">
                         <p className="ps-eyebrow ps-sidebar__label">{t('Services')}</p>

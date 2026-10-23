@@ -14,9 +14,15 @@ export type UserSummary = {
 
 export type AppLink = { id: string; name: string; icon: string; url: string | null };
 
+/** An app inside the dashboard (Weather, News): opened in the content area, and from its widgets. */
+export type CoreApp = { id: string; name: string; icon: string; url: string; widgets: string[] };
+export type WeatherPlace = { name: string; region?: string; country?: string; countryCode?: string; lat: number; lon: number };
+
 export type SharedProps = {
     auth: { user: UserSummary | null; capabilities: string[] };
     apps: AppLink[];
+    coreApps: CoreApp[];
+    weatherHome: WeatherPlace | null;
     flash: { status: string | null; error: string | null };
     errors: Record<string, string>;
     uiVersion: string;

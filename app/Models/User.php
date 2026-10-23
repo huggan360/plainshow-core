@@ -24,6 +24,7 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
             'password_changed_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'weather' => 'array',
         ];
     }
 

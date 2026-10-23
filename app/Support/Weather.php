@@ -33,6 +33,29 @@ class Weather
     /** The SMHI radar grid: SWEREF 99 TM (UTM zone 33 on GRS 80), from the composite's GeoTIFF. */
     public const SMHI_GRID = ['x0' => 126648.404, 'y0' => 7771252.876, 'cell' => 2014.9581656050955, 'width' => 471, 'height' => 887];
 
+    /** A place from the browser, cleaned: a name, a region, a country code and real coordinates. */
+    public static function cleanPlace(mixed $value): ?array
+    {
+        if (! is_array($value) || ! is_numeric($value['lat'] ?? null) || ! is_numeric($value['lon'] ?? null)
+            || abs((float) $value['lat']) > 90 || abs((float) $value['lon']) > 180) {
+            return null;
+        }
+
+        return [
+            'name' => mb_substr(trim(strip_tags((string) ($value['name'] ?? ''))), 0, 80),
+            'region' => mb_substr(trim(strip_tags((string) ($value['region'] ?? ''))), 0, 80),
+            'countryCode' => strtoupper(substr(preg_replace('/[^A-Za-z]/', '', (string) ($value['countryCode'] ?? '')), 0, 2)),
+            'lat' => round((float) $value['lat'], 4),
+            'lon' => round((float) $value['lon'], 4),
+        ];
+    }
+
+    /** Two places are the same when they are within about a kilometre. */
+    public static function samePlace(array $a, array $b): bool
+    {
+        return abs($a['lat'] - $b['lat']) < 0.01 && abs($a['lon'] - $b['lon']) < 0.01;
+    }
+
     /** @return list<array{name: string, region: string, country: string, countryCode: string, lat: float, lon: float}> */
     public static function places(string $query, string $language = 'en'): array
     {
@@ -346,10 +369,11 @@ class Weather
 
     /* ---------- Radar ---------- */
 
-    /** The last two hours of radar, every ten minutes: SMHI where it reaches, RainViewer elsewhere. */
-    public static function radar(float $lat, float $lon, string $imageBase): array
+    /** The last hours of radar (two unless asked), every ten minutes: SMHI where it reaches, RainViewer elsewhere. */
+    public static function radar(float $lat, float $lon, string $imageBase, int $hours = 2): array
     {
-        if (self::inSmhiRadar($lat, $lon) && ($frames = self::smhiFrames()) !== []) {
+        $hours = max(1, min(6, $hours));
+        if (self::inSmhiRadar($lat, $lon) && ($frames = self::smhiFrames($hours)) !== []) {
             return [
                 'provider' => 'smhi',
                 'providerName' => 'SMHI',
@@ -379,10 +403,10 @@ class Weather
         ];
     }
 
-    /** SMHI's frames of the last two hours, ten minutes apart, newest last. */
-    private static function smhiFrames(): array
+    /** SMHI's frames of the last hours, ten minutes apart, newest last. */
+    private static function smhiFrames(int $hours): array
     {
-        return Cache::remember('weather:smhi-frames', 120, function () {
+        return Cache::remember("weather:smhi-frames:$hours", 120, function () use ($hours) {
             $names = [];
             foreach ([new DateTimeImmutable('now', new DateTimeZone('UTC')), new DateTimeImmutable('-1 day', new DateTimeZone('UTC'))] as $day) {
                 try {
@@ -397,7 +421,7 @@ class Weather
                         $names[$match[1]] = $key;
                     }
                 }
-                if (count($names) >= 13) {
+                if (count($names) >= $hours * 12 + 2) {
                     break;
                 }
             }
@@ -405,12 +429,12 @@ class Weather
             $frames = [];
             foreach ($names as $stamp => $name) {
                 $time = DateTimeImmutable::createFromFormat('ymdHi', (string) $stamp, new DateTimeZone('UTC'));
-                if ($time && (int) $time->format('i') % 10 === 0 && $time->getTimestamp() > time() - 2 * 3600 - 300) {
+                if ($time && (int) $time->format('i') % 10 === 0 && $time->getTimestamp() > time() - $hours * 3600 - 300) {
                     $frames[] = ['name' => $name, 'time' => $time->format(DATE_ATOM)];
                 }
             }
 
-            return array_slice($frames, -13);
+            return array_slice($frames, -($hours * 6 + 1));
         });
     }
 

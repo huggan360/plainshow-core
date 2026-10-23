@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.6.0
+
+- Core apps: apps inside the dashboard itself, listed in the sidebar above Services. They open in the content area in one large frame, and their widgets have an expand button in the corner that grows the widget into the app. Weather is the first; News comes next.
+- Weather app: the sky of the place behind everything, crossfading when you change place, with a quiet map of the place blended into the hero. Search on top, your places as dots beneath it, a heart to save a place and a blue house to make it home. The coming hours step one hour at a time; below, the weather now in figures and the full report by hour or by day.
+- Home place: the weather widgets show your home unless a widget has a place of its own. A widget without any place asks for one and makes it your home.
+- Rain radar tool: open the radar from a place and it fills the frame. Drag and zoom the map, choose one to six hours, play or scrub through them at three speeds, set how strong the rain shows, read the scale in mm/h, and point at the rain to see how hard it falls there (over Sweden). The radar widget opens straight into it.
+- API: `/weather/radar` takes `hours` (1 to 6).
+
 ## v1.5.2
 
 - Rain radar: the map is Esri's quiet grey canvas (the old map now asked for a key). The rain is drawn from the radar's own values in calm blues to violet, blended between radar cells so it is smooth, with the place names above it. Your place is a larger dot that no longer pulses.

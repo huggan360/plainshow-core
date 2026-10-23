@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, MouseEvent, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { expandWidget } from './expand';
 import { t } from '@/i18n';
 import { Fill, Height, SLOTS, useMobile } from './List';
 import type { Place } from './Weather';
@@ -66,14 +67,21 @@ export function useBorder(fallback?: Border | null): string | undefined {
     return border === 'none' ? undefined : border;
 }
 
-export function WidgetFrame({ definition, children, action, className = '' }: { definition: WidgetDefinition; children: ReactNode; action?: ReactNode; className?: string }) {
+/** The button in a widget's corner that grows it into its app (Weather, News). */
+export function ExpandButton({ href }: { href: string }) {
+    const open = (event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); expandWidget(event.currentTarget.closest('.ps-frame'), href); };
+    return <button type="button" className="widget-expand" onClick={open} aria-label={t('Open')} title={t('Open')}><i className="bx bx-expand-alt" aria-hidden="true" /></button>;
+}
+
+/** `expand`: the address of the core app this widget opens. */
+export function WidgetFrame({ definition, children, action, className = '', expand }: { definition: WidgetDefinition; children: ReactNode; action?: ReactNode; className?: string; expand?: string }) {
     const border = useBorder(definition.border);
     return (
         <section className={`ps-frame ps-widget ${className}`} data-border={border}>
             <div className="ps-frame__panel">
                 <header className="ps-widget__head">
                     <h2 className="ps-widget__title">{definition.title}</h2>
-                    {action && <span className="ps-widget__action">{action}</span>}
+                    {(action || expand) && <span className="ps-widget__action">{action}{expand && <ExpandButton href={expand} />}</span>}
                 </header>
                 <div className="ps-widget__body">{children}</div>
             </div>

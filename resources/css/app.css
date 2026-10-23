@@ -602,20 +602,180 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .studio-place > span { display: grid; flex: 1; min-width: 0; line-height: 1.3; }
 
 /* Rain radar: a map that fills the box, the rain played over the last two hours. */
-.radar { position: absolute; inset: 0; overflow: hidden; background: var(--ps-raised); }
+.radar { position: absolute; inset: 0; overflow: hidden; background: var(--ps-raised); touch-action: none; }
+.radar__world { position: absolute; inset: 0; will-change: transform; }
 .radar__tile { position: absolute; width: 256px; height: 256px; max-width: none; user-select: none; pointer-events: none; }
-.radar__layer { position: absolute; inset: 0; transition: opacity .25s ease; }
-.radar__rain { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(3px); }
+.radar__layer, .radar__labels { position: absolute; inset: 0; transition: opacity .25s ease; }
+.radar__rain { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(3px); transition: opacity .2s ease; }
 .radar__layer .radar__tile { filter: blur(2px); }
-.radar__tile--labels { opacity: .9; }
-.radar__you { position: absolute; top: 50%; left: 50%; z-index: 2; width: 20px; height: 20px; margin: -10px 0 0 -10px; border: 3px solid #fff; border-radius: 50%; background: var(--ps-accent); box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
-.radar__bar { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; pointer-events: none; }
-.radar__place, .radar__time { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--ps-shell) 78%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--ps-text); font-size: var(--ps-text-xs); font-weight: 600; }
+.radar__labels { opacity: .9; }
+.radar__you { position: absolute; z-index: 2; width: 20px; height: 20px; margin: -10px 0 0 -10px; border: 3px solid #fff; border-radius: 50%; background: var(--ps-accent); box-shadow: 0 2px 8px rgba(0, 0, 0, .35); pointer-events: none; }
+.radar__bar { position: absolute; top: 14px; left: 14px; right: 14px; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 8px; pointer-events: none; }
+.widget-radar .radar__bar { right: 56px; }
+.radar__place, .radar__time, .radar__chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--ps-shell) 78%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--ps-text); font-size: var(--ps-text-xs); font-weight: 600; }
 .radar__time { font-variant-numeric: tabular-nums; }
+.radar__chip--button { border: 1px solid var(--ps-shell-border); font-family: inherit; cursor: pointer; pointer-events: auto; }
+.radar__chip--button:hover { background: var(--ps-shell); }
 .radar__progress { position: absolute; left: 14px; right: 14px; bottom: 22px; display: flex; gap: 3px; }
 .radar__progress span { flex: 1; height: 3px; border-radius: 999px; background: color-mix(in srgb, var(--ps-text) 22%, transparent); transition: background-color .2s ease; }
 .radar__progress span.is-done { background: var(--ps-accent); }
-.radar__credit { position: absolute; right: 14px; bottom: 6px; color: var(--ps-text-muted); font-size: 9px; }
+.radar__credit { position: absolute; right: 14px; bottom: 6px; z-index: 3; color: var(--ps-text-muted); font-size: 9px; }
+
+/* The radar tool, over the whole Weather app: drag, zoom, scrub, read the rain. */
+.radar--tool { cursor: grab; }
+.radar--tool.is-dragging { cursor: grabbing; }
+.radar--tool .radar__bar { top: 18px; left: 18px; right: 18px; }
+.radar--tool .radar__place, .radar--tool .radar__chip { padding: 6px 12px; font-size: var(--ps-text-sm); }
+.radar__tools { position: absolute; top: 70px; right: 18px; z-index: 3; display: grid; gap: 3px; }
+.radar__tools button { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--ps-shell-border); border-radius: 5px; background: color-mix(in srgb, var(--ps-shell) 82%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--ps-text); font-size: 1.2rem; cursor: pointer; }
+.radar__tools button:first-child { border-radius: 12px 12px 5px 5px; }
+.radar__tools button:last-child { border-radius: 5px 5px 12px 12px; }
+.radar__tools button:hover:not(:disabled) { background: var(--ps-shell); }
+.radar__tools button:disabled { opacity: .45; cursor: default; }
+.radar__panel { position: absolute; top: 70px; left: 18px; z-index: 3; display: grid; gap: 12px; width: 230px; padding: 14px; border: 1px solid var(--ps-shell-border); border-radius: 16px; background: color-mix(in srgb, var(--ps-shell) 82%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--ps-text); font-size: var(--ps-text-xs); cursor: default; }
+.radar__setting { display: grid; gap: 6px; }
+.radar__setting > span { color: var(--ps-text-muted); font-weight: 600; }
+.radar__setting select { height: 32px; padding: 0 8px; border: 1px solid var(--ps-shell-border); border-radius: 8px; background: var(--ps-raised); color: var(--ps-text); font: inherit; }
+.radar__setting input[type='range'], .radar__scrub input { width: 100%; accent-color: var(--ps-accent); }
+.radar__legend { display: grid; gap: 4px; }
+.radar__legend-title { color: var(--ps-text-muted); font-weight: 600; }
+.radar__legend-bar { height: 8px; border-radius: 999px; }
+.radar__legend-marks { position: relative; height: 14px; }
+.radar__legend-marks span { position: absolute; transform: translateX(-50%); color: var(--ps-text-muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+.radar__timeline { position: absolute; left: 18px; right: 18px; bottom: 24px; z-index: 3; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--ps-shell-border); border-radius: 16px; background: color-mix(in srgb, var(--ps-shell) 82%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--ps-text); cursor: default; }
+.radar__play { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border: 0; border-radius: 999px; background: var(--ps-accent); color: #fff; font-size: 1.3rem; cursor: pointer; }
+.radar__speed { flex: none; min-width: 40px; height: 30px; border: 1px solid var(--ps-shell-border); border-radius: 999px; background: none; color: var(--ps-text); font: 600 var(--ps-text-xs) var(--ps-font-ui); cursor: pointer; }
+.radar__scrub { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.radar__ticks { display: flex; justify-content: space-between; color: var(--ps-text-muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+.radar__now { flex: none; min-width: 52px; font: 600 var(--ps-text-lg) var(--ps-font-title); font-variant-numeric: tabular-nums; text-align: right; }
+.radar--tool .radar__credit { bottom: 6px; }
+.radar__hover { position: absolute; z-index: 4; display: grid; gap: 1px; padding: 6px 10px; border: 1px solid var(--ps-shell-border); border-radius: 10px; background: var(--ps-shell); box-shadow: var(--ps-shadow); color: var(--ps-text); font-size: var(--ps-text-xs); transform: translate(14px, -50%); pointer-events: none; white-space: nowrap; }
+.radar__hover strong { font-size: var(--ps-text-sm); font-variant-numeric: tabular-nums; }
+.radar__hover span { color: var(--ps-text-muted); }
+.widget-radar__wait { position: absolute; inset: 0; display: grid; place-items: center; padding: 20px; color: var(--ps-text-muted); font-size: 1.6rem; }
+
+/* ---------- Opening a core app from its widget ---------- */
+.widget-expand { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-left: 6px; padding: 0; border: 0; border-radius: 9px; background: none; color: var(--ps-text-muted); font-size: 1.1rem; cursor: pointer; transition: background-color .15s ease, color .15s ease; }
+.widget-expand:hover { background: var(--ps-hover); color: var(--ps-text); }
+.widget-weather .widget-expand, .widget-radar .widget-expand { position: absolute; top: 12px; right: 12px; z-index: 6; margin: 0; background: rgba(255, 255, 255, .14); color: #fff; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.widget-radar .widget-expand { background: color-mix(in srgb, var(--ps-shell) 78%, transparent); color: var(--ps-text); }
+.widget-weather .widget-expand:hover { background: rgba(255, 255, 255, .26); }
+.widget-weather .wx__top, .widget-weather .wx__head { padding-right: 34px; }
+.widget-ghost { position: fixed !important; z-index: 60; margin: 0; pointer-events: none; transition: left .36s cubic-bezier(.2, .8, .2, 1), top .36s cubic-bezier(.2, .8, .2, 1), width .36s cubic-bezier(.2, .8, .2, 1), height .36s cubic-bezier(.2, .8, .2, 1), opacity .36s ease; }
+.widget-ghost .widget-expand { display: none; }
+.widget-ghost.is-leaving { opacity: 0; }
+
+/* ---------- The Weather app: one frame filling the content area ---------- */
+.wxa-frame { position: relative; display: flex; min-height: 520px; animation: ps-fade .3s ease; }
+.wxa-frame > .ps-frame__panel { position: relative; flex: 1; padding: 0; overflow: hidden; isolation: isolate; color: #fff; }
+.wxa__skies { position: absolute; inset: 0; z-index: -1; }
+.wxa__sky { position: absolute; inset: 0; animation: wxa-sky-in .9s ease both; transition: opacity .9s ease; }
+.wxa__sky.is-leaving { opacity: 0; }
+.wxa__sky .wx-sky { z-index: 0; }
+@keyframes wxa-sky-in { from { opacity: 0; } to { opacity: 1; } }
+.wxa { position: absolute; inset: 0; overflow-y: auto; padding: 22px 28px 28px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .3) transparent; text-shadow: 0 1px 14px rgba(0, 0, 0, .2); }
+.wxa__bar { position: relative; z-index: 5; display: grid; justify-items: center; gap: 12px; margin: 0 auto 8px; width: min(100%, 440px); }
+.wxa__bar .wx-search { width: 100%; }
+.wxa__bar .wx-search .ps-input { height: 42px; border-radius: 999px; }
+.wxa-dots { display: flex; align-items: center; gap: 6px; }
+.wxa-dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .45); cursor: pointer; transition: width .3s ease, background-color .3s ease; }
+.wxa-dots button:hover { background: rgba(255, 255, 255, .75); }
+.wxa-dots button.is-active { width: 26px; background: #fff; }
+.wxa-dots button.is-other { background: transparent; box-shadow: inset 0 0 0 1.5px #fff; }
+.wxa__empty { display: grid; place-items: center; gap: 10px; padding: 18vh 0; text-align: center; }
+.wxa__empty i { font-size: 2.4rem; }
+.wxa__empty strong { font: 520 var(--ps-text-xl) var(--ps-font-title); }
+.wxa__body { display: grid; gap: 16px; animation: ps-fade .5s ease; }
+
+.wxa-hero { position: relative; min-height: 300px; display: flex; align-items: center; }
+.wxa-hero__text { position: relative; z-index: 1; display: grid; gap: 6px; max-width: min(100%, 560px); }
+.wxa-hero__name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.wxa-hero__name h1 { margin: 0 6px 0 0; font: 520 clamp(28px, 3.4vw, 42px) var(--ps-font-title); letter-spacing: -.02em; line-height: 1.1; }
+.wxa-hero__where { margin: 0; color: rgba(255, 255, 255, .8); font-size: var(--ps-text-sm); }
+.wxa-hero__temp { font: 500 clamp(80px, 11vw, 136px) var(--ps-font-title); line-height: .95; letter-spacing: -.05em; }
+.wxa-hero__condition { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--ps-text-lg); font-weight: 500; }
+.wxa-hero__condition i { font-size: 1.8rem; }
+.wxa-hero__range { margin: 0; color: rgba(255, 255, 255, .85); font-size: var(--ps-text-sm); }
+.wxa-hero__wait { padding: 30px 0; font-size: 1.8rem; }
+.wxa-icon { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .14); color: #fff; font-size: 1.25rem; cursor: pointer; transition: background-color .15s ease, transform .15s ease, color .15s ease; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.wxa-icon:hover { background: rgba(255, 255, 255, .26); }
+.wxa-icon:active { transform: scale(.9); }
+.wxa-icon--heart.is-on { color: #ff4d6d; background: rgba(255, 255, 255, .9); }
+.wxa-icon--home.is-on { color: #fff; background: #3b82f6; }
+.wxa-radar-button { display: inline-flex; align-items: center; gap: 6px; height: 36px; margin-left: 4px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .14); color: #fff; font: 600 var(--ps-text-sm) var(--ps-font-ui); cursor: pointer; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.wxa-radar-button:hover { background: rgba(255, 255, 255, .26); }
+.wxa-radar-button i { font-size: 1.15rem; }
+
+/* The map of the place, blended into the sky behind the hero's right side. */
+.wxa-map { position: absolute; top: -40px; right: -28px; bottom: -20px; width: 62%; overflow: hidden; opacity: .5; mix-blend-mode: soft-light; pointer-events: none;
+    -webkit-mask-image: radial-gradient(ellipse 60% 70% at 55% 50%, #000 25%, transparent 75%); mask-image: radial-gradient(ellipse 60% 70% at 55% 50%, #000 25%, transparent 75%); }
+.wxa-map img { position: absolute; width: 256px; height: 256px; max-width: none; filter: grayscale(1) contrast(1.15); }
+.wxa-map__pin { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border: 2px solid #fff; border-radius: 50%; background: #fff; }
+
+/* The coming hours, a step at a time. */
+.wxa-line { display: flex; align-items: stretch; gap: 6px; }
+.wxa-line__arrow { flex: none; width: 30px; border: 0; border-radius: 10px; background: rgba(255, 255, 255, .1); color: #fff; font-size: 1.3rem; cursor: pointer; }
+.wxa-line__arrow:disabled { opacity: .3; cursor: default; }
+.wxa-line__arrow:hover:not(:disabled) { background: rgba(255, 255, 255, .2); }
+.wxa-line__strip { display: flex; flex: 1; gap: 3px; min-width: 0; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.wxa-line__strip::-webkit-scrollbar { display: none; }
+.wxa-line__hour { display: flex; flex: 0 0 var(--item); flex-direction: column; align-items: center; gap: 4px; padding: 12px 4px; border-radius: 5px; background: rgba(255, 255, 255, .13); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); scroll-snap-align: start; scroll-snap-stop: always; text-shadow: none; transition: border-radius .2s ease; }
+.wxa-line__hour.is-first { border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
+.wxa-line__hour.is-last { border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
+.wxa-line__hour > i:not(.wxa-line__wind) { font-size: 1.5rem; }
+.wxa-line__hour strong { font-size: var(--ps-text-lg); font-weight: 600; }
+.wxa-line__time { color: rgba(255, 255, 255, .8); font-size: var(--ps-text-xs); font-variant-numeric: tabular-nums; }
+.wxa-line__rain { min-height: 1em; color: #bfe0ff; font-size: var(--ps-text-xs); }
+.wxa-line__wind { color: rgba(255, 255, 255, .7); font-size: 1rem; }
+
+/* Figures for now. */
+.wxa-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 3px; }
+.wxa-fact { display: grid; gap: 2px; padding: 12px 14px; border-radius: 5px; background: rgba(255, 255, 255, .13); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); text-shadow: none; }
+.wxa-fact.is-first { border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
+.wxa-fact.is-last { border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
+.wxa-fact__label { display: inline-flex; align-items: center; gap: 5px; color: rgba(255, 255, 255, .78); font-size: var(--ps-text-xs); }
+.wxa-fact strong { font-size: var(--ps-text-lg); font-weight: 600; }
+.wxa-fact .wx-wind { font-size: var(--ps-text-lg); }
+.wxa-fact__note { color: rgba(255, 255, 255, .7); font-size: var(--ps-text-xs); }
+
+/* The full report, by hour or by day. */
+.wxa-report { display: grid; gap: 10px; }
+.wxa-report__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wxa-report__head h2 { margin: 0; font: 520 var(--ps-text-xl) var(--ps-font-title); }
+.wxa-modes { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(255, 255, 255, .13); }
+.wxa-modes button { height: 30px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: rgba(255, 255, 255, .85); font: 600 var(--ps-text-sm) var(--ps-font-ui); cursor: pointer; }
+.wxa-modes button.is-active { background: #fff; color: #1d2433; }
+.wxa-rows { display: grid; gap: 3px; text-shadow: none; }
+.wxa-row { display: grid; align-items: center; gap: 14px; min-height: 48px; padding: 6px 16px; border-radius: 5px; background: rgba(255, 255, 255, .11); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); font-size: var(--ps-text-sm); }
+.wxa-row.is-first { border-top-left-radius: 16px; border-top-right-radius: 16px; }
+.wxa-row.is-last { border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+.wxa-row--hour { grid-template-columns: 110px minmax(0, 1fr) 56px 90px 90px; }
+.wxa-row--hour.is-new-day { margin-top: 8px; }
+.wxa-row--day { grid-template-columns: 120px minmax(0, 1fr) 70px minmax(150px, 1.2fr) 70px; }
+.wxa-row__when { display: grid; font-weight: 600; font-variant-numeric: tabular-nums; }
+.wxa-row__when small { color: rgba(255, 255, 255, .7); font-size: 10px; font-weight: 500; text-transform: capitalize; }
+.wxa-row--day .wxa-row__when::first-letter { text-transform: uppercase; }
+.wxa-row__what { display: inline-flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.wxa-row__what i { flex: none; font-size: 1.3rem; }
+.wxa-row__temp { font-size: var(--ps-text-lg); }
+.wxa-row__rain { color: #bfe0ff; font-size: var(--ps-text-xs); }
+.wxa-row__wind { color: rgba(255, 255, 255, .85); font-size: var(--ps-text-xs); text-align: right; }
+.wxa-row__range { display: grid; grid-template-columns: 36px minmax(40px, 1fr) 36px; align-items: center; gap: 10px; }
+.wxa-row__low { color: rgba(255, 255, 255, .7); text-align: right; }
+.wxa-report__source { margin: 2px 0 0; color: rgba(255, 255, 255, .7); font-size: var(--ps-text-xs); }
+
+/* The radar fills the whole frame. */
+.wxa-frame.is-radar > .ps-frame__panel { color: var(--ps-text); }
+.wxa-frame.is-radar .wxa__skies { display: none; }
+
+@media (max-width: 900px) {
+    .radar__panel { top: auto; bottom: 96px; width: auto; right: 18px; grid-template-columns: 1fr 1fr; }
+    .radar__legend { grid-column: 1 / -1; }
+    .wxa-row--hour { grid-template-columns: 70px minmax(0, 1fr) 46px 70px; }
+    .wxa-row--hour .wxa-row__wind { display: none; }
+    .wxa-row--day { grid-template-columns: 90px minmax(0, 1fr) minmax(120px, 1fr); }
+    .wxa-row--day .wxa-row__rain, .wxa-row--day .wxa-row__wind { display: none; }
+}
 
 @media (max-width: 700px) {
     .ps-widget-grid { grid-auto-rows: auto; }
@@ -632,6 +792,14 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
     .widget-weather, .widget-radar { min-height: 260px; }
     .widget-weather--forecast { min-height: 420px; }
     .widget-radar { height: 320px; }
+    .wxa-frame { min-height: 0; }
+    .wxa { position: relative; inset: auto; overflow: visible; padding: 16px; }
+    .wxa-frame.is-radar { height: 78vh; }
+    .wxa-map { width: 100%; right: -16px; opacity: .35; }
+    .wxa-hero { min-height: 240px; }
+    .wxa-line__arrow { display: none; }
+    .radar__panel { display: none; }
+    .radar__tools { top: 64px; }
     .widget-weather > .ps-frame__panel, .widget-radar > .ps-frame__panel { min-height: inherit; }
     .wx-week { min-height: 300px; }
 }

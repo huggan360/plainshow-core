@@ -46,6 +46,13 @@ React and TypeScript (Vite).
   "more" row on phones), `base.tsx` the shared hooks and frame,
   `Weather.tsx` weather, forecast and radar. Data comes from
   `GET /widgets/{extension}/{widget}` (`?limit=` for more rows).
+- Core apps (Weather, later News): `App\Support\CoreApps` lists them (shared
+  as `coreApps`, shown in the sidebar above Services). Each is a page in the
+  content area with one large frame (`Pages/Weather.tsx`); widgets that belong
+  to an app pass `expand` to `WidgetFrame` (or use `ExpandButton`), which grows
+  the widget into the app (`Widgets/expand.ts`; the app calls `settleExpand()`).
+- Weather places: `users.weather` holds `home` and `saved` (`WeatherController`).
+  Weather widgets show their own `place` setting, else home.
 - Weather: `App\Support\Weather` (SMHI and Open-Meteo forecasts, SMHI and
   RainViewer radar, Open-Meteo places), cached; no keys. SMHI radar images are
   passed through `/weather/radar/smhi/*.png` and kept in `storage/app/radar`
