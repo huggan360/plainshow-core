@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.9.2
+
+- Design studio: widgets rise as high as they can and close the gaps, also on the dashboard itself; a widget pushed aside while another is moved goes back when it passes.
+- Design studio: while an edge is dragged, a light stand-in with the widget's name and size follows the pointer exactly, and the widget is drawn at its new size when let go. No more lag or freezing.
+
 ## v1.9.1
 
 - Design studio: moving a widget works on a full dashboard; it pushes the others aside. Sizing still stops at the neighbours.

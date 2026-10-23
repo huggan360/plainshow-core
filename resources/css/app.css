@@ -200,9 +200,12 @@
 
 .studio-phone__grid { position: relative; width: 100%; }
 
-/* While a widget is sized, its contents keep their size until let go: only the outline and the shadow follow. */
-.react-grid-item.resizing { overflow: hidden; border-radius: var(--ps-frame-radius); }
-.react-grid-item.resizing .studio-item__content { width: var(--frozen-w, 100%); height: var(--frozen-h, 100%); }
+/* While a widget is sized, a light stand-in follows the pointer; the widget is drawn again when let go. */
+.studio-stand-in { position: absolute; inset: 0; display: none; place-content: center; justify-items: center; gap: 8px; border: 1px solid var(--ps-shell-border); border-radius: var(--ps-frame-radius); background: color-mix(in srgb, var(--ps-shell) 80%, transparent); -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px); color: var(--ps-text); text-align: center; }
+.studio-stand-in strong { font: 600 var(--ps-text-md) var(--ps-font-title); }
+.studio-stand-in__size { color: var(--ps-accent-text); font: 600 var(--ps-text-sm) var(--ps-font-mono); }
+.react-grid-item.resizing .studio-stand-in { display: grid; }
+.react-grid-item.resizing .studio-item__content { visibility: hidden; }
 .react-grid-item.resizing .studio-item::after { box-shadow: 0 0 0 2px var(--ps-accent); }
 
 /* A widget's settings: a drawer on the right. */

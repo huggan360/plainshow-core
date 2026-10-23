@@ -32,6 +32,11 @@ type Target = 'me' | string;
 const COLS = 12;
 const ROW = 96;
 const GAP = 16;
+// Kept as constants so the grid never sees a new value between drags.
+const MARGIN: [number, number] = [GAP, GAP];
+const PADDING: [number, number] = [0, 0];
+const DESKTOP_HANDLES: ResizeHandleAxis[] = ['n', 'e', 's', 'w'];
+const PHONE_HANDLES: ResizeHandleAxis[] = ['n', 's'];
 
 const BORDERS: { value: Border | undefined; label: string }[] = [
     { value: undefined, label: t('Default') }, { value: 'none', label: t('None') }, { value: 'orange', label: t('Orange') }, { value: 'sunset', label: t('Sunset') },
@@ -297,15 +302,18 @@ function useWidth(): [Ref<HTMLDivElement>, number] {
 }
 
 /**
- * When sizing starts, the widget's contents keep the size they have (the
- * grid item clips them) until the edge is let go: redrawing a widget for
- * every pixel of the drag made the edge lag behind the pointer.
+ * While an edge is dragged the widget shows a light stand-in (its icon, name
+ * and size) that follows the pointer exactly; the real widget is drawn again
+ * at its new size when the edge is let go. Redrawing a real widget for every
+ * pixel of the drag made it lag behind. The size is written straight into the
+ * stand-in, without redrawing anything.
  */
-function freeze(...args: unknown[]) {
+function showSize(...args: unknown[]) {
+    const item = args[2] as { w: number; h: number } | null;
     const element = args.find((arg): arg is HTMLElement => arg instanceof HTMLElement);
-    if (!element) return;
-    element.style.setProperty('--frozen-w', `${element.offsetWidth}px`);
-    element.style.setProperty('--frozen-h', `${element.offsetHeight}px`);
+    // The grid passes the edge being dragged; the label is in the widget around it.
+    const label = element?.closest('.react-grid-item')?.querySelector('.studio-stand-in__size');
+    if (item && label) label.textContent = `${item.w} × ${item.h}`;
 }
 
 /** An orange bar on each edge, shown on hover, to size the widget from that side. */
@@ -318,11 +326,11 @@ function DesktopGrid({ items, byKey, selected, onChange, onSelect, onRemove }: C
     const [moving, setMoving] = useState(false);
     // Sizing stops at the neighbours; moving pushes them aside, so a packed dashboard can still be rearranged.
     const [sizing, setSizing] = useState(false);
-    const known = items.filter((item) => byKey.has(item.key));
-    const grid: Layout = known.map((item) => {
+    const known = useMemo(() => items.filter((item) => byKey.has(item.key)), [items, byKey]);
+    const grid: Layout = useMemo(() => known.map((item) => {
         const definition = byKey.get(item.key)!;
         return { i: item.key, x: item.x ?? 0, y: item.y ?? 0, w: item.w ?? definition.w, h: item.h ?? definition.h, minW: definition.min[0], minH: definition.min[1], maxW: COLS, maxH: 12 };
-    });
+    }), [known, byKey]);
     // The grid reports every layout, also unchanged ones; only real moves count.
     const apply = (next: Layout) => {
         let changed = false;
@@ -339,10 +347,10 @@ function DesktopGrid({ items, byKey, selected, onChange, onSelect, onRemove }: C
         <div ref={ref} className={`studio-canvas${moving ? ' is-moving' : ''}`} style={{ '--col': `${column}px`, '--row': `${ROW}px`, '--gap': `${GAP}px` } as CSSProperties}>
             {known.length === 0 && <div className="studio-empty"><i className="bx bx-grid-alt" aria-hidden="true" /></div>}
             {width > 0 && (
-                <ReactGridLayout width={width} layout={grid} cols={COLS} rowHeight={ROW} margin={[GAP, GAP]} containerPadding={[0, 0]}
-                    compactType={null} preventCollision={sizing} isResizable isDraggable resizeHandles={['n', 'e', 's', 'w']} resizeHandle={handle}
-                    draggableCancel=".studio-tools,.studio-handle" onDragStart={() => setMoving(true)} onResizeStart={(...args) => { setMoving(true); setSizing(true); freeze(...args); }}
-                    onDragStop={(next) => { setMoving(false); apply(next); }} onResizeStop={(next) => { setMoving(false); setSizing(false); apply(next); }}>
+                <ReactGridLayout width={width} layout={grid} cols={COLS} rowHeight={ROW} margin={MARGIN} containerPadding={PADDING}
+                    compactType="vertical" preventCollision={sizing} isResizable isDraggable resizeHandles={DESKTOP_HANDLES} resizeHandle={handle}
+                    draggableCancel=".studio-tools,.studio-handle" onDragStart={() => setMoving(true)} onResizeStart={(...args) => { setMoving(true); setSizing(true); showSize(...args); }}
+                    onResize={showSize} onDragStop={(next) => { setMoving(false); apply(next); }} onResizeStop={(next) => { setMoving(false); setSizing(false); apply(next); }}>
                     {known.map((item) => <div key={item.key}><StudioItem item={item} definition={byKey.get(item.key)!} selected={selected === item.key} onSelect={onSelect} onRemove={onRemove} /></div>)}
                 </ReactGridLayout>
             )}
@@ -352,15 +360,17 @@ function DesktopGrid({ items, byKey, selected, onChange, onSelect, onRemove }: C
 
 function PhoneColumn({ items, byKey, selected, onChange, onSelect, onRemove }: CanvasProps) {
     const [ref, width] = useWidth();
-    const known = items.filter((item) => byKey.has(item.key));
-    let top = 0;
-    const grid: Layout = known.map((item) => {
-        const definition = byKey.get(item.key)!;
-        const h = item.h ?? definition.h;
-        const cell = { i: item.key, x: 0, y: top, w: 1, h, minW: 1, maxW: 1, minH: definition.min[1], maxH: 12 };
-        top += h;
-        return cell;
-    });
+    const known = useMemo(() => items.filter((item) => byKey.has(item.key)), [items, byKey]);
+    const grid: Layout = useMemo(() => {
+        let top = 0;
+        return known.map((item) => {
+            const definition = byKey.get(item.key)!;
+            const h = item.h ?? definition.h;
+            const cell = { i: item.key, x: 0, y: top, w: 1, h, minW: 1, maxW: 1, minH: definition.min[1], maxH: 12 };
+            top += h;
+            return cell;
+        });
+    }, [known, byKey]);
     // Order follows the column; heights follow the edges.
     const apply = (next: Layout) => {
         const ordered = [...next].sort((a, b) => a.y - b.y);
@@ -374,9 +384,9 @@ function PhoneColumn({ items, byKey, selected, onChange, onSelect, onRemove }: C
               <div ref={ref} className="studio-phone__grid">
                 {known.length === 0 && <div className="studio-empty"><i className="bx bx-mobile" aria-hidden="true" /></div>}
                 {width > 0 && (
-                    <ReactGridLayout width={width} layout={grid} cols={1} rowHeight={ROW} margin={[GAP, GAP]} containerPadding={[0, 0]}
-                        compactType="vertical" isResizable isDraggable resizeHandles={['n', 's']} resizeHandle={handle}
-                        draggableCancel=".studio-tools,.studio-handle" onDragStop={apply} onResizeStart={freeze} onResizeStop={apply}>
+                    <ReactGridLayout width={width} layout={grid} cols={1} rowHeight={ROW} margin={MARGIN} containerPadding={PADDING}
+                        compactType="vertical" isResizable isDraggable resizeHandles={PHONE_HANDLES} resizeHandle={handle}
+                        draggableCancel=".studio-tools,.studio-handle" onDragStop={apply} onResizeStart={showSize} onResize={showSize} onResizeStop={apply}>
                         {known.map((item) => <div key={item.key}><StudioItem item={{ ...item, w: PHONE_COLUMNS }} definition={byKey.get(item.key)!} selected={selected === item.key} onSelect={onSelect} onRemove={onRemove} /></div>)}
                     </ReactGridLayout>
                 )}
@@ -396,6 +406,11 @@ const StudioItem = memo(function StudioItem({ item, definition, selected, onSele
             </div>
             <div className="studio-item__content" inert>
                 <PlacedWidget item={item} definition={definition} />
+            </div>
+            <div className="studio-stand-in" aria-hidden="true">
+                <span className="studio-pick__icon"><i className={`bx ${definition.icon}`} /></span>
+                <strong>{definition.title}</strong>
+                <span className="studio-stand-in__size">{item.w ?? definition.w} × {item.h ?? definition.h}</span>
             </div>
         </div>
     );
