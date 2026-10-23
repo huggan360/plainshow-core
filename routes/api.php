@@ -121,4 +121,5 @@ Route::middleware([AuthenticateBearer::class.':core', 'throttle:120,1'])->group(
     Route::get('/weather/places', [App\Http\Controllers\WeatherController::class, 'places']);
     Route::get('/weather/forecast', [App\Http\Controllers\WeatherController::class, 'forecast']);
     Route::get('/weather/radar', [App\Http\Controllers\WeatherController::class, 'radar']);
+    Route::get('/weather/warnings', [App\Http\Controllers\WeatherController::class, 'warnings']);
 });

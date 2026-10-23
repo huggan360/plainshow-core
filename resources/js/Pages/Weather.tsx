@@ -1,12 +1,14 @@
 import AppShell from '@/Layouts/AppShell';
-import { CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { t, locale } from '@/i18n';
 import { expanding, settleExpand } from '@/Widgets/expand';
 import { RadarMap } from '@/Widgets/Radar';
 import {
     clock, Day, dayName, degrees, esri, Forecast, Hour, hourLabel, icon, label, Phase, phaseOf, Place, PlaceSearch, placeUrl,
-    samePlace, send, Sky, tilesFor, useForecast, useTheme, Wind, worldPixel, Condition,
+    samePlace, send, Sky, tilesFor, useForecast, useJson, useTheme, Wind, worldPixel, Condition,
 } from '@/Widgets/weatherKit';
+
+type Warning = { id: string; level: 'yellow' | 'orange' | 'red'; event: string; title: string; text: string[]; areas: string[]; here: boolean; km: number; start: string | null; end: string | null };
 
 /*
  * The Weather app, inside the dashboard: one large frame with the sky of the
@@ -28,6 +30,9 @@ export default function Weather({ home: startHome, saved: startSaved, initial }:
     const [mode, setMode] = useState<'hours' | 'days'>('hours');
     const [busy, setBusy] = useState(false);
     const { data, error } = useForecast(place);
+    const warnings = useJson<{ warnings: Warning[] }>(place && (!place.countryCode || place.countryCode === 'SE') ? `/weather/warnings?lat=${place.lat}&lon=${place.lon}` : null, 300).data?.warnings ?? [];
+    const warningsRef = useRef<HTMLElement>(null);
+    const hereWarning = warnings.find((warning) => warning.here);
     // Opened from a widget: no fade of our own, and the growing widget fades once the sky is drawn.
     const [grown] = useState(expanding);
     useEffect(() => {
@@ -113,6 +118,11 @@ export default function Weather({ home: startHome, saved: startSaved, initial }:
                                             ) : <>
                                                 <div className="wxa-hero__temp">{degrees(data.current.temp)}</div>
                                                 <p className="wxa-hero__condition"><i className={`bx ${icon(data.current.condition, data.current.isDay)}`} aria-hidden="true" />{label(data.current.condition)}</p>
+                                                {hereWarning && (
+                                                    <button type="button" className={`wxa-warning-pill is-${hereWarning.level}`} onClick={() => warningsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
+                                                        <i className="bx bxs-error" aria-hidden="true" />{t(WARNING_LEVEL[hereWarning.level])}: {hereWarning.event}
+                                                    </button>
+                                                )}
                                                 {data.days[0] && <p className="wxa-hero__range">{t('High {max}, low {min}', { max: degrees(data.days[0].max), min: degrees(data.days[0].min) })}{data.current.feels !== null ? `, ${t('feels like {temp}', { temp: degrees(data.current.feels) })}` : ''}</p>}
                                             </>}
                                         </div>
@@ -120,6 +130,7 @@ export default function Weather({ home: startHome, saved: startSaved, initial }:
 
                                     {data && <>
                                         <Timeline hours={data.hours} />
+                                        {warnings.length > 0 && <Warnings ref={warningsRef} warnings={warnings} />}
                                         <Facts forecast={data} />
                                         <section className="wxa-report">
                                             <div className="wxa-report__head">
@@ -265,6 +276,40 @@ function Timeline({ hours }: { hours: Hour[] }) {
         </section>
     );
 }
+
+const WARNING_LEVEL: Record<Warning['level'], string> = { yellow: 'Yellow warning', orange: 'Orange warning', red: 'Red warning' };
+
+/** SMHI's warnings here and nearby: the ones over this place first, then the nearest. A row opens to its text. */
+const Warnings = forwardRef<HTMLElement, { warnings: Warning[] }>(function Warnings({ warnings }, ref) {
+    const [open, setOpen] = useState<string | null>(null);
+    const span = (warning: Warning) => [warning.start, warning.end].filter(Boolean).map((iso) => new Date(iso!).toLocaleString(locale, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })).join(' – ');
+    return (
+        <section ref={ref} className="wxa-warnings" aria-label={t('Warnings')}>
+            <h2 className="wxa-warnings__title">{t('Warnings')}<small>{t('From SMHI, here and within 80 km')}</small></h2>
+            <div className="wxa-rows">
+                {warnings.map((warning, at) => (
+                    <div key={warning.id} className={`wxa-warning is-${warning.level}${at === 0 ? ' is-first' : ''}${at === warnings.length - 1 ? ' is-last' : ''}${open === warning.id ? ' is-open' : ''}`}>
+                        <button type="button" className="wxa-warning__head" onClick={() => setOpen(open === warning.id ? null : warning.id)} aria-expanded={open === warning.id}>
+                            <span className="wxa-warning__dot" aria-hidden="true" />
+                            <span className="wxa-warning__text">
+                                <strong>{warning.title || warning.event}</strong>
+                                <small>{t(WARNING_LEVEL[warning.level])}, {warning.areas.join(', ')}</small>
+                            </span>
+                            <span className="wxa-warning__where">{warning.here ? t('Here') : t('{km} km away', { km: warning.km })}</span>
+                            <i className={`bx ${open === warning.id ? 'bx-chevron-up' : 'bx-chevron-down'}`} aria-hidden="true" />
+                        </button>
+                        {open === warning.id && (
+                            <div className="wxa-warning__body">
+                                {span(warning) && <p className="wxa-warning__time">{span(warning)}</p>}
+                                {warning.text.map((line, index) => <p key={index}>{line}</p>)}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+});
 
 /** The weather now, in figures. */
 function Facts({ forecast }: { forecast: Forecast }) {

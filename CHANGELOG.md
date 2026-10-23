@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.8.0
+
+- News: the big title is gone; a bar of sections under the date (Front page, then your topics in your order) opens a topic as its own page, with a line that slides to the open one. Section headings on the front page open their section too.
+- News: alerts from the authorities lead the page: VMA, SMHI's warnings when your town is inside the warned area, and Krisinformation (MSB) for your county or marked important. Alerts can be closed (a VMA cannot).
+- News: the reader shows the whole article where the source publishes it openly (SVT, Sveriges Radio, BBC, The Guardian and others), else the summary.
+- News: a new first-time setup, three short questions one at a time, where each topic is skip, show or more of it. What you want more of leads the front page and gets more room; the same choices are in the settings.
+- News: the column of headlines no longer sits on its rule.
+- Weather app: SMHI's warnings here and within 80 km, nearest first, each opening to its text; a warning over the place itself shows under the temperature. API: `/weather/warnings`.
+
 ## v1.7.0
 
 - News: a news app in the dashboard, laid out like a paper. A lead story in large type, the next stories beside it, the latest headlines in a narrow column, then a section per topic with a feature and a column of headlines. Two editions: Top news and Local (SVT's regional desk for your county, and stories that name your town). Search on top, settings in the corner (town, topics, sources), a short setup the first time, and a reader with the story's summary and a link to the whole story.

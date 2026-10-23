@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'show'])->name('dashboard');
     Route::get('/news', [App\Http\Controllers\NewsController::class, 'app'])->middleware('can.do:core.dashboard.use')->name('news');
     Route::get('/news/stories', [App\Http\Controllers\NewsController::class, 'stories'])->middleware('throttle:60,1');
+    Route::get('/news/article/{id}', [App\Http\Controllers\NewsController::class, 'article'])->where('id', '[a-f0-9]{16}')->middleware('throttle:60,1');
     Route::put('/news/preferences', [App\Http\Controllers\NewsController::class, 'savePreferences']);
     Route::get('/news/image/{key}', [App\Http\Controllers\NewsController::class, 'image'])->where('key', '[a-f0-9]{32}');
     Route::get('/weather', [App\Http\Controllers\WeatherController::class, 'app'])->middleware('can.do:core.dashboard.use')->name('weather');
@@ -37,6 +38,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/weather/places', [App\Http\Controllers\WeatherController::class, 'places']);
         Route::get('/weather/forecast', [App\Http\Controllers\WeatherController::class, 'forecast']);
         Route::get('/weather/radar', [App\Http\Controllers\WeatherController::class, 'radar']);
+        Route::get('/weather/warnings', [App\Http\Controllers\WeatherController::class, 'warnings']);
     });
     Route::put('/dashboard/widgets/{key}/settings', [DashboardController::class, 'saveWidgetSettings'])->where('key', '[a-z0-9-]+\.[a-z0-9-]+');
     Route::get('/groups', [GroupsController::class, 'index'])->middleware('can.do:core.groups.view')->name('groups');

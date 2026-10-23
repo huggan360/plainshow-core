@@ -28,11 +28,23 @@ class NewsController extends Controller
         $valid = $request->validate([
             'tab' => ['nullable', 'in:top,local'],
             'q' => ['nullable', 'string', 'max:80'],
+            'topic' => ['nullable', 'string', 'in:'.implode(',', News::TOPICS)],
             'limit' => ['nullable', 'integer', 'between:1,150'],
         ]);
+        $user = $request->user();
+        $query = trim((string) ($valid['q'] ?? ''));
+        $topic = $valid['topic'] ?? null;
 
-        return response()->json(['stories' => News::stories($request->user(), $valid['tab'] ?? 'top', trim((string) ($valid['q'] ?? '')), (int) ($valid['limit'] ?? 80))])
-            ->header('Cache-Control', 'private, max-age=120');
+        return response()->json([
+            'stories' => News::stories($user, $valid['tab'] ?? 'top', $query, (int) ($valid['limit'] ?? 80), $topic),
+            // Alerts lead the front page and the local edition.
+            'alerts' => $query === '' && ! $topic ? News::alerts(News::preferences($user)['place']) : [],
+        ])->header('Cache-Control', 'private, max-age=60');
+    }
+
+    public function article(string $id): JsonResponse
+    {
+        return response()->json(['parts' => News::article($id)])->header('Cache-Control', 'private, max-age=3600');
     }
 
     public function savePreferences(Request $request): JsonResponse
@@ -43,6 +55,7 @@ class NewsController extends Controller
             'sources' => ['sometimes', 'array'],
             'sources.*' => ['string'],
             'place' => ['sometimes', 'nullable', 'array'],
+            'levels' => ['sometimes', 'array'],
         ]);
         $preferences = News::savePreferences($request->user(), $input);
 

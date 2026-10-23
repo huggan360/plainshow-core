@@ -367,6 +367,92 @@ class Weather
         return $temp;
     }
 
+    /* ---------- SMHI's warnings ---------- */
+
+    /**
+     * SMHI's yellow, orange and red warnings at or near a point, nearest
+     * first: `here` when the point is inside the warned area, else how far
+     * away it is. Only within $radius km. Read at most every five minutes.
+     *
+     * @return list<array{id: string, level: string, event: string, title: string, text: list<string>, areas: list<string>, here: bool, km: int, start: ?string, end: ?string}>
+     */
+    public static function warnings(float $lat, float $lon, int $radius = 80, ?string $language = null): array
+    {
+        $language = ($language ?? app()->getLocale()) === 'sv' ? 'sv' : 'en';
+        $warnings = Cache::remember('weather:smhi-warnings', 300, function () {
+            try {
+                $data = Http::timeout(8)->connectTimeout(4)->acceptJson()->get('https://opendata-download-warnings.smhi.se/ibww/api/version/1/warning.json')->json();
+            } catch (Throwable) {
+                return [];
+            }
+
+            return is_array($data) ? $data : [];
+        });
+        $found = [];
+        foreach ($warnings as $warning) {
+            foreach ((array) ($warning['warningAreas'] ?? []) as $area) {
+                $level = strtolower((string) ($area['warningLevel']['code'] ?? 'MESSAGE'));
+                if (! in_array($level, ['yellow', 'orange', 'red'], true)) {
+                    continue;
+                }
+                $km = self::distanceToArea($lat, $lon, (array) ($area['area']['geometry'] ?? []));
+                if ($km === null || $km > $radius) {
+                    continue;
+                }
+                $event = (string) ($warning['event'][$language] ?? $warning['event']['sv'] ?? '');
+                $found[] = [
+                    'id' => (string) ($area['id'] ?? ''),
+                    'level' => $level,
+                    'event' => $event,
+                    'title' => (string) ($area['eventDescription'][$language] ?? $area['eventDescription']['sv'] ?? $event),
+                    'text' => array_values(array_filter(array_map(fn ($d) => trim((string) ($d['text'][$language] ?? $d['text']['sv'] ?? '')), (array) ($area['descriptions'] ?? [])))),
+                    'areas' => array_values(array_filter(array_map(fn ($a) => (string) ($a[$language] ?? $a['sv'] ?? ''), (array) ($area['affectedAreas'] ?? [])))),
+                    'here' => $km === 0.0,
+                    'km' => (int) round($km),
+                    'start' => $area['approximateStart'] ?? null,
+                    'end' => $area['approximateEnd'] ?? null,
+                ];
+            }
+        }
+        $rank = ['red' => 0, 'orange' => 1, 'yellow' => 2];
+        usort($found, fn ($a, $b) => [$a['km'], $rank[$a['level']]] <=> [$b['km'], $rank[$b['level']]]);
+
+        return array_slice($found, 0, 10);
+    }
+
+    /** 0 inside a GeoJSON polygon or multipolygon, else the distance in km to its nearest corner; null without a shape. */
+    private static function distanceToArea(float $lat, float $lon, array $geometry): ?float
+    {
+        $polygons = match ($geometry['type'] ?? '') {
+            'Polygon' => [$geometry['coordinates'] ?? []],
+            'MultiPolygon' => $geometry['coordinates'] ?? [],
+            default => [],
+        };
+        if ($polygons === []) {
+            return null;
+        }
+        $nearest = INF;
+        $cos = cos(deg2rad($lat));
+        foreach ($polygons as $polygon) {
+            $ring = $polygon[0] ?? [];
+            $inside = false;
+            $count = count($ring);
+            for ($i = 0, $j = $count - 1; $i < $count; $j = $i++) {
+                [$xi, $yi] = $ring[$i];
+                [$xj, $yj] = $ring[$j];
+                if ((($yi > $lat) !== ($yj > $lat)) && ($lon < ($xj - $xi) * ($lat - $yi) / (($yj - $yi) ?: 1e-12) + $xi)) {
+                    $inside = ! $inside;
+                }
+                $nearest = min($nearest, hypot(($xi - $lon) * 111.32 * $cos, ($yi - $lat) * 110.57));
+            }
+            if ($inside) {
+                return 0.0;
+            }
+        }
+
+        return is_finite($nearest) ? $nearest : null;
+    }
+
     /* ---------- Radar ---------- */
 
     /** The last hours of radar (two unless asked), every ten minutes: SMHI where it reaches, RainViewer elsewhere. */

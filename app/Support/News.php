@@ -24,7 +24,7 @@ class News
 
     /** Every source: name, language, whether it is on by default, and its feeds by topic. */
     public const SOURCES = [
-        'svt' => ['name' => 'SVT Nyheter', 'lang' => 'sv', 'default' => true, 'rank' => 10, 'feeds' => [
+        'svt' => ['open' => true, 'name' => 'SVT Nyheter', 'lang' => 'sv', 'default' => true, 'rank' => 10, 'feeds' => [
             'sweden' => 'https://www.svt.se/nyheter/inrikes/rss.xml',
             'world' => 'https://www.svt.se/nyheter/utrikes/rss.xml',
             'business' => 'https://www.svt.se/nyheter/ekonomi/rss.xml',
@@ -32,19 +32,19 @@ class News
             'culture' => 'https://www.svt.se/kultur/rss.xml',
             'science' => 'https://www.svt.se/nyheter/vetenskap/rss.xml',
         ]],
-        'sr' => ['name' => 'Sveriges Radio Ekot', 'lang' => 'sv', 'default' => true, 'rank' => 8, 'feeds' => ['sweden' => 'https://api.sr.se/api/rss/program/83']],
+        'sr' => ['open' => true, 'name' => 'Sveriges Radio Ekot', 'lang' => 'sv', 'default' => true, 'rank' => 8, 'feeds' => ['sweden' => 'https://api.sr.se/api/rss/program/83']],
         'dn' => ['name' => 'Dagens Nyheter', 'lang' => 'sv', 'default' => true, 'rank' => 7, 'feeds' => ['sweden' => 'https://www.dn.se/rss/']],
-        'svd' => ['name' => 'Svenska Dagbladet', 'lang' => 'sv', 'default' => true, 'rank' => 7, 'feeds' => ['sweden' => 'https://www.svd.se/feed/articles.rss']],
-        'aftonbladet' => ['name' => 'Aftonbladet', 'lang' => 'sv', 'default' => false, 'rank' => 5, 'feeds' => ['sweden' => 'https://rss.aftonbladet.se/rss2/small/pages/sections/senastenytt/']],
-        'expressen' => ['name' => 'Expressen', 'lang' => 'sv', 'default' => false, 'rank' => 5, 'feeds' => ['sweden' => 'https://feeds.expressen.se/nyheter/']],
+        'svd' => ['open' => true, 'name' => 'Svenska Dagbladet', 'lang' => 'sv', 'default' => true, 'rank' => 7, 'feeds' => ['sweden' => 'https://www.svd.se/feed/articles.rss']],
+        'aftonbladet' => ['open' => true, 'name' => 'Aftonbladet', 'lang' => 'sv', 'default' => false, 'rank' => 5, 'feeds' => ['sweden' => 'https://rss.aftonbladet.se/rss2/small/pages/sections/senastenytt/']],
+        'expressen' => ['open' => true, 'name' => 'Expressen', 'lang' => 'sv', 'default' => false, 'rank' => 5, 'feeds' => ['sweden' => 'https://feeds.expressen.se/nyheter/']],
         'di' => ['name' => 'Dagens industri', 'lang' => 'sv', 'default' => true, 'rank' => 6, 'feeds' => ['business' => 'https://www.di.se/rss']],
-        'sydsvenskan' => ['name' => 'Sydsvenskan', 'lang' => 'sv', 'default' => false, 'rank' => 5, 'feeds' => ['sweden' => 'https://www.sydsvenskan.se/rss.xml']],
-        'bbc' => ['name' => 'BBC News', 'lang' => 'en', 'default' => true, 'rank' => 6, 'feeds' => ['world' => 'https://feeds.bbci.co.uk/news/world/rss.xml']],
-        'guardian' => ['name' => 'The Guardian', 'lang' => 'en', 'default' => true, 'rank' => 5, 'feeds' => ['world' => 'https://www.theguardian.com/world/rss']],
-        'aljazeera' => ['name' => 'Al Jazeera', 'lang' => 'en', 'default' => false, 'rank' => 4, 'feeds' => ['world' => 'https://www.aljazeera.com/xml/rss/all.xml']],
-        'nos' => ['name' => 'NOS', 'lang' => 'nl', 'default' => false, 'rank' => 5, 'feeds' => ['world' => 'https://feeds.nos.nl/nosnieuwsalgemeen']],
-        'ars' => ['name' => 'Ars Technica', 'lang' => 'en', 'default' => true, 'rank' => 5, 'feeds' => ['tech' => 'https://feeds.arstechnica.com/arstechnica/index']],
-        'verge' => ['name' => 'The Verge', 'lang' => 'en', 'default' => false, 'rank' => 4, 'feeds' => ['tech' => 'https://www.theverge.com/rss/index.xml']],
+        'sydsvenskan' => ['open' => true, 'name' => 'Sydsvenskan', 'lang' => 'sv', 'default' => false, 'rank' => 5, 'feeds' => ['sweden' => 'https://www.sydsvenskan.se/rss.xml']],
+        'bbc' => ['open' => true, 'name' => 'BBC News', 'lang' => 'en', 'default' => true, 'rank' => 6, 'feeds' => ['world' => 'https://feeds.bbci.co.uk/news/world/rss.xml']],
+        'guardian' => ['open' => true, 'name' => 'The Guardian', 'lang' => 'en', 'default' => true, 'rank' => 5, 'feeds' => ['world' => 'https://www.theguardian.com/world/rss']],
+        'aljazeera' => ['open' => true, 'name' => 'Al Jazeera', 'lang' => 'en', 'default' => false, 'rank' => 4, 'feeds' => ['world' => 'https://www.aljazeera.com/xml/rss/all.xml']],
+        'nos' => ['open' => true, 'name' => 'NOS', 'lang' => 'nl', 'default' => false, 'rank' => 5, 'feeds' => ['world' => 'https://feeds.nos.nl/nosnieuwsalgemeen']],
+        'ars' => ['open' => true, 'name' => 'Ars Technica', 'lang' => 'en', 'default' => true, 'rank' => 5, 'feeds' => ['tech' => 'https://feeds.arstechnica.com/arstechnica/index']],
+        'verge' => ['open' => true, 'name' => 'The Verge', 'lang' => 'en', 'default' => false, 'rank' => 4, 'feeds' => ['tech' => 'https://www.theverge.com/rss/index.xml']],
     ];
 
     /** SVT's regional desks, by the words in a county's name (any language). */
@@ -57,24 +57,52 @@ class News
 
     /* ---------- Preferences ---------- */
 
-    /** @return array{setup: bool, topics: list<string>, sources: list<string>, place: ?array} */
+    /**
+     * A person's choices. Every topic has a level: 0 skip, 1 show, 2 more of
+     * it. `topics` lists the topics they read, the ones they want more of
+     * first; that is also the order of the front page's sections.
+     *
+     * @return array{setup: bool, levels: array<string, int>, topics: list<string>, sources: list<string>, place: ?array}
+     */
     public static function preferences(User $user): array
     {
         $saved = is_array($user->news) ? $user->news : [];
-        $topics = array_values(array_intersect((array) ($saved['topics'] ?? self::TOPICS), self::TOPICS));
+        $levels = [];
+        foreach (self::TOPICS as $topic) {
+            $levels[$topic] = isset($saved['levels'][$topic])
+                ? max(0, min(2, (int) $saved['levels'][$topic]))
+                : (isset($saved['topics']) ? (in_array($topic, (array) $saved['topics'], true) ? 1 : 0) : 1);
+        }
+        if (! array_filter($levels)) {
+            $levels = array_fill_keys(self::TOPICS, 1);
+        }
+        $topics = array_keys(array_filter($levels));
+        usort($topics, fn ($a, $b) => [$levels[$b], array_search($a, self::TOPICS, true)] <=> [$levels[$a], array_search($b, self::TOPICS, true)]);
         $sources = array_values(array_intersect((array) ($saved['sources'] ?? self::defaultSources()), array_keys(self::SOURCES)));
         // Until a town is chosen (or cleared) for the news, the weather home is the guess.
         $place = array_key_exists('place', $saved) ? Weather::cleanPlace($saved['place']) : (isset($user->weather['home']) ? Weather::cleanPlace($user->weather['home']) : null);
 
-        return ['setup' => (bool) ($saved['setup'] ?? false), 'topics' => $topics ?: self::TOPICS, 'sources' => $sources ?: self::defaultSources(), 'place' => $place];
+        return ['setup' => (bool) ($saved['setup'] ?? false), 'levels' => $levels, 'topics' => $topics, 'sources' => $sources ?: self::defaultSources(), 'place' => $place];
     }
 
     public static function savePreferences(User $user, array $input): array
     {
         $current = self::preferences($user);
+        $levels = $current['levels'];
+        if (isset($input['levels']) && is_array($input['levels'])) {
+            foreach (self::TOPICS as $topic) {
+                if (isset($input['levels'][$topic])) {
+                    $levels[$topic] = max(0, min(2, (int) $input['levels'][$topic]));
+                }
+            }
+        } elseif (isset($input['topics']) && is_array($input['topics'])) {
+            foreach (self::TOPICS as $topic) {
+                $levels[$topic] = in_array($topic, $input['topics'], true) ? max(1, $levels[$topic]) : 0;
+            }
+        }
         $next = [
             'setup' => true,
-            'topics' => array_key_exists('topics', $input) ? array_values(array_intersect((array) $input['topics'], self::TOPICS)) : $current['topics'],
+            'levels' => $levels,
             'sources' => array_key_exists('sources', $input) ? array_values(array_intersect((array) $input['sources'], array_keys(self::SOURCES))) : $current['sources'],
             'place' => array_key_exists('place', $input) ? Weather::cleanPlace($input['place']) : $current['place'],
         ];
@@ -131,19 +159,28 @@ class News
      *
      * @return list<array<string, mixed>>
      */
-    public static function stories(User $user, string $tab = 'top', string $query = '', int $limit = 60): array
+    public static function stories(User $user, string $tab = 'top', string $query = '', int $limit = 60, ?string $only = null): array
     {
         $preferences = self::preferences($user);
+        $only = in_array($only, self::TOPICS, true) ? $only : null;
         $feeds = [];
         foreach ($preferences['sources'] as $id) {
             foreach (self::SOURCES[$id]['feeds'] as $topic => $url) {
-                if ($query !== '' || in_array($topic, $preferences['topics'], true) || $tab === 'local') {
+                if ($only ? $topic === $only : ($query !== '' || in_array($topic, $preferences['topics'], true) || $tab === 'local')) {
                     $feeds[] = ['source' => $id, 'topic' => $topic, 'url' => $url];
                 }
             }
         }
+        // A section none of their sources covers is read from every source that does.
+        if ($only && $feeds === []) {
+            foreach (self::SOURCES as $id => $source) {
+                if (isset($source['feeds'][$only])) {
+                    $feeds[] = ['source' => $id, 'topic' => $only, 'url' => $source['feeds'][$only]];
+                }
+            }
+        }
         $region = self::region($preferences['place']);
-        if ($tab === 'local' && $region) {
+        if ($tab === 'local' && $region && ! $only) {
             $feeds[] = ['source' => 'svt', 'topic' => 'local', 'url' => "https://www.svt.se/nyheter/lokalt/$region/rss.xml"];
         }
 
@@ -158,24 +195,28 @@ class News
             $stories = array_values(array_filter($stories, fn ($story) => str_contains(self::fold($story['title'].' '.$story['summary']), $needle)));
         }
 
-        // Newer first, but a central source and a picture lift a story a little.
+        // Newer first, but a central source, a picture and a topic they want more of lift a story.
         $now = time();
-        usort($stories, function ($a, $b) use ($now) {
-            $score = fn ($story) => -($now - $story['time']) / 3600 + (self::SOURCES[$story['source']]['rank'] ?? 4) * 0.25 + ($story['image'] ? 1 : 0);
+        $levels = $preferences['levels'];
+        usort($stories, function ($a, $b) use ($now, $levels) {
+            $score = fn ($story) => -($now - $story['time']) / 3600 + (self::SOURCES[$story['source']]['rank'] ?? 4) * 0.25 + ($story['image'] ? 1 : 0)
+                + (($levels[$story['topic']] ?? 1) === 2 ? 4 : 0);
 
             return $score($b) <=> $score($a);
         });
 
         $limit = max(1, min(150, $limit));
         // The front page shows every topic: each gets its share before the rest fill up.
-        if ($tab === 'top' && $query === '') {
-            $share = max(6, (int) ceil($limit / max(1, count($preferences['topics']))));
+        if ($tab === 'top' && $query === '' && ! $only) {
+            // Topics they want more of get twice the room.
+            $weight = array_sum(array_map(fn ($topic) => $levels[$topic], $preferences['topics']));
+            $share = fn ($topic) => max(6, (int) ceil($limit * ($levels[$topic] ?? 1) / max(1, $weight)));
             $counts = [];
             $first = [];
             $rest = [];
             foreach ($stories as $story) {
                 $counts[$story['topic']] = ($counts[$story['topic']] ?? 0) + 1;
-                if ($counts[$story['topic']] <= $share) {
+                if ($counts[$story['topic']] <= $share($story['topic'])) {
                     $first[] = $story;
                 } else {
                     $rest[] = $story;
@@ -190,6 +231,9 @@ class News
     /** What the browser gets: no raw picture addresses, only core's own. */
     private static function present(array $story): array
     {
+        // The reader asks for the article by id; only addresses from the feeds can be read.
+        Cache::add('news:story:'.$story['id'], $story['url'], 3 * 86400);
+
         return [
             'id' => $story['id'],
             'title' => $story['title'],
@@ -201,6 +245,7 @@ class News
             'sourceName' => self::SOURCES[$story['source']]['name'] ?? $story['source'],
             'topic' => $story['topic'],
             'topicName' => self::topicName($story['topic']),
+            'full' => self::SOURCES[$story['source']]['open'] ?? false,
         ];
     }
 
@@ -394,6 +439,200 @@ class News
         }
 
         return $parsed;
+    }
+
+    /* ---------- The whole article, where the source publishes it openly ---------- */
+
+    /**
+     * The text of a story's page: the paragraphs and subheadings of its
+     * article, without menus, pictures, share buttons and "read more" lists.
+     * Kept for a day. Null when the page gives nothing worth more than the
+     * feed's summary (paywalls, video pages).
+     *
+     * @return ?list<array{type: string, text: string}>
+     */
+    public static function article(string $id): ?array
+    {
+        if (! preg_match('/^[a-f0-9]{16}$/', $id)) {
+            return null;
+        }
+        $url = Cache::get("news:story:$id");
+        if (! is_string($url)) {
+            return null;
+        }
+
+        return Cache::remember("news:article:$id", 86400, function () use ($url) {
+            try {
+                $response = Http::timeout(8)->connectTimeout(4)->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; PlainShow/1.0; +https://plainshow.se)'])->get($url);
+            } catch (Throwable) {
+                return [];
+            }
+            $parts = $response->ok() ? self::extract($response->body()) : [];
+            $words = array_sum(array_map(fn ($part) => str_word_count($part['text']), $parts));
+
+            return $words >= 120 ? $parts : [];
+        }) ?: null;
+    }
+
+    private static function extract(string $html): array
+    {
+        $document = new \DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML('<?xml encoding="utf-8"?>'.$html, LIBXML_NONET | LIBXML_NOERROR);
+        libxml_use_internal_errors($previous);
+        $path = new \DOMXPath($document);
+        foreach (['//script', '//style', '//noscript', '//figure', '//aside', '//nav', '//footer', '//header', '//form', '//button'] as $query) {
+            foreach (iterator_to_array($path->query($query)) as $node) {
+                $node->parentNode?->removeChild($node);
+            }
+        }
+        // The <article> (else <main>) with the most paragraph text is the story.
+        $best = null;
+        $most = 0;
+        foreach ([$path->query('//article'), $path->query('//main')] as $candidates) {
+            foreach ($candidates as $root) {
+                $length = 0;
+                foreach ($path->query('.//p', $root) as $paragraph) {
+                    $length += mb_strlen(trim($paragraph->textContent));
+                }
+                if ($length > $most) {
+                    $best = $root;
+                    $most = $length;
+                }
+            }
+            if ($best) {
+                break;
+            }
+        }
+        if (! $best) {
+            return [];
+        }
+        $parts = [];
+        foreach ($path->query('.//p|.//h2|.//h3', $best) as $node) {
+            $text = trim(preg_replace('/\s+/u', ' ', $node->textContent));
+            $heading = $node->nodeName !== 'p';
+            if ($heading && preg_match('/recommended|related|more on|most read|read more|läs (också|mer)|relaterat|mest läst|lees ook|meer over|tekstgrootte|dyslexie|deel dit|share/i', $text)) {
+                if ($parts) {
+                    break; // the story is over; what follows is the site's own lists
+                }
+                continue;
+            }
+            if (mb_strlen($text) < ($heading ? 4 : 40) || ($heading && $parts === [])) {
+                continue;
+            }
+            $parts[] = ['type' => $heading ? 'heading' : 'paragraph', 'text' => mb_substr($text, 0, 3000)];
+            if (count($parts) >= 80) {
+                break;
+            }
+        }
+
+        return $parts;
+    }
+
+    /* ---------- Alerts: VMA, SMHI's warnings and Krisinformation ---------- */
+
+    /**
+     * What the authorities say that concerns the person: Viktigt meddelande
+     * till allmänheten (Sveriges Radio's VMA feed), SMHI's warnings where
+     * their town is inside the warned area, and Krisinformation's news (MSB)
+     * for their county or marked important. Most urgent first. Each source is
+     * read at most every five minutes.
+     *
+     * @return list<array{id: string, level: string, title: string, summary: string, body: list<string>, source: string, url: ?string, time: string, area: string}>
+     */
+    public static function alerts(?array $place): array
+    {
+        if ($place && ($place['countryCode'] ?? 'SE') !== 'SE') {
+            return [];
+        }
+        $county = $place ? self::fold((string) ($place['region'] ?? '')) : null;
+        $here = function (array $areas) use ($county): bool {
+            foreach ($areas as $area) {
+                $name = self::fold((string) $area);
+                if ($name === 'sverige' || $name === 'sweden' || ($county && $name !== '' && (str_contains($county, preg_replace('/ (lan|county)$/', '', $name)) || str_contains($name, preg_replace('/ (lan|county)$/', '', $county))))) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+        $english = app()->getLocale() !== 'sv';
+        $alerts = [];
+
+        foreach ((array) (self::json('https://vmaapi.sr.se/api/v2/alerts')['alerts'] ?? []) as $vma) {
+            $info = (array) ($vma['info'][0] ?? $vma['info'] ?? []);
+            $areas = array_map(fn ($area) => $area['areaDesc'] ?? '', (array) ($info['area'] ?? []));
+            if ($areas && ! $here($areas)) {
+                continue;
+            }
+            $alerts[] = [
+                'id' => 'vma-'.substr(sha1((string) ($vma['identifier'] ?? json_encode($vma))), 0, 12),
+                'level' => 'vma',
+                'title' => self::text((string) ($info['headline'] ?? $info['event'] ?? 'VMA'), 200),
+                'summary' => self::text((string) ($info['description'] ?? ''), 400),
+                'body' => array_values(array_filter(array_map('trim', preg_split('/\R+/', (string) ($info['description'] ?? '').' '.($info['instruction'] ?? ''))))),
+                'source' => 'Sveriges Radio, VMA',
+                'url' => 'https://sverigesradio.se/vma',
+                'time' => date(DATE_ATOM, strtotime((string) ($vma['sent'] ?? 'now')) ?: time()),
+                'area' => implode(', ', array_filter($areas)),
+            ];
+        }
+
+        // SMHI's warnings only when the town itself is inside the warned area (the Weather app shows those nearby).
+        if ($place) {
+            foreach (Weather::warnings((float) $place['lat'], (float) $place['lon'], 0) as $warning) {
+                $alerts[] = [
+                    'id' => 'smhi-'.$warning['id'],
+                    'level' => $warning['level'],
+                    'title' => $warning['title'] ?: $warning['event'],
+                    'summary' => self::text(implode(' ', $warning['text']), 400),
+                    'body' => $warning['text'],
+                    'source' => 'SMHI',
+                    'url' => 'https://www.smhi.se/vader/varningar-och-brandrisk/varningar-och-meddelanden/varningar',
+                    'time' => date(DATE_ATOM, strtotime((string) ($warning['start'] ?? 'now')) ?: time()),
+                    'area' => implode(', ', $warning['areas']),
+                ];
+            }
+        }
+
+        // Krisinformation (MSB): what concerns their county, or what they mark as important for everyone.
+        foreach ((array) self::json('https://api.krisinformation.se/v3/news?days=2') as $item) {
+            $local = array_map(fn ($area) => $area['description'] ?? '', array_filter((array) ($item['area'] ?? []), fn ($area) => ($area['type'] ?? '') !== 'Country'));
+            $important = filter_var($item['isPinned'] ?? false, FILTER_VALIDATE_BOOLEAN) || ($item['event'] ?? 'News') !== 'News';
+            if (! $important && ! ($local && $county && $here($local))) {
+                continue;
+            }
+            $areas = array_map(fn ($area) => $area['description'] ?? '', (array) ($item['area'] ?? []));
+            $alerts[] = [
+                'id' => 'kris-'.($item['identifier'] ?? '0'),
+                'level' => 'info',
+                'title' => self::text((string) ($item['headline'] ?? ''), 200),
+                'summary' => self::text((string) ($item['preamble'] ?? ''), 400),
+                'body' => array_values(array_filter(array_map('trim', preg_split('/\R+/', (string) ($item['bodyText'] ?? ''))))),
+                'source' => 'Krisinformation',
+                'url' => is_string($item['web'] ?? null) && str_starts_with($item['web'], 'https://') ? $item['web'] : 'https://www.krisinformation.se',
+                'time' => date(DATE_ATOM, strtotime((string) ($item['published'] ?? 'now')) ?: time()),
+                'area' => implode(', ', array_filter($areas)),
+            ];
+        }
+
+        $order = ['vma' => 0, 'red' => 1, 'orange' => 2, 'yellow' => 3, 'info' => 4];
+        usort($alerts, fn ($a, $b) => [$order[$a['level']], $b['time']] <=> [$order[$b['level']], $a['time']]);
+
+        return array_slice(array_values(array_filter($alerts, fn ($alert) => $alert['title'] !== '')), 0, 8);
+    }
+
+    private static function json(string $url): array
+    {
+        return Cache::remember('news:alerts:'.md5($url), 300, function () use ($url) {
+            try {
+                $data = Http::timeout(6)->connectTimeout(3)->acceptJson()->get($url)->json();
+            } catch (Throwable) {
+                return [];
+            }
+
+            return is_array($data) ? $data : [];
+        });
     }
 
     /* ---------- Pictures through core ---------- */

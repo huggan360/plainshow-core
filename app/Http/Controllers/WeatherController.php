@@ -108,6 +108,14 @@ class WeatherController extends Controller
         return response()->json(Weather::radar($lat, $lon, url('/weather/radar/smhi'), $hours))->header('Cache-Control', 'private, max-age=60');
     }
 
+    /** SMHI's warnings at and near a point (in Sweden). */
+    public function warnings(Request $request): JsonResponse
+    {
+        [$lat, $lon] = $this->point($request);
+
+        return response()->json(['warnings' => Weather::warnings($lat, $lon)])->header('Cache-Control', 'private, max-age=120');
+    }
+
     /** SMHI's radar images through core, so the dashboard can read their pixels and they are fetched once. */
     public function radarImage(string $name): BinaryFileResponse
     {
