@@ -6,8 +6,9 @@ React and TypeScript (Vite).
 
 ## Layout
 
-- `app/Http/Controllers`: pages and API. `Admin/` holds users, permissions,
-  extensions, audit and updates. `GatewayController` signs requests to the
+- `app/Http/Controllers`: pages and API. `Admin/` holds the Administration
+  page, users, permissions, extensions, audit and updates; `App\Support\AdminAreas`
+  says who may open which (it feeds the page, the account menu and the tabs). `GatewayController` signs requests to the
   services (`/api/<service>/v1/...`).
 - `app/Support`: `Permissions`, `RoleAccess`, `CapabilityCatalog` (roles,
   groups, capabilities), `Registry` (reads `extensions/*.json`),

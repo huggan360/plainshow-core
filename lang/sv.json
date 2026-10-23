@@ -823,5 +823,20 @@
     "Top story": "Toppnyhet",
     "The biggest story right now, over its picture.": "Den största nyheten just nu, över sin bild.",
     "News strip": "Nyhetsremsa",
-    "A few stories side by side, with their pictures.": "Några nyheter sida vid sida, med sina bilder."
+    "A few stories side by side, with their pictures.": "Några nyheter sida vid sida, med sina bilder.",
+    "for your own scripts. It lasts 90 days.": "för dina egna skript. Den gäller i 90 dagar.",
+    "Using a token": "Använda en token",
+    "Send it in the Authorization header. Each service has its own address; its description lists what you can ask for.": "Skicka den i Authorization-headern. Varje tjänst har en egen adress; dess beskrivning visar vad du kan fråga efter.",
+    "What it can do": "Vad den kan",
+    "People, their roles and access.": "Personer, deras roller och åtkomst.",
+    "The services PlainShow runs, and who sees them.": "Tjänsterna PlainShow kör, och vem som ser dem.",
+    "Roles and what each can do.": "Roller och vad var och en kan.",
+    "New versions, installed with one click.": "Nya versioner, installerade med ett klick.",
+    "Who did what, and when.": "Vem gjorde vad, och när.",
+    ":n accounts": ":n konton",
+    ":n turned on": ":n påslagna",
+    ":n roles": ":n roller",
+    ":n waiting": ":n väntar",
+    ":n today": ":n i dag",
+    "Login did not answer, so your tokens cannot be shown right now.": "Login svarade inte, så dina tokens kan inte visas just nu."
 }

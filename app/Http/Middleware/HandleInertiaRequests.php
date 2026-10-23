@@ -36,6 +36,7 @@ class HandleInertiaRequests extends Middleware
                 ->values() : [],
             // Apps inside the dashboard (sidebar, widget expand), and the person's home for the weather widgets.
             'coreApps' => $user ? fn () => \App\Support\CoreApps::for($user) : [],
+            'adminAreas' => $user ? fn () => \App\Support\AdminAreas::for($user) : [],
             'weatherHome' => $user ? fn () => $user->weather['home'] ?? null : null,
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),

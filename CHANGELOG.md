@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.10.0
+
+- Administration: one page for the admin area, with a card per part you may open (accounts, services, permissions, updates, audit log) and a figure on each. It is in the account menu for people who may use it; the sidebar no longer lists the admin pages. The admin pages have tabs to move between them.
+- The API page is gone: Account, API tokens now says how to use a token, with each service's address and what it can do.
+
 ## v1.9.2
 
 - Design studio: widgets rise as high as they can and close the gaps, also on the dashboard itself; a widget pushed aside while another is moved goes back when it passes.

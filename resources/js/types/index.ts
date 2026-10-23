@@ -16,12 +16,15 @@ export type AppLink = { id: string; name: string; icon: string; url: string | nu
 
 /** An app inside the dashboard (Weather, News): opened in the content area, and from its widgets. */
 export type CoreApp = { id: string; name: string; icon: string; url: string; widgets: string[] };
+export type AdminArea = { id: string; href: string; icon: string; label: string; description: string };
 export type WeatherPlace = { name: string; region?: string; country?: string; countryCode?: string; lat: number; lon: number };
 
 export type SharedProps = {
     auth: { user: UserSummary | null; capabilities: string[] };
     apps: AppLink[];
     coreApps: CoreApp[];
+    /** The admin areas this person may open (empty: no Administration at all). */
+    adminAreas: AdminArea[];
     weatherHome: WeatherPlace | null;
     flash: { status: string | null; error: string | null };
     errors: Record<string, string>;

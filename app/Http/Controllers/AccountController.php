@@ -227,7 +227,18 @@ class AccountController extends Controller
             $error = 'Login did not answer, so your tokens cannot be shown right now.';
         }
 
-        return ['list' => $list, 'services' => $services, 'error' => $error, 'created' => $request->session()->get('api_token')];
+        // How to call each service this person can reach: its address and its description (OpenAPI).
+        $apis = \App\Models\Extension::where('enabled', true)->whereIn('id', $services)->orderBy('sort')->get()
+            ->filter(fn ($extension) => $extension->id === 'core' || ! empty($extension->manifest['api']))
+            ->map(fn ($extension) => [
+                'id' => $extension->id,
+                'name' => $extension->name,
+                'icon' => $extension->icon,
+                'base' => url('/api/'.$extension->id.'/v1'),
+                'spec' => url('/api/'.$extension->id.'/openapi.json'),
+            ])->values()->all();
+
+        return ['list' => $list, 'services' => $services, 'apis' => $apis, 'error' => $error ? __($error) : null, 'created' => $request->session()->get('api_token')];
     }
 
     public function createToken(Request $request): RedirectResponse

@@ -9,9 +9,10 @@ type Props = {
     profile: { username: string; firstName: string; lastName: string; email: string | null; phone: string | null; avatar: string | null; initials: string; role: string; groups: string[] };
     security: { twoFactor: boolean; recoveryCodesLeft: number; passwordChangedAt: string | null; lastLoginAt: string | null; enrollment: { secret: string; qr: string } | null; recoveryCodes: string[] | null };
     apiAccess: boolean;
-    tokens: { list: ApiToken[]; services: string[]; error: string | null; created: { token: string; name: string } | null } | null;
+    tokens: { list: ApiToken[]; services: string[]; apis: ApiService[]; error: string | null; created: { token: string; name: string } | null } | null;
 };
 
+type ApiService = { id: string; name: string; icon: string; base: string; spec: string };
 type ApiToken = { id: string; name: string; scopes: string[]; createdAt: string; expiresAt: string };
 
 const SECTIONS = [
@@ -188,7 +189,7 @@ function Tokens({ tokens }: { tokens: NonNullable<Props['tokens']> }) {
             <Frame compact>
                 <form onSubmit={submit} className="account-form">
                     <div className="account-form__head">
-                        <span><strong>{t('New token')}</strong><span className="ps-muted ps-small"> {' '}{t('for your own scripts, through')}{' '}<a href="/api">plainshow.se/api</a>{t('. It lasts 90 days.')}</span></span>
+                        <span><strong>{t('New token')}</strong><span className="ps-muted ps-small"> {' '}{t('for your own scripts. It lasts 90 days.')}</span></span>
                         <Button type="submit" size="sm" variant="primary" icon="bx-plus" loading={form.processing} disabled={!form.data.name.trim() || form.data.services.length === 0}>{t('Create')}</Button>
                     </div>
                     <div className="token-form">
@@ -223,10 +224,43 @@ function Tokens({ tokens }: { tokens: NonNullable<Props['tokens']> }) {
                         ))}</tbody>
                     </table></div>}
             </Frame>
+            {tokens.apis.length > 0 && <ApiHelp apis={tokens.apis} />}
             <Modal open={shown !== null} title={t('Copy your token')} onClose={() => setShown(null)} footer={<><Button onClick={copy} icon={copied ? 'bx-check' : 'bx-copy'}>{copied ? t('Copied') : t('Copy')}</Button><Button variant="primary" onClick={() => setShown(null)}>{t('Done')}</Button></>}>
                 <p className="ps-muted">{t('This is the only time')}{' '}{shown?.name} {' '}{t('is shown. Keep it somewhere safe.')}</p>
                 <textarea className="ps-textarea token-value" readOnly rows={5} value={shown?.token ?? ''} onFocus={(event) => event.target.select()} />
             </Modal>
         </div>
+    );
+}
+
+/** How to use a token: one header, each service's address, and what it can do. */
+function ApiHelp({ apis }: { apis: ApiService[] }) {
+    const example = apis[0];
+    const [copied, setCopied] = useState(false);
+    const command = `curl ${example.base}/${example.id === 'core' ? 'me' : ''} \\\n  -H "Authorization: Bearer $PLAINSHOW_TOKEN"`;
+    const copy = () => navigator.clipboard?.writeText(command).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1500); }).catch(() => undefined);
+    return (
+        <Frame compact>
+            <div className="api-help">
+                <div className="api-help__intro">
+                    <strong>{t('Using a token')}</strong>
+                    <span className="ps-muted ps-small">{t('Send it in the Authorization header. Each service has its own address; its description lists what you can ask for.')}</span>
+                </div>
+                <div className="api-help__code">
+                    <pre><code>{command}</code></pre>
+                    <button type="button" className="api-help__copy" onClick={copy} aria-label={t('Copy')}><i className={`bx ${copied ? 'bx-check' : 'bx-copy'}`} aria-hidden="true" /></button>
+                </div>
+                <ul className="api-help__services">
+                    {apis.map((api, index) => (
+                        <li key={api.id} className={`${index === 0 ? 'is-first' : ''}${index === apis.length - 1 ? ' is-last' : ''}`}>
+                            <i className={`bx ${api.icon}`} aria-hidden="true" />
+                            <span className="api-help__name">{api.name}</span>
+                            <code>{api.base}</code>
+                            <a href={api.spec} target="_blank" rel="noopener noreferrer">{t('What it can do')}<i className="bx bx-link-external" aria-hidden="true" /></a>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </Frame>
     );
 }

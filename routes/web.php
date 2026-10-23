@@ -72,10 +72,10 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/design', [DashboardController::class, 'studio'])->name('design');
-    Route::get('/api', App\Http\Controllers\ApiDocsController::class)->middleware('can.do:core.api.use')->name('api.docs');
     Route::put('/dashboard/layout/roles/{role}', [DashboardController::class, 'saveRoleLayout'])->middleware('can.do:core.permissions.manage');
     Route::delete('/dashboard/layout/roles/{role}', [DashboardController::class, 'resetRoleLayout'])->middleware('can.do:core.permissions.manage');
 
+    Route::get('/admin', [App\Http\Controllers\Admin\AdminController::class, 'index'])->name('admin');
     Route::prefix('admin')->group(function () {
         Route::middleware('can.do:core.users.manage')->group(function () {
             Route::get('/users', [UsersController::class, 'index'])->name('admin.users');

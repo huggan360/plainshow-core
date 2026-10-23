@@ -832,5 +832,20 @@
     "Top story": "Hoofdverhaal",
     "The biggest story right now, over its picture.": "Het grootste verhaal van dit moment, over de afbeelding.",
     "News strip": "Nieuwsstrook",
-    "A few stories side by side, with their pictures.": "Een paar verhalen naast elkaar, met hun afbeeldingen."
+    "A few stories side by side, with their pictures.": "Een paar verhalen naast elkaar, met hun afbeeldingen.",
+    "for your own scripts. It lasts 90 days.": "voor je eigen scripts. Hij is 90 dagen geldig.",
+    "Using a token": "Een token gebruiken",
+    "Send it in the Authorization header. Each service has its own address; its description lists what you can ask for.": "Stuur hem mee in de Authorization-header. Elke dienst heeft een eigen adres; de beschrijving laat zien wat je kunt opvragen.",
+    "What it can do": "Wat hij kan",
+    "People, their roles and access.": "Mensen, hun rollen en toegang.",
+    "The services PlainShow runs, and who sees them.": "De diensten van PlainShow, en wie ze ziet.",
+    "Roles and what each can do.": "Rollen en wat elke rol kan.",
+    "New versions, installed with one click.": "Nieuwe versies, met één klik geïnstalleerd.",
+    "Who did what, and when.": "Wie wat deed, en wanneer.",
+    ":n accounts": ":n accounts",
+    ":n turned on": ":n aan",
+    ":n roles": ":n rollen",
+    ":n waiting": ":n wachtend",
+    ":n today": ":n vandaag",
+    "Login did not answer, so your tokens cannot be shown right now.": "Login antwoordde niet, dus je tokens kunnen nu niet worden getoond."
 }

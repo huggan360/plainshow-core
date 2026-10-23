@@ -64,13 +64,8 @@ export default function AppShell({ title, children, wide, actions, description, 
 
     const path = url.split('?')[0];
     const active = (prefix: string) => (prefix === '/' ? path === '/' : path.startsWith(prefix));
-    const admin = [
-        can(caps, 'core.users.manage') && { href: '/admin/users', icon: 'bx-group', label: t('Accounts') },
-        can(caps, 'core.extensions.manage') && { href: '/admin/services', icon: 'bx-extension', label: t('Services') },
-        can(caps, 'core.permissions.manage') && { href: '/admin/permissions', icon: 'bx-key', label: t('Permissions') },
-        can(caps, 'core.updates.apply') && { href: '/admin/updates', icon: 'bx-refresh', label: t('Updates') },
-        can(caps, 'core.audit.view') && { href: '/admin/audit', icon: 'bx-list-ul', label: t('Audit log') },
-    ].filter(Boolean) as { href: string; icon: string; label: string }[];
+    const admin = props.adminAreas;
+    const inAdmin = path === '/admin' || path.startsWith('/admin/');
 
     return (
         <div className={`ps-shell${menuOpen ? ' is-menu-open' : ''}${app ? ' ps-shell--app' : ''}`}>
@@ -101,17 +96,8 @@ export default function AppShell({ title, children, wide, actions, description, 
                         </nav>
                     </div>
                 )}
-                {admin.length > 0 && (
-                    <div className="ps-sidebar__section">
-                        <p className="ps-eyebrow ps-sidebar__label">{t('Administration')}</p>
-                        <nav className="ps-nav">
-                            {admin.map((item) => <Link key={item.href} href={item.href} className={`ps-nav__item${active(item.href) ? ' is-active' : ''}`}><i className={`bx ${item.icon}`} aria-hidden="true" />{t(item.label)}</Link>)}
-                        </nav>
-                    </div>
-                )}
                 <div className="ps-sidebar__foot">
                     <Link href="/design" className={`ps-nav__item${active('/design') ? ' is-active' : ''}`}><i className="bx bx-palette" aria-hidden="true" />{t('Design')}</Link>
-                    {can(caps, 'core.api.use') && <Link href="/api" className={`ps-nav__item${path === '/api' ? ' is-active' : ''}`}><i className="bx bx-code-alt" aria-hidden="true" />{t('API')}</Link>}
                     <div className={`ps-dropdown ps-me${accountOpen ? ' is-open' : ''}`} ref={accountRef}>
                         <button type="button" className="ps-me__button" aria-expanded={accountOpen} aria-label={t('Account menu')} onClick={() => setAccountOpen((open) => !open)}>
                             <Avatar src={user.avatar} initials={user.initials} size="sm" />
@@ -121,6 +107,7 @@ export default function AppShell({ title, children, wide, actions, description, 
                         {accountOpen && (
                             <div className="ps-dropdown__menu ps-dropdown__menu--up">
                                 <Link href="/account" className="ps-dropdown__item"><i className="bx bx-user" />{t('Account')}</Link>
+                                {admin.length > 0 && <Link href="/admin" className="ps-dropdown__item"><i className="bx bx-shield-quarter" />{t('Administration')}</Link>}
                                 <LanguageSwitch />
                                 <button type="button" className="ps-dropdown__item" onClick={toggleTheme}><i className={`bx ${theme === 'light' ? 'bx-moon' : 'bx-sun'}`} />{theme === 'light' ? t('Dark theme') : t('Light theme')}</button>
                                 <div className="ps-dropdown__sep" />
@@ -152,6 +139,12 @@ export default function AppShell({ title, children, wide, actions, description, 
                     </div>
                 </header>
                 <main className={`ps-content${wide ? ' ps-content--wide' : ''}`}>
+                    {inAdmin && admin.length > 0 && (
+                        <nav className="admin-tabs" aria-label={t('Administration')}>
+                            <Link href="/admin" className={`admin-tabs__item${path === '/admin' ? ' is-active' : ''}`}><i className="bx bx-shield-quarter" aria-hidden="true" />{t('Administration')}</Link>
+                            {admin.map((area) => <Link key={area.id} href={area.href} className={`admin-tabs__item${active(area.href) ? ' is-active' : ''}`}><i className={`bx ${area.icon}`} aria-hidden="true" />{area.label}</Link>)}
+                        </nav>
+                    )}
                     {heading && (
                         <div className="ps-page-head">
                             <div>

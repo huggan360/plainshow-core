@@ -998,6 +998,43 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .widget-radar.is-tiny .radar__bar, .widget-radar.is-tiny .radar__credit { display: none; }
 .widget-radar.is-tiny .radar__progress { bottom: 10px; left: 10px; right: 10px; }
 
+/* How to use an API token, under the tokens. */
+.api-help { display: grid; gap: 14px; }
+.api-help__intro { display: grid; gap: 2px; }
+.api-help__code { position: relative; }
+.api-help__code pre { margin: 0; padding: 14px 48px 14px 16px; overflow-x: auto; border-radius: 12px; background: var(--ps-raised); font: var(--ps-text-sm)/1.6 var(--ps-font-mono); }
+.api-help__copy { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 9px; background: var(--ps-btn-bg); color: var(--ps-text-soft); cursor: pointer; }
+.api-help__copy:hover { color: var(--ps-text); }
+.api-help__services { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; }
+.api-help__services li { display: grid; grid-template-columns: 22px minmax(90px, auto) minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 5px; background: var(--ps-raised); font-size: var(--ps-text-sm); }
+.api-help__services li.is-first { border-top-left-radius: 14px; border-top-right-radius: 14px; }
+.api-help__services li.is-last { border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; }
+.api-help__services i:first-child { color: var(--ps-accent-text); font-size: 1.1rem; }
+.api-help__name { font-weight: 600; }
+.api-help__services code { overflow: hidden; color: var(--ps-text-muted); font: var(--ps-text-xs) var(--ps-font-mono); text-overflow: ellipsis; white-space: nowrap; }
+.api-help__services a { display: inline-flex; align-items: center; gap: 4px; color: var(--ps-accent-text); font-size: var(--ps-text-xs); font-weight: 600; text-decoration: none; white-space: nowrap; }
+@media (max-width: 640px) { .api-help__services li { grid-template-columns: 22px minmax(0, 1fr) auto; } .api-help__services code { display: none; } }
+
+/* Administration: one card per area, and tabs across the admin pages. */
+.admin-tabs { display: flex; gap: 2px; margin: -8px 0 22px; padding: 4px; overflow-x: auto; border: 1px solid var(--ps-shell-border); border-radius: 14px; background: color-mix(in srgb, var(--ps-shell) 70%, transparent); scrollbar-width: none; }
+.admin-tabs::-webkit-scrollbar { display: none; }
+.admin-tabs__item { display: inline-flex; flex: none; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-radius: 10px; color: var(--ps-text-soft); font: 600 var(--ps-text-sm) var(--ps-font-ui); text-decoration: none; white-space: nowrap; transition: background-color .15s ease, color .15s ease; }
+.admin-tabs__item:hover { background: var(--ps-hover); color: var(--ps-text); }
+.admin-tabs__item.is-active { background: var(--ps-shell); color: var(--ps-text); box-shadow: inset 0 0 0 1px var(--ps-shell-border); }
+.admin-tabs__item.is-active i { color: var(--ps-accent); }
+.admin-areas { display: grid; gap: 12px; }
+.admin-area { display: block; color: var(--ps-text); text-decoration: none; transition: transform .15s ease, border-color .15s ease; }
+.admin-area:hover { border-color: color-mix(in srgb, var(--ps-accent) 40%, var(--ps-shell-border)); transform: translateY(-1px); }
+.admin-area > .ps-frame__panel { display: flex; align-items: center; gap: 16px; }
+.admin-area__icon { display: inline-grid; flex: none; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: var(--ps-accent-bg); color: var(--ps-accent-text); font-size: 1.4rem; }
+.admin-area__text { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.admin-area__text strong { font: 600 var(--ps-text-lg) var(--ps-font-title); }
+.admin-area__text span { color: var(--ps-text-muted); font-size: var(--ps-text-sm); }
+.admin-area__figure { flex: none; padding: 4px 12px; border-radius: 999px; background: var(--ps-raised); color: var(--ps-text-soft); font: 600 var(--ps-text-sm) var(--ps-font-ui); }
+.admin-area__go { flex: none; color: var(--ps-text-faint); font-size: 1.4rem; transition: transform .15s ease, color .15s ease; }
+.admin-area:hover .admin-area__go { color: var(--ps-accent); transform: translateX(3px); }
+@media (max-width: 600px) { .admin-area__figure { display: none; } }
+
 /* Groups: cards, a group's page and its editor */
 .group-mark { display: inline-grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--group-color); color: #fff; font: 600 1.25rem var(--ps-font-title); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
 .group-mark--lg { width: 64px; height: 64px; border-radius: 18px; font-size: 1.8rem; }
