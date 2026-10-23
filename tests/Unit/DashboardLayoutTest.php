@@ -8,22 +8,52 @@ use PHPUnit\Framework\TestCase;
 class DashboardLayoutTest extends TestCase
 {
     private const CATALOGUE = [
-        ['key' => 'core.greeting', 'sizes' => ['l', 'full'], 'default' => 'full', 'height' => 'short', 'settings' => []],
-        ['key' => 'core.notes', 'sizes' => ['s', 'm'], 'default' => 'm', 'height' => 'normal', 'settings' => [['name' => 'text', 'type' => 'text', 'max' => 20]]],
-        ['key' => 'core.bookmarks', 'sizes' => ['m'], 'default' => 'm', 'height' => 'normal', 'settings' => [['name' => 'links', 'type' => 'links']]],
-        ['key' => 'core.weather', 'sizes' => ['m'], 'default' => 'm', 'height' => 'normal', 'settings' => [['name' => 'place', 'type' => 'place']]],
+        ['key' => 'core.greeting', 'min' => [3, 2], 'w' => 12, 'h' => 2, 'settings' => []],
+        ['key' => 'core.notes', 'min' => [2, 2], 'w' => 4, 'h' => 4, 'settings' => [['name' => 'text', 'type' => 'text', 'max' => 20]]],
+        ['key' => 'core.bookmarks', 'min' => [2, 2], 'w' => 4, 'h' => 4, 'settings' => [['name' => 'links', 'type' => 'links']]],
+        ['key' => 'core.weather', 'min' => [2, 2], 'w' => 4, 'h' => 4, 'settings' => [['name' => 'place', 'type' => 'place']]],
     ];
 
     public function test_unknown_and_repeated_widgets_are_dropped(): void
     {
         $layout = Dashboard::sanitize([['key' => 'core.greeting', 'size' => 'full'], ['key' => 'blog.secret', 'size' => 'm'], ['key' => 'core.greeting', 'size' => 'l']], self::CATALOGUE);
 
-        $this->assertSame([['key' => 'core.greeting', 'size' => 'full', 'height' => 'short']], $layout);
+        $this->assertSame([['key' => 'core.greeting', 'x' => 0, 'y' => 0, 'w' => 12, 'h' => 2]], $layout);
     }
 
-    public function test_a_size_the_widget_lacks_falls_back_to_its_default(): void
+    public function test_old_layouts_are_placed_in_their_order(): void
     {
-        $this->assertSame('m', Dashboard::sanitize([['key' => 'core.notes', 'size' => 'full']], self::CATALOGUE)[0]['size']);
+        $layout = Dashboard::sanitize([['key' => 'core.greeting', 'size' => 'full', 'height' => 'short'], ['key' => 'core.notes', 'size' => 'm'], ['key' => 'core.bookmarks', 'size' => 'm', 'height' => 'tall']], self::CATALOGUE);
+
+        $this->assertSame([0, 0, 12, 2], [$layout[0]['x'], $layout[0]['y'], $layout[0]['w'], $layout[0]['h']]);
+        $this->assertSame([0, 2, 4, 4], [$layout[1]['x'], $layout[1]['y'], $layout[1]['w'], $layout[1]['h']]);
+        $this->assertSame([4, 2, 4, 6], [$layout[2]['x'], $layout[2]['y'], $layout[2]['w'], $layout[2]['h']]);
+    }
+
+    public function test_widgets_never_overlap_and_keep_their_smallest_size(): void
+    {
+        $layout = Dashboard::sanitize([
+            ['key' => 'core.notes', 'x' => 0, 'y' => 0, 'w' => 6, 'h' => 4],
+            ['key' => 'core.bookmarks', 'x' => 2, 'y' => 1, 'w' => 1, 'h' => 1],
+            ['key' => 'core.weather', 'x' => 11, 'y' => 0, 'w' => 4, 'h' => 30],
+        ], self::CATALOGUE);
+        $byKey = collect($layout)->keyBy('key');
+
+        $this->assertSame([2, 2], [$byKey['core.bookmarks']['w'], $byKey['core.bookmarks']['h']], 'no smaller than its minimum');
+        $this->assertSame([6, 0], [$byKey['core.bookmarks']['x'], $byKey['core.bookmarks']['y']], 'moved to the first free place');
+        $this->assertSame([8, 12], [$byKey['core.weather']['x'], $byKey['core.weather']['h']], 'kept inside the grid');
+    }
+
+    public function test_the_phone_follows_the_desktop_until_it_has_its_own(): void
+    {
+        $desktop = Dashboard::sanitize([['key' => 'core.notes', 'x' => 6, 'y' => 0, 'w' => 6, 'h' => 4], ['key' => 'core.greeting', 'x' => 0, 'y' => 0, 'w' => 6, 'h' => 2]], self::CATALOGUE);
+        $follows = Dashboard::phoneFor(null, $desktop, self::CATALOGUE);
+        $own = Dashboard::phoneFor([['key' => 'core.notes', 'h' => 9], ['key' => 'core.notes', 'h' => 3], ['key' => 'nope']], $desktop, self::CATALOGUE);
+
+        $this->assertFalse($follows['custom']);
+        $this->assertSame(['core.greeting', 'core.notes'], array_column($follows['items'], 'key'));
+        $this->assertTrue($own['custom']);
+        $this->assertSame([['key' => 'core.notes', 'h' => 9]], $own['items']);
     }
 
     public function test_titles_cannot_be_renamed_and_borders_and_settings_are_cleaned(): void

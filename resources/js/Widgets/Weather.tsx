@@ -1,9 +1,9 @@
 import { router, usePage } from '@inertiajs/react';
-import { CSSProperties, ReactNode, useContext, useRef, useState } from 'react';
+import { CSSProperties, ReactNode, useRef, useState } from 'react';
 import { t } from '@/i18n';
 import { SharedProps } from '@/types';
 import { Fill } from './List';
-import { ExpandButton, useBorder, useHeight, useSetting, WidgetDefinition, WidgetItem } from './base';
+import { ExpandButton, useBorder, useHeight, useSetting, useSize, WidgetDefinition } from './base';
 import { RadarMap } from './Radar';
 import { Day, dayName, degrees, Forecast, Hour, hourLabel, icon, label, phaseOf, Place, PlaceSearch, placeUrl, send, Sky, useForecast, useWidth, Wind } from './weatherKit';
 
@@ -42,8 +42,9 @@ function AskPlace() {
 
 function WeatherFrame({ definition, forecast, className, place, children }: { definition: WidgetDefinition; forecast: Forecast | null; className: string; place: Place | null; children: ReactNode }) {
     const border = useBorder(definition.border);
+    const { tiny } = useSize(definition);
     return (
-        <section className={`ps-frame ps-widget widget-weather ${className}`} data-border={border}>
+        <section className={`ps-frame ps-widget widget-weather${tiny ? ' is-tiny' : ''} ${className}`} data-border={border}>
             <div className="ps-frame__panel">
                 <Sky phase={phaseOf(forecast)} condition={forecast?.current.condition} precip={forecast?.current.precip ?? 0} />
                 {place && <ExpandButton href={placeUrl(place)} />}
@@ -77,15 +78,26 @@ function Waiting({ error }: { error: boolean }) {
 }
 
 /* ---------- Weather: now, and the next hours when there is room ---------- */
+/** A tiny weather widget: the temperature and the sky, and the place. */
+function TinyWeather({ place, data }: { place: Place; data: Forecast }) {
+    return (
+        <div className="wx-tiny">
+            <i className={`bx ${icon(data.current.condition, data.current.isDay)}`} aria-label={label(data.current.condition)} />
+            <span className="wx-tiny__temp">{degrees(data.current.temp)}</span>
+            <span className="wx-tiny__place">{place.name}</span>
+        </div>
+    );
+}
+
 export function WeatherWidget({ definition }: { definition: WidgetDefinition }) {
     const place = usePlace(definition);
     const height = useHeight(definition);
-    const size = useContext(WidgetItem)?.size ?? definition.default;
+    const { tiny } = useSize(definition);
     const { data, error } = useForecast(place);
     const today = data?.days[0];
     return (
         <WeatherFrame definition={definition} forecast={data} place={place} className="widget-weather--now">
-            {!place ? <AskPlace /> : !data ? <Waiting error={error} /> : <>
+            {!place ? <AskPlace /> : !data ? <Waiting error={error} /> : tiny ? <TinyWeather place={place} data={data} /> : <>
                 <div className="wx__top">
                     <span className="wx__place"><i className="bx bxs-map" aria-hidden="true" />{place.name}</span>
                 </div>
@@ -102,7 +114,7 @@ export function WeatherWidget({ definition }: { definition: WidgetDefinition }) 
                     {data.current.feels !== null && <span>{t('Feels like {temp}', { temp: degrees(data.current.feels) })}</span>}
                     {data.current.humidity !== null && height !== 'short' && <span><i className="bx bx-droplet" aria-hidden="true" />{data.current.humidity}%</span>}
                 </div>
-                {height !== 'short' && <Hours hours={data.hours} count={size === 's' ? 4 : size === 'l' ? 8 : 5} />}
+                {height !== 'short' && <Hours hours={data.hours} count={8} />}
             </>}
         </WeatherFrame>
     );
@@ -112,12 +124,11 @@ export function WeatherWidget({ definition }: { definition: WidgetDefinition }) 
 export function ForecastWidget({ definition }: { definition: WidgetDefinition }) {
     const place = usePlace(definition);
     const height = useHeight(definition);
-    const size = useContext(WidgetItem)?.size ?? definition.default;
+    const { tiny } = useSize(definition);
     const { data, error } = useForecast(place);
-    const hours = size === 'full' ? 12 : size === 'xl' ? 10 : 7;
     return (
         <WeatherFrame definition={definition} forecast={data} place={place} className={`widget-weather--forecast widget-weather--${height}`}>
-            {!place ? <AskPlace /> : !data ? <Waiting error={error} /> : <>
+            {!place ? <AskPlace /> : !data ? <Waiting error={error} /> : tiny ? <TinyWeather place={place} data={data} /> : <>
                 <div className="wx__head">
                     <div className="wx__now">
                         <span className="wx__temp">{degrees(data.current.temp)}</span>
@@ -132,7 +143,7 @@ export function ForecastWidget({ definition }: { definition: WidgetDefinition })
                         {data.current.humidity !== null && <span><i className="bx bx-droplet" aria-hidden="true" />{data.current.humidity}%</span>}
                     </div>
                 </div>
-                {height !== 'short' && <Hours hours={data.hours} count={hours} />}
+                {height !== 'short' && <Hours hours={data.hours} count={12} />}
                 <Days days={data.days} rows={height === 'tall'} />
                 <span className="wx__credit">{data.sourceName}</span>
             </>}
@@ -184,8 +195,9 @@ export function RadarWidget({ definition }: { definition: WidgetDefinition }) {
     const place = usePlace(definition);
     const area = useSetting<string>(definition, 'area') ?? 'region';
     const border = useBorder(definition.border);
+    const { tiny } = useSize(definition);
     return (
-        <section className="ps-frame ps-widget widget-radar" data-border={border}>
+        <section className={`ps-frame ps-widget widget-radar${tiny ? ' is-tiny' : ''}`} data-border={border}>
             <div className="ps-frame__panel">
                 {!place ? <><Sky phase="day" condition="rain" /><div className="wx"><AskPlace /></div></> : <>
                     <RadarMap place={place} zoom={ZOOM[area] ?? 7} />

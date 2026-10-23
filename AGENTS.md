@@ -40,6 +40,12 @@ React and TypeScript (Vite).
 - Adding a component to Updates: add it to `config/updates.php` with `kind`
   (`release` with a deploy script, or `checkout` with steps) and a `health` URL
   whose host is the site (that host gets the updating page).
+- Layouts: desktop items have a place and size on a grid of 12 columns and
+  96 px rows (`x`, `y`, `w`, `h`); the phone layout (`phone`, one column of
+  `key` and `h`) is null until the phone is changed, and then follows the
+  desktop no more (`App\Support\Dashboard`). Widgets declare `min` [w, h] in
+  their manifest; `useSize()` gives a widget its size and `tiny` (no title).
+  The Design studio uses react-grid-layout (`Pages/Design.tsx`).
 - Widgets: `extensions/*.json` declares them (title, sizes, settings); the
   dashboard translates titles with `__()`. `resources/js/Widgets/`: `List.tsx`
   is the one list every widget uses (scrolls on a computer, fixed rows and a

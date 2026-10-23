@@ -1,68 +1,116 @@
 import AppShell from '@/Layouts/AppShell';
-import { Avatar, Badge, Button, ButtonLink, Empty, Field, Frame, FrameHead, ListRow, Meter, Switch } from '@/Components/ui';
+import { Avatar, Badge, Button, ButtonLink, Field, Frame, FrameHead, ListRow, Meter, RoleBadge, Switch } from '@/Components/ui';
 import { can, SharedProps } from '@/types';
-import { Bookmark, Border, Height, LayoutItem, PlacedWidget, SettingField, WidgetDefinition } from '@/Widgets/Widgets';
+import { Bookmark, Border, LayoutItem, PHONE_COLUMNS, PlacedWidget, SettingField, WidgetDefinition } from '@/Widgets/Widgets';
 import { Place, PlaceSearch } from '@/Widgets/Weather';
-import { closestCenter, DndContext, DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
 import { router, usePage } from '@inertiajs/react';
-import { createContext, CSSProperties, KeyboardEvent, PointerEvent, ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import ReactGridLayout from 'react-grid-layout/legacy';
+import type { Layout, ResizeHandleAxis } from 'react-grid-layout/legacy';
+import { CSSProperties, Ref, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { t } from '@/i18n';
 
-type RoleData = { name: string; layout: LayoutItem[]; catalogue: WidgetDefinition[]; saved: boolean };
-type Props = { layout: LayoutItem[]; catalogue: WidgetDefinition[]; customised: boolean; roles: Record<string, RoleData> | null };
-type Target = 'me' | RoleName;
-type RoleName = string;
-type Width = 'desktop' | 'tablet' | 'phone';
+/*
+ * The Design studio: the dashboard itself, full size, to arrange.
+ *
+ * Desktop: widgets sit on the grid of twelve columns and rows of one unit
+ * (the same grid as the dashboard). Drag a widget to move it; drag any edge
+ * (the orange bars on hover) to size it. It snaps to the grid, never smaller
+ * than the widget allows, and stops at its neighbours instead of pushing them.
+ *
+ * Phone: one column, each widget with its height. Until the phone is changed
+ * it follows the desktop (the desktop layout, top to bottom, in one column);
+ * once changed it is its own, and the desktop no longer changes it.
+ *
+ * The bar on top: Desktop or Phone, the widgets by kind, and for admins the
+ * dashboard being edited (yours, or a role's default).
+ */
+type RoleData = { name: string; layout: LayoutItem[]; phone: LayoutItem[]; phoneCustom: boolean; catalogue: WidgetDefinition[]; saved: boolean };
+type Props = { layout: LayoutItem[]; phone: LayoutItem[]; phoneCustom: boolean; catalogue: WidgetDefinition[]; customised: boolean; roles: Record<string, RoleData> | null };
+type Mode = 'desktop' | 'phone';
+type Target = 'me' | string;
 
-const WIDTHS: Record<Width, { px: number; label: string; icon: string }> = {
-    desktop: { px: 1180, label: t('Desktop'), icon: 'bx-desktop' },
-    tablet: { px: 820, label: t('Tablet'), icon: 'bx-tab' },
-    phone: { px: 390, label: t('Phone'), icon: 'bx-mobile' },
-};
-const SIZE_LABELS: Record<string, string> = { s: t('Small'), m: t('Medium'), l: t('Large'), xl: t('Wide'), full: t('Full width') };
-const HEIGHTS: { value: Height; label: string }[] = [{ value: 'short', label: t('Short') }, { value: 'normal', label: t('Normal') }, { value: 'tall', label: t('Tall') }];
+const COLS = 12;
+const ROW = 96;
+const GAP = 16;
+
 const BORDERS: { value: Border | undefined; label: string }[] = [
     { value: undefined, label: t('Default') }, { value: 'none', label: t('None') }, { value: 'orange', label: t('Orange') }, { value: 'sunset', label: t('Sunset') },
     { value: 'ocean', label: t('Ocean') }, { value: 'forest', label: t('Forest') }, { value: 'violet', label: t('Violet') }, { value: 'mono', label: t('Grey') },
 ];
-/** How far the preview is scaled down, so dragged widgets follow the pointer. */
-const ZoomContext = createContext(1);
+
 export default function Design(props: Props) {
     const { props: shared } = usePage<SharedProps>();
     const tokens = can(shared.auth.capabilities, 'core.design.tokens');
-    const [tab, setTab] = useState<'dashboard' | 'tokens'>(() => (tokens && window.location.hash === '#tokens' ? 'tokens' : 'dashboard'));
+    const [view, setView] = useState<'dashboard' | 'tokens'>(() => (tokens && window.location.hash === '#tokens' ? 'tokens' : 'dashboard'));
     const choose = (next: 'dashboard' | 'tokens') => {
-        setTab(next);
+        setView(next);
         window.history.replaceState(null, '', next === 'tokens' ? '#tokens' : window.location.pathname);
     };
-
     return (
-        <AppShell title={t('Design')} wide description={tokens ? t('Arrange your dashboard, and see the type, colours and boxes every page is built from.') : t('Arrange your dashboard: drag widgets into place, size them and change their settings.')}
-            actions={tokens && <div className="ps-tabs" role="tablist">
-                <button type="button" role="tab" aria-selected={tab === 'dashboard'} className={`ps-tab${tab === 'dashboard' ? ' is-active' : ''}`} onClick={() => choose('dashboard')}>{t('Dashboard')}</button>
-                <button type="button" role="tab" aria-selected={tab === 'tokens'} className={`ps-tab${tab === 'tokens' ? ' is-active' : ''}`} onClick={() => choose('tokens')}>{t('Tokens')}</button>
-            </div>}>
-            {tab === 'dashboard' ? <Studio {...props} /> : <Tokens />}
+        <AppShell title={t('Design')} wide heading={false}>
+            {view === 'tokens'
+                ? <><div className="studio-toolbar"><Button size="sm" variant="ghost" icon="bx-arrow-back" onClick={() => choose('dashboard')}>{t('Dashboard')}</Button></div><Tokens /></>
+                : <Studio {...props} onTokens={tokens ? () => choose('tokens') : undefined} />}
         </AppShell>
     );
 }
 
-/* ---------- Dashboard studio ---------- */
+/* ---------- Layout arithmetic, as App\Support\Dashboard ---------- */
 
-function Studio({ layout, catalogue, customised, roles }: Props) {
+/** The desktop layout in one column: top to bottom, left to right. */
+function derivePhone(desktop: LayoutItem[]): LayoutItem[] {
+    return [...desktop].sort((a, b) => (a.y ?? 0) - (b.y ?? 0) || (a.x ?? 0) - (b.x ?? 0))
+        .map(({ key, h, border, settings }) => clean({ key, h: Math.min(8, h ?? 4), border, settings }));
+}
+
+/** The first place a widget of this size fits, row by row. */
+function firstFree(items: LayoutItem[], w: number, h: number): { x: number; y: number } {
+    const taken = (x: number, y: number) => items.some((item) => x < (item.x ?? 0) + (item.w ?? 1) && x + w > (item.x ?? 0) && y < (item.y ?? 0) + (item.h ?? 1) && y + h > (item.y ?? 0));
+    for (let y = 0; y < 500; y++) for (let x = 0; x + w <= COLS; x++) if (!taken(x, y)) return { x, y };
+    return { x: 0, y: 500 };
+}
+
+/** Drops empty optional fields so saved layouts stay small. */
+function clean(item: LayoutItem): LayoutItem {
+    const next: LayoutItem = { key: item.key };
+    (['x', 'y', 'w', 'h'] as const).forEach((field) => { if (item[field] !== undefined) next[field] = item[field]; });
+    if (item.border) next.border = item.border;
+    if (item.settings && Object.keys(item.settings).length) next.settings = item.settings;
+    return next;
+}
+
+/** What kind of widget it is, for the menus: Dashboard, News, Weather, then each service. */
+function category(widget: WidgetDefinition): string {
+    if (widget.extension !== 'core') return widget.extensionName;
+    if (['weather', 'forecast', 'radar'].includes(widget.id)) return t('Weather');
+    if (widget.id.startsWith('news')) return t('News');
+    return t('Dashboard');
+}
+
+/* ---------- The studio ---------- */
+
+function Studio({ layout, phone, phoneCustom, catalogue, customised, roles, onTokens }: Props & { onTokens?: () => void }) {
     const [target, setTarget] = useState<Target>('me');
-    const source = target === 'me' ? { layout, catalogue, saved: customised } : roles![target];
-    const [items, setItems] = useState<LayoutItem[]>(source.layout);
+    const source = target === 'me' ? { layout, phone, phoneCustom, catalogue, saved: customised } : roles![target];
+    const [desktop, setDesktop] = useState<LayoutItem[]>(source.layout);
+    const [ownPhone, setOwnPhone] = useState<LayoutItem[] | null>(source.phoneCustom ? source.phone : null);
+    const [mode, setMode] = useState<Mode>(() => (window.innerWidth <= 700 ? 'phone' : 'desktop'));
     const [dirty, setDirty] = useState(false);
-    const [selected, setSelected] = useState<string | null>(null);
-    const [width, setWidth] = useState<Width>(() => (window.innerWidth < 700 ? 'phone' : 'desktop'));
-    const [theme, setTheme] = useState<'dark' | 'light'>(() => (document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'));
     const [saving, setSaving] = useState(false);
+    const [selected, setSelected] = useState<string | null>(null);
     const byKey = useMemo(() => new Map(source.catalogue.map((widget) => [widget.key, widget])), [source.catalogue]);
+    const phoneItems = ownPhone ?? derivePhone(desktop);
+    // On a phone there is only the phone layout to edit.
+    const narrow = useNarrow();
+    const shown: Mode = narrow ? 'phone' : mode;
 
     // Switching target, or fresh props after a save, starts from what is stored.
-    useEffect(() => { setItems(source.layout); setDirty(false); setSelected(null); }, [target, source.layout]);
+    useEffect(() => {
+        setDesktop(source.layout);
+        setOwnPhone(source.phoneCustom ? source.phone : null);
+        setDirty(false);
+        setSelected(null);
+    }, [target, source.layout, source.phone, source.phoneCustom]);
 
     useEffect(() => {
         if (!dirty) return;
@@ -71,232 +119,286 @@ function Studio({ layout, catalogue, customised, roles }: Props) {
         return () => window.removeEventListener('beforeunload', warn);
     }, [dirty]);
 
-    const change = (next: LayoutItem[]) => { setItems(next); setDirty(true); };
-    const update = (key: string, patch: Partial<LayoutItem>) => change(items.map((item) => (item.key === key ? clean({ ...item, ...patch }) : item)));
-    const remove = (key: string) => { change(items.filter((item) => item.key !== key)); if (selected === key) setSelected(null); };
+    const changeDesktop = (next: LayoutItem[]) => { setDesktop(next.map(clean)); setDirty(true); };
+    // The first change on the phone makes it a layout of its own.
+    const changePhone = (next: LayoutItem[]) => { setOwnPhone(next.map(clean)); setDirty(true); };
+    const items = shown === 'phone' ? phoneItems : desktop;
+    const change = shown === 'phone' ? changePhone : changeDesktop;
+
     const add = (definition: WidgetDefinition) => {
-        change([...items, { key: definition.key, size: definition.sizes.includes(definition.default) ? definition.default : definition.sizes[0], height: definition.height ?? 'normal' }]);
-        setSelected(definition.key);
+        if (shown === 'phone') {
+            changePhone([...phoneItems, { key: definition.key, h: definition.h }]);
+        } else {
+            const w = Math.max(definition.min[0], Math.min(COLS, definition.w));
+            changeDesktop([...desktop, { key: definition.key, w, h: definition.h, ...firstFree(desktop, w, definition.h) }]);
+        }
+        setSelected(null);
     };
+    const remove = (key: string) => { change(items.filter((item) => item.key !== key)); if (selected === key) setSelected(null); };
+    const update = (key: string, patch: Partial<LayoutItem>) => change(items.map((item) => (item.key === key ? { ...item, ...patch } : item)));
 
     const endpoint = target === 'me' ? '/dashboard/layout' : `/dashboard/layout/roles/${target}`;
     const save = () => {
         setSaving(true);
-        router.put(endpoint, { widgets: items } as unknown as Record<string, string>, { preserveScroll: true, preserveState: true, onSuccess: () => setDirty(false), onFinish: () => setSaving(false) });
+        router.put(endpoint, { widgets: desktop, phone: ownPhone } as unknown as Record<string, string>, { preserveScroll: true, preserveState: true, onSuccess: () => setDirty(false), onFinish: () => setSaving(false) });
     };
+    const undo = () => { setDesktop(source.layout); setOwnPhone(source.phoneCustom ? source.phone : null); setDirty(false); };
     const reset = () => {
-        const question = target === 'me' ? 'Go back to the default dashboard for your role?' : `Go back to the built-in default for ${roles?.[target]?.name ?? target}?`;
+        const question = target === 'me' ? t('Go back to the default dashboard for your role?') : t('Go back to the built-in default for {role}?', { role: roles?.[target]?.name ?? target });
         if (window.confirm(question)) router.delete(endpoint, { preserveScroll: true, preserveState: true });
     };
 
     const selectedItem = items.find((item) => item.key === selected);
     const selectedDefinition = selected ? byKey.get(selected) : undefined;
+    const placed = new Set(items.map((item) => item.key));
 
     return (
         <div className="studio">
-            <div className="studio-bar">
-                {roles && (
-                    <label className="studio-bar__target">
-                        <span className="ps-sr-only">{t('Dashboard to edit')}</span>
-                        <select className="ps-select" value={target} onChange={(event) => {
-                            if (dirty && !window.confirm(t('Leave without saving your changes?'))) return;
-                            setTarget(event.target.value as Target);
-                        }}>
-                            <option value="me">{t('Your dashboard')}</option>
-                            {Object.entries(roles).map(([role, data]) => <option key={role} value={role}>{t('Default for')}{' '}{data.name}</option>)}
-                        </select>
-                    </label>
+            <div className="studio-toolbar">
+                {!narrow && (
+                    <div className="studio-modes" role="tablist" aria-label={t('Layout')}>
+                        <button type="button" role="tab" aria-selected={shown === 'desktop'} className={shown === 'desktop' ? 'is-active' : undefined} onClick={() => setMode('desktop')}><i className="bx bx-desktop" aria-hidden="true" /><span>{t('Desktop')}</span></button>
+                        <button type="button" role="tab" aria-selected={shown === 'phone'} className={shown === 'phone' ? 'is-active' : undefined} onClick={() => setMode('phone')}><i className="bx bx-mobile" aria-hidden="true" /><span>{t('Phone')}</span></button>
+                    </div>
                 )}
-                <div className="ps-tabs studio-bar__group" aria-label={t('Preview width')}>
-                    {(Object.keys(WIDTHS) as Width[]).map((key) => (
-                        <button key={key} type="button" className={`ps-tab${width === key ? ' is-active' : ''}`} aria-pressed={width === key} onClick={() => setWidth(key)} title={WIDTHS[key].label}>
-                            <i className={`bx ${WIDTHS[key].icon}`} aria-hidden="true" /><span className="studio-bar__label">{WIDTHS[key].label}</span>
-                        </button>
-                    ))}
-                </div>
-                <div className="ps-tabs studio-bar__group" aria-label={t('Preview theme')}>
-                    <button type="button" className={`ps-tab${theme === 'dark' ? ' is-active' : ''}`} aria-pressed={theme === 'dark'} onClick={() => setTheme('dark')} title={t('Dark')}><i className="bx bx-moon" aria-hidden="true" /><span className="studio-bar__label">{t('Dark')}</span></button>
-                    <button type="button" className={`ps-tab${theme === 'light' ? ' is-active' : ''}`} aria-pressed={theme === 'light'} onClick={() => setTheme('light')} title={t('Light')}><i className="bx bx-sun" aria-hidden="true" /><span className="studio-bar__label">{t('Light')}</span></button>
-                </div>
-                <span className="studio-bar__spacer" />
-                {dirty && <span className="ps-small ps-muted">{t('Unsaved changes')}</span>}
-                {(source.saved || dirty) && <Button size="sm" variant="ghost" icon="bx-reset" onClick={dirty ? () => { setItems(source.layout); setDirty(false); } : reset}>{dirty ? t('Undo') : t('Reset')}</Button>}
+                <Menus catalogue={source.catalogue} placed={placed} onAdd={add} />
+                <span className="studio-toolbar__spacer" />
+                {shown === 'phone' && ownPhone && (
+                    <button type="button" className="studio-chip" onClick={() => { setOwnPhone(null); setDirty(true); }} title={t('Let the phone follow the desktop again')}>
+                        <i className="bx bx-link" aria-hidden="true" />{t('Follow desktop')}
+                    </button>
+                )}
+                {roles && <TargetMenu roles={roles} target={target} onChoose={(next) => {
+                    if (dirty && !window.confirm(t('Leave without saving your changes?'))) return;
+                    setTarget(next);
+                }} />}
+                {onTokens && <button type="button" className="studio-icon" onClick={onTokens} aria-label={t('Design tokens')} title={t('Design tokens')}><i className="bx bx-palette" /></button>}
+                {dirty
+                    ? <Button size="sm" variant="ghost" icon="bx-undo" onClick={undo}>{t('Undo')}</Button>
+                    : source.saved && <Button size="sm" variant="ghost" icon="bx-reset" onClick={reset}>{t('Reset')}</Button>}
                 <Button size="sm" variant="primary" icon="bx-check" onClick={save} loading={saving} disabled={!dirty}>{t('Save')}</Button>
             </div>
 
-            <div className="studio-body">
-                <Canvas width={width} theme={theme}>
-                    {items.length === 0
-                        ? <Empty icon="bx-grid-alt">{t('Add widgets from the list.')}</Empty>
-                        : <SortableGrid items={items} onMove={change}>
-                            {items.map((item) => {
-                                const definition = byKey.get(item.key);
-                                return definition ? (
-                                    <SortableWidget key={item.key} item={item} definition={definition} selected={selected === item.key}
-                                        onSelect={() => setSelected(selected === item.key ? null : item.key)} onRemove={() => remove(item.key)}
-                                        onSize={(size) => update(item.key, { size })} />
-                                ) : null;
-                            })}
-                        </SortableGrid>}
-                </Canvas>
+            {shown === 'desktop'
+                ? <DesktopGrid items={desktop} byKey={byKey} selected={selected} onChange={changeDesktop} onSelect={setSelected} onRemove={remove} />
+                : <PhoneColumn items={phoneItems} byKey={byKey} selected={selected} onChange={changePhone} onSelect={setSelected} onRemove={remove} />}
 
-                <aside className="studio-panel">
-                    {selectedItem && selectedDefinition
-                        ? <WidgetSettings item={selectedItem} definition={selectedDefinition} onChange={(patch) => update(selectedItem.key, patch)} onRemove={() => remove(selectedItem.key)} onClose={() => setSelected(null)} />
-                        : <Gallery catalogue={source.catalogue} placed={new Set(items.map((item) => item.key))} onAdd={add} />}
-                </aside>
-            </div>
+            {selectedItem && selectedDefinition && (
+                <WidgetSettings item={selectedItem} definition={selectedDefinition} onChange={(patch) => update(selectedItem.key, patch)} onRemove={() => remove(selectedItem.key)} onClose={() => setSelected(null)} />
+            )}
         </div>
     );
 }
 
-/** Drops empty optional fields so saved layouts stay small. */
-function clean(item: LayoutItem): LayoutItem {
-    const next: LayoutItem = { key: item.key, size: item.size, height: item.height };
-    if (item.border) next.border = item.border;
-    if (item.settings && Object.keys(item.settings).length) next.settings = item.settings;
-    return next;
+function useNarrow(): boolean {
+    const [narrow, setNarrow] = useState(() => window.innerWidth <= 700);
+    useEffect(() => {
+        const media = window.matchMedia('(max-width: 700px)');
+        const change = () => setNarrow(media.matches);
+        media.addEventListener('change', change);
+        return () => media.removeEventListener('change', change);
+    }, []);
+    return narrow;
 }
 
-/** The preview, laid out at the chosen device width and scaled to fit. */
-function Canvas({ width, theme, children }: { width: Width; theme: 'dark' | 'light'; children: ReactNode }) {
-    const outer = useRef<HTMLDivElement>(null);
-    const [available, setAvailable] = useState(0);
+function useOutside(open: boolean, close: () => void) {
+    const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        const element = outer.current;
+        if (!open) return;
+        const down = (event: MouseEvent) => { if (ref.current && !ref.current.contains(event.target as Node)) close(); };
+        const key = (event: KeyboardEvent) => { if (event.key === 'Escape') close(); };
+        document.addEventListener('mousedown', down);
+        document.addEventListener('keydown', key);
+        return () => { document.removeEventListener('mousedown', down); document.removeEventListener('keydown', key); };
+    }, [open, close]);
+    return ref;
+}
+
+/** The widgets by kind, each kind a menu. */
+function Menus({ catalogue, placed, onAdd }: { catalogue: WidgetDefinition[]; placed: Set<string>; onAdd: (widget: WidgetDefinition) => void }) {
+    const [open, setOpen] = useState<string | null>(null);
+    const ref = useOutside(open !== null, () => setOpen(null));
+    const groups = useMemo(() => {
+        const map = new Map<string, WidgetDefinition[]>();
+        [t('Dashboard'), t('News'), t('Weather')].forEach((name) => map.set(name, []));
+        catalogue.forEach((widget) => map.set(category(widget), [...(map.get(category(widget)) ?? []), widget]));
+        return [...map.entries()].filter(([, widgets]) => widgets.length > 0);
+    }, [catalogue]);
+    return (
+        <nav className="studio-menus" ref={ref} aria-label={t('Widgets')}>
+            {groups.map(([name, widgets]) => (
+                <div key={name} className={`studio-menu${open === name ? ' is-open' : ''}`}>
+                    <button type="button" className="studio-menu__button" aria-expanded={open === name} onClick={() => setOpen(open === name ? null : name)}>
+                        {name}<i className="bx bx-chevron-down" aria-hidden="true" />
+                    </button>
+                    {open === name && (
+                        <div className="studio-menu__panel" role="menu">
+                            {widgets.map((widget) => {
+                                const added = placed.has(widget.key);
+                                return (
+                                    <button key={widget.key} type="button" role="menuitem" className={`studio-pick${added ? ' is-added' : ''}`} disabled={added}
+                                        onClick={() => { onAdd(widget); setOpen(null); }}>
+                                        <span className="studio-pick__icon"><i className={`bx ${widget.icon}`} aria-hidden="true" /></span>
+                                        <span className="studio-pick__text"><strong>{widget.title}{widget.admin && <span className="studio-pick__admin">{t('Admin')}</span>}</strong>{widget.description && <small>{widget.description}</small>}</span>
+                                        <i className={`bx ${added ? 'bx-check' : 'bx-plus'} studio-pick__add`} aria-hidden="true" />
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            ))}
+        </nav>
+    );
+}
+
+/** For admins: whose dashboard is being edited, yours or a role's default. */
+function TargetMenu({ roles, target, onChoose }: { roles: Record<string, RoleData>; target: Target; onChoose: (target: Target) => void }) {
+    const [open, setOpen] = useState(false);
+    const ref = useOutside(open, () => setOpen(false));
+    return (
+        <div className={`studio-menu studio-menu--right${open ? ' is-open' : ''}`} ref={ref}>
+            <button type="button" className="studio-menu__button" aria-expanded={open} onClick={() => setOpen(!open)}>
+                {target === 'me' ? <><i className="bx bx-user" aria-hidden="true" />{t('Your dashboard')}</> : <RoleBadge role={target} name={roles[target]?.name} />}
+                <i className="bx bx-chevron-down" aria-hidden="true" />
+            </button>
+            {open && (
+                <div className="studio-menu__panel" role="menu">
+                    <button type="button" role="menuitem" className={`studio-target${target === 'me' ? ' is-active' : ''}`} onClick={() => { onChoose('me'); setOpen(false); }}>
+                        <i className="bx bx-user" aria-hidden="true" />{t('Your dashboard')}
+                    </button>
+                    <p className="studio-menu__label">{t('Defaults for roles')}</p>
+                    {Object.entries(roles).map(([role, data]) => (
+                        <button key={role} type="button" role="menuitem" className={`studio-target${target === role ? ' is-active' : ''}`} onClick={() => { onChoose(role); setOpen(false); }}>
+                            <RoleBadge role={role} name={data.name} />{data.saved && <i className="bx bx-check-circle studio-target__saved" title={t('Changed')} aria-hidden="true" />}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+/* ---------- The canvas ---------- */
+
+function useWidth(): [Ref<HTMLDivElement>, number] {
+    const ref = useRef<HTMLDivElement>(null);
+    const [width, setWidth] = useState(0);
+    useLayoutEffect(() => {
+        const element = ref.current;
         if (!element) return;
-        const observer = new ResizeObserver(([entry]) => setAvailable(entry.contentRect.width));
+        const measure = () => setWidth(element.clientWidth);
+        measure();
+        const observer = new ResizeObserver(measure);
         observer.observe(element);
         return () => observer.disconnect();
     }, []);
-    const px = WIDTHS[width].px;
-    const zoom = available > 0 ? Math.min(1, available / px) : 1;
+    return [ref, width];
+}
 
+/** An orange bar on each edge, shown on hover, to size the widget from that side. */
+const handle = (axis: ResizeHandleAxis, ref: Ref<HTMLElement>) => <span ref={ref as Ref<HTMLSpanElement>} className={`studio-handle studio-handle--${axis}`} aria-hidden="true" />;
+
+type CanvasProps = { items: LayoutItem[]; byKey: Map<string, WidgetDefinition>; selected: string | null; onChange: (items: LayoutItem[]) => void; onSelect: (key: string | null) => void; onRemove: (key: string) => void };
+
+function DesktopGrid({ items, byKey, selected, onChange, onSelect, onRemove }: CanvasProps) {
+    const [ref, width] = useWidth();
+    const [moving, setMoving] = useState(false);
+    const known = items.filter((item) => byKey.has(item.key));
+    const grid: Layout = known.map((item) => {
+        const definition = byKey.get(item.key)!;
+        return { i: item.key, x: item.x ?? 0, y: item.y ?? 0, w: item.w ?? definition.w, h: item.h ?? definition.h, minW: definition.min[0], minH: definition.min[1], maxW: COLS, maxH: 12 };
+    });
+    // The grid reports every layout, also unchanged ones; only real moves count.
+    const apply = (next: Layout) => {
+        let changed = false;
+        const updated = items.map((item) => {
+            const cell = next.find((entry) => entry.i === item.key);
+            if (!cell || (cell.x === item.x && cell.y === item.y && cell.w === item.w && cell.h === item.h)) return item;
+            changed = true;
+            return { ...item, x: cell.x, y: cell.y, w: cell.w, h: cell.h };
+        });
+        if (changed) onChange(updated);
+    };
+    const column = width ? (width - GAP * (COLS - 1)) / COLS : 0;
     return (
-        <div className="studio-stage" ref={outer}>
-            <div className="studio-canvas" data-theme={theme} data-width={width} style={{ width: px, zoom }}>
-                <ZoomContext.Provider value={zoom}>{children}</ZoomContext.Provider>
+        <div ref={ref} className={`studio-canvas${moving ? ' is-moving' : ''}`} style={{ '--col': `${column}px`, '--row': `${ROW}px`, '--gap': `${GAP}px` } as CSSProperties}>
+            {known.length === 0 && <div className="studio-empty"><i className="bx bx-grid-alt" aria-hidden="true" /></div>}
+            {width > 0 && (
+                <ReactGridLayout width={width} layout={grid} cols={COLS} rowHeight={ROW} margin={[GAP, GAP]} containerPadding={[0, 0]}
+                    compactType={null} preventCollision isResizable isDraggable resizeHandles={['n', 'e', 's', 'w']} resizeHandle={handle}
+                    draggableCancel=".studio-tools,.studio-handle" onDragStart={() => setMoving(true)} onResizeStart={() => setMoving(true)}
+                    onDragStop={(next) => { setMoving(false); apply(next); }} onResizeStop={(next) => { setMoving(false); apply(next); }}>
+                    {known.map((item) => <div key={item.key}><StudioItem item={item} definition={byKey.get(item.key)!} selected={selected === item.key} onSelect={onSelect} onRemove={onRemove} /></div>)}
+                </ReactGridLayout>
+            )}
+        </div>
+    );
+}
+
+function PhoneColumn({ items, byKey, selected, onChange, onSelect, onRemove }: CanvasProps) {
+    const [ref, width] = useWidth();
+    const known = items.filter((item) => byKey.has(item.key));
+    let top = 0;
+    const grid: Layout = known.map((item) => {
+        const definition = byKey.get(item.key)!;
+        const h = item.h ?? definition.h;
+        const cell = { i: item.key, x: 0, y: top, w: 1, h, minW: 1, maxW: 1, minH: definition.min[1], maxH: 12 };
+        top += h;
+        return cell;
+    });
+    // Order follows the column; heights follow the edges.
+    const apply = (next: Layout) => {
+        const ordered = [...next].sort((a, b) => a.y - b.y);
+        const updated = ordered.map((cell) => ({ ...known.find((item) => item.key === cell.i)!, h: cell.h }));
+        const same = updated.every((item, index) => item.key === known[index]?.key && item.h === (known[index].h ?? byKey.get(item.key)!.h));
+        if (!same) onChange(updated);
+    };
+    return (
+        <div className="studio-phone">
+            <div ref={ref} className="studio-phone__screen">
+                {known.length === 0 && <div className="studio-empty"><i className="bx bx-mobile" aria-hidden="true" /></div>}
+                {width > 0 && (
+                    <ReactGridLayout width={width} layout={grid} cols={1} rowHeight={ROW} margin={[GAP, GAP]} containerPadding={[0, 0]}
+                        compactType="vertical" isResizable isDraggable resizeHandles={['n', 's']} resizeHandle={handle}
+                        draggableCancel=".studio-tools,.studio-handle" onDragStop={apply} onResizeStop={apply}>
+                        {known.map((item) => <div key={item.key}><StudioItem item={{ ...item, w: PHONE_COLUMNS }} definition={byKey.get(item.key)!} selected={selected === item.key} onSelect={onSelect} onRemove={onRemove} /></div>)}
+                    </ReactGridLayout>
+                )}
             </div>
         </div>
     );
 }
 
-function SortableGrid({ items, onMove, children }: { items: LayoutItem[]; onMove: (items: LayoutItem[]) => void; children: ReactNode }) {
-    const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-    );
-    const onDragEnd = ({ active, over }: DragEndEvent) => {
-        if (!over || active.id === over.id) return;
-        const from = items.findIndex((item) => item.key === active.id);
-        const to = items.findIndex((item) => item.key === over.id);
-        if (from >= 0 && to >= 0) onMove(arrayMove(items, from, to));
-    };
-
+/** A widget as it will look, with its tools on hover: settings and remove. */
+function StudioItem({ item, definition, selected, onSelect, onRemove }: { item: LayoutItem; definition: WidgetDefinition; selected: boolean; onSelect: (key: string | null) => void; onRemove: (key: string) => void }) {
     return (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-            <SortableContext items={items.map((item) => item.key)} strategy={rectSortingStrategy}>
-                <div className="ps-widget-grid">{children}</div>
-            </SortableContext>
-        </DndContext>
-    );
-}
-
-function SortableWidget({ item, definition, selected, onSelect, onRemove, onSize }: {
-    item: LayoutItem; definition: WidgetDefinition; selected: boolean; onSelect: () => void; onRemove: () => void; onSize: (size: string) => void;
-}) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.key });
-    // Movement is measured on screen; the canvas may be zoomed, so undo that.
-    const zoom = useContext(ZoomContext);
-    const style: CSSProperties = {
-        transform: transform ? `translate3d(${transform.x / zoom}px, ${transform.y / zoom}px, 0)` : undefined,
-        transition,
-    };
-    const stop = { onPointerDown: (event: PointerEvent) => event.stopPropagation(), onKeyDown: (event: KeyboardEvent) => event.stopPropagation() };
-
-    return (
-        <div ref={setNodeRef} data-size={item.size} data-height={item.height ?? definition.height ?? 'normal'} style={style} className={`studio-widget${selected ? ' is-selected' : ''}${isDragging ? ' is-dragging' : ''}`}
-            {...attributes} {...listeners} aria-label={t('{title}, {value}. Drag to move, Enter to edit.', { title: definition.title, value: SIZE_LABELS[item.size] })}
-            onClick={onSelect} onKeyDown={(event) => { if (event.key === 'Enter') onSelect(); listeners?.onKeyDown?.(event); }}>
-            <div className="studio-widget__tools" {...stop}>
-                <span className="studio-widget__grip" aria-hidden="true"><i className="bx bx-grid-vertical" /></span>
-                <select className="studio-widget__size" value={item.size} onChange={(event) => onSize(event.target.value)} onClick={(event) => event.stopPropagation()} aria-label={t('Size')}>
-                    {definition.sizes.map((size) => <option key={size} value={size}>{SIZE_LABELS[size] ?? size}</option>)}
-                </select>
-                <button type="button" className="studio-widget__tool" onClick={(event) => { event.stopPropagation(); onSelect(); }} aria-label={t('Settings')} title={t('Settings')}><i className="bx bx-slider-alt" /></button>
-                <button type="button" className="studio-widget__tool" onClick={(event) => { event.stopPropagation(); onRemove(); }} aria-label={t('Remove')} title={t('Remove')}><i className="bx bx-x" /></button>
+        <div className={`studio-item${selected ? ' is-selected' : ''}`}>
+            <div className="studio-tools">
+                <button type="button" onClick={() => onSelect(selected ? null : item.key)} aria-label={t('Settings for {title}', { title: definition.title })} title={t('Settings')}><i className="bx bx-slider-alt" /></button>
+                <button type="button" onClick={() => onRemove(item.key)} aria-label={t('Remove {title}', { title: definition.title })} title={t('Remove')}><i className="bx bx-x" /></button>
             </div>
-            <div className="studio-widget__content" inert>
+            <div className="studio-item__content" inert>
                 <PlacedWidget item={item} definition={definition} />
             </div>
         </div>
     );
 }
 
-function Gallery({ catalogue, placed, onAdd }: { catalogue: WidgetDefinition[]; placed: Set<string>; onAdd: (definition: WidgetDefinition) => void }) {
-    const groups = useMemo(() => {
-        const map = new Map<string, WidgetDefinition[]>();
-        catalogue.forEach((widget) => map.set(widget.extensionName, [...(map.get(widget.extensionName) ?? []), widget]));
-        return [...map.entries()];
-    }, [catalogue]);
-
-    return (
-        <Frame compact>
-            <div className="studio-gallery__head">
-                <h2 className="ps-frame__title">{t('Widgets')}</h2>
-                <p className="ps-small ps-muted">{t('Click one on the dashboard to change it; drag to move.')}</p>
-            </div>
-            <div className="studio-gallery">
-                {groups.map(([name, widgets]) => (
-                    <section key={name} className="studio-gallery__group">
-                        <h3 className="studio-gallery__name">{name}</h3>
-                        <ul className="ps-chain">
-                            {widgets.map((widget) => {
-                                const added = placed.has(widget.key);
-                                return (
-                                    <li key={widget.key}>
-                                        <button type="button" className={`studio-pick${added ? ' is-added' : ''}`} disabled={added} onClick={() => onAdd(widget)} title={t(widget.description)} aria-label={added ? t('{title} is on the dashboard', { title: widget.title }) : t('Add {title}', { title: widget.title })}>
-                                            <span className="studio-pick__name">{t(widget.title)}{widget.admin && <span className="studio-pick__admin">{t('Admin')}</span>}</span>
-                                            <i className={`bx ${added ? 'bx-check' : 'bx-plus'}`} aria-hidden="true" />
-                                        </button>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </section>
-                ))}
-            </div>
-        </Frame>
-    );
-}
+/* ---------- A widget's settings, in a drawer ---------- */
 
 function WidgetSettings({ item, definition, onChange, onRemove, onClose }: {
     item: LayoutItem; definition: WidgetDefinition; onChange: (patch: Partial<LayoutItem>) => void; onRemove: () => void; onClose: () => void;
 }) {
     const setSetting = (name: string, value: unknown) => onChange({ settings: { ...(item.settings ?? {}), [name]: value } });
-
     return (
-        <Frame compact>
-            <FrameHead title={definition.title} text={t(definition.description)}
-                action={<Button size="sm" variant="ghost" iconOnly icon="bx-x" aria-label={t('Close settings')} onClick={onClose} />} />
-            <div className="ps-frame__body studio-settings">
-                <div className="ps-field">
-                    <span className="ps-label">{t('Size')}</span>
-                    <div className="studio-choices">
-                        {definition.sizes.map((size) => (
-                            <button key={size} type="button" className={`studio-choice${item.size === size ? ' is-active' : ''}`} aria-pressed={item.size === size} onClick={() => onChange({ size })}>{SIZE_LABELS[size] ?? size}</button>
-                        ))}
-                    </div>
-                </div>
-                <div className="ps-field">
-                    <span className="ps-label">{t('Height')}</span>
-                    <div className="studio-choices">
-                        {HEIGHTS.map((height) => {
-                            const current = item.height ?? definition.height ?? 'normal';
-                            return <button key={height.value} type="button" className={`studio-choice${current === height.value ? ' is-active' : ''}`} aria-pressed={current === height.value} onClick={() => onChange({ height: height.value })}>{t(height.label)}</button>;
-                        })}
-                    </div>
-                </div>
+        <aside className="studio-drawer" aria-label={t('Settings for {title}', { title: definition.title })}>
+            <header className="studio-drawer__head">
+                <span className="studio-pick__icon"><i className={`bx ${definition.icon}`} aria-hidden="true" /></span>
+                <h2>{definition.title}</h2>
+                <button type="button" className="studio-icon" onClick={onClose} aria-label={t('Close settings')}><i className="bx bx-x" /></button>
+            </header>
+            <div className="studio-drawer__body">
                 <div className="ps-field">
                     <span className="ps-label">{t('Border')}</span>
                     <div className="studio-swatches">
@@ -307,14 +409,15 @@ function WidgetSettings({ item, definition, onChange, onRemove, onClose }: {
                     </div>
                 </div>
                 {(definition.settings ?? []).map((field) => <SettingInput key={field.name} field={field} value={item.settings?.[field.name]} onChange={(value) => setSetting(field.name, value)} />)}
-                <div className="studio-settings__foot">
-                    <Button size="sm" variant="danger" icon="bx-trash" onClick={onRemove}>{t('Remove')}</Button>
-                    <Button size="sm" onClick={onClose}>{t('Done')}</Button>
-                </div>
             </div>
-        </Frame>
+            <footer className="studio-drawer__foot">
+                <Button size="sm" variant="danger" icon="bx-trash" onClick={onRemove}>{t('Remove')}</Button>
+                <Button size="sm" onClick={onClose}>{t('Done')}</Button>
+            </footer>
+        </aside>
     );
 }
+
 
 function SettingInput({ field, value, onChange }: { field: SettingField; value: unknown; onChange: (value: unknown) => void }) {
     const id = `studio-setting-${field.name}`;

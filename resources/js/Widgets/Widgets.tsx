@@ -3,13 +3,13 @@ import { Link } from '@inertiajs/react';
 import { CSSProperties, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { t, locale } from '@/i18n';
 import { Fill, Height, List, Row } from './List';
-import { Body, LayoutItem, More, useBorder, useHeight, usePaging, useSetting, useWidgetData, WidgetDefinition, WidgetFrame, WidgetItem } from './base';
+import { Body, ExpandButton, LayoutItem, More, useBorder, useHeight, usePaging, useSetting, useSize, useWidgetData, WidgetDefinition, WidgetFrame, WidgetItem } from './base';
 import { ForecastWidget, RadarWidget, WeatherWidget } from './Weather';
 
 export type { Height } from './List';
 export { SLOTS } from './List';
 export type { Border, Bookmark, LayoutItem, SettingField, WidgetDefinition } from './base';
-export { WidgetItem } from './base';
+export { PHONE_COLUMNS, WidgetItem } from './base';
 
 /*
  * How every widget is laid out.
@@ -20,7 +20,6 @@ export { WidgetItem } from './base';
  * number of rows at once and scroll on a computer (see List.tsx). A widget
  * can have a gradient border instead of the plain one.
  */
-const PHOTO_COLUMNS: Record<string, number> = { s: 2, m: 3, l: 4, xl: 5, full: 8 };
 
 /* ---------- Welcome: greeting, clock and date ---------- */
 type GreetingData = { firstName: string; role: string; services: number };
@@ -48,6 +47,19 @@ export function GreetingWidget({ definition }: { definition: WidgetDefinition })
     const now = useNow(seconds && display !== 'greeting');
     const clock = now.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: seconds ? '2-digit' : undefined });
     const date = now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+    const { tiny } = useSize(definition);
+
+    // Tiny: the time, and the day under it.
+    if (tiny) {
+        return (
+            <section className="ps-frame ps-widget widget-greeting is-tiny" data-border={border} aria-label={definition.title}>
+                <div className="ps-frame__panel">
+                    <p className="widget-greeting__title widget-clock">{now.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</p>
+                    <p className="widget-greeting__date">{now.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}</p>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section className="ps-frame ps-widget widget-greeting" data-border={border}>
@@ -118,10 +130,18 @@ export function LauncherWidget({ definition }: { definition: WidgetDefinition })
     const height = useHeight(definition);
     const descriptions = (useSetting<boolean>(definition, 'descriptions') ?? false) && height !== 'short';
     const hidden = useSetting<string[]>(definition, 'hidden') ?? [];
+    const { tiny } = useSize(definition);
     return (
         <WidgetFrame definition={definition}>
             <Body state={state} height={height}>{({ apps }) => {
                 const shown = apps.filter((app) => !hidden.includes(app.id));
+                if (tiny && shown.length > 0) {
+                    // Tiny: up to four services as icons, two by two.
+                    const four = shown.slice(0, 4);
+                    return <div className={`widget-apps widget-apps--icons is-${four.length}`}>{four.map((app) => (
+                        <a key={app.id} href={app.url} className="widget-app" title={app.name} aria-label={app.name}><span className="widget-app__icon"><i className={`bx ${app.icon}`} aria-hidden="true" /></span></a>
+                    ))}</div>;
+                }
                 return shown.length === 0
                     ? <Fill>{t('No services to show.')}</Fill>
                     : <div className={`widget-apps${descriptions ? ' widget-apps--described' : ''}`}>{shown.map((app, index) => (
@@ -135,16 +155,35 @@ export function LauncherWidget({ definition }: { definition: WidgetDefinition })
     );
 }
 
-/* ---------- News: the latest headlines; expands into the News app ---------- */
+/* ---------- News: headlines, the top story and a strip; each expands into the News app ---------- */
 type NewsStory = { id: string; title: string; url: string; image: string | null; time: string; sourceName: string; topicName: string };
+
+/** The stories a news widget shows: its edition (top or local) and section, from its settings. */
+function useNews(definition: WidgetDefinition, limit?: number) {
+    const topic = useSetting<string>(definition, 'topic') ?? 'all';
+    const edition = useSetting<string>(definition, 'edition') ?? 'top';
+    return useWidgetData<{ stories: NewsStory[] }>(definition.extension, definition.id, 600, { limit, topic: topic === 'all' ? undefined : topic, edition: edition === 'local' ? 'local' : undefined });
+}
+function NoNews({ definition }: { definition: WidgetDefinition }) {
+    const local = (useSetting<string>(definition, 'edition') ?? 'top') === 'local';
+    return <Fill icon="bx-news">{local ? <>{t('No local news. Choose your town in')}{' '}<Link href="/news">{t('News')}</Link>.</> : t('No news right now.')}</Fill>;
+}
+
 export function NewsWidget({ definition }: { definition: WidgetDefinition }) {
     const [limit, more] = usePaging();
-    const state = useWidgetData<{ stories: NewsStory[] }>(definition.extension, definition.id, 600, { limit });
+    const state = useNews(definition, limit);
     const height = useHeight(definition);
     const pictures = useSetting<boolean>(definition, 'pictures') ?? true;
+    const { tiny } = useSize(definition);
     return (
         <WidgetFrame definition={definition} expand="/news">
-            <Body state={state} height={height}>{({ stories }) => (
+            <Body state={state} height={height}>{({ stories }) => stories.length === 0 ? <NoNews definition={definition} /> : tiny ? (
+                // Tiny: the top story, over its picture.
+                <a className="widget-headline" href={stories[0].url}>
+                    {stories[0].image && <img src={stories[0].image} alt="" loading="lazy" />}
+                    <span><small>{stories[0].sourceName}</small><strong>{stories[0].title}</strong></span>
+                </a>
+            ) : (
                 <List height={height} empty={t('No news right now.')} more={{ href: '/news' }} onEnd={() => more(stories.length)} rows={stories.map((story) => ({
                     key: story.id, href: story.url,
                     lead: pictures ? (story.image ? <span className="widget-thumb"><img src={story.image} alt="" loading="lazy" /></span> : <Lead icon="bx-news" />) : undefined,
@@ -152,6 +191,67 @@ export function NewsWidget({ definition }: { definition: WidgetDefinition }) {
                     meta: `${story.sourceName}, ${relativeTime(story.time)}`,
                 }))} />
             )}</Body>
+        </WidgetFrame>
+    );
+}
+
+/** The biggest stories, one at a time over their pictures, turning every few seconds. */
+export function TopStoryWidget({ definition }: { definition: WidgetDefinition }) {
+    const state = useNews(definition, 6);
+    const border = useBorder(definition.border);
+    const { tiny } = useSize(definition);
+    const [at, setAt] = useState(0);
+    const stories = (state.data?.stories ?? []).filter((story) => story.image).slice(0, 5);
+    useEffect(() => {
+        if (stories.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const timer = window.setInterval(() => { if (document.visibilityState === 'visible') setAt((current) => (current + 1) % stories.length); }, 9000);
+        return () => window.clearInterval(timer);
+    }, [stories.length]);
+    const story = stories[at % Math.max(1, stories.length)];
+    return (
+        <section className={`ps-frame ps-widget widget-top-story${tiny ? ' is-tiny' : ''}`} data-border={border} aria-label={definition.title}>
+            <div className="ps-frame__panel">
+                {!story ? (state.loading ? <div className="widget-top-story__wait" /> : <NoNews definition={definition} />) : <>
+                    {stories.map((item, index) => <img key={item.id} className={`widget-top-story__picture${index === at ? ' is-shown' : ''}`} src={item.image!} alt="" loading="lazy" />)}
+                    <a className="widget-top-story__text" href={story.url} key={story.id}>
+                        <small>{story.topicName}<span>{story.sourceName}</span></small>
+                        <strong>{story.title}</strong>
+                        {!tiny && <time dateTime={story.time}>{relativeTime(story.time)}</time>}
+                    </a>
+                    {stories.length > 1 && !tiny && (
+                        <span className="widget-top-story__dots">{stories.map((item, index) => (
+                            <button key={item.id} type="button" className={index === at ? 'is-active' : undefined} onClick={() => setAt(index)} aria-label={item.title} />
+                        ))}</span>
+                    )}
+                </>}
+                <span className="widget-corner"><ExpandButton href="/news" /></span>
+            </div>
+        </section>
+    );
+}
+
+/** A few stories side by side, as many as fit, each with its picture. */
+export function NewsStripWidget({ definition }: { definition: WidgetDefinition }) {
+    const state = useNews(definition, 12);
+    const height = useHeight(definition);
+    const { w } = useSize(definition);
+    const count = Math.max(1, Math.min(6, Math.floor(w / 2)));
+    return (
+        <WidgetFrame definition={definition} expand="/news">
+            <Body state={state} height={height}>{({ stories }) => {
+                const shown = stories.filter((story) => story.image).slice(0, count);
+                if (shown.length === 0) return <NoNews definition={definition} />;
+                return (
+                    <div className="widget-strip" style={{ '--count': shown.length } as CSSProperties}>
+                        {shown.map((story, index) => (
+                            <a key={story.id} href={story.url} className={`widget-strip__story${index === 0 ? ' is-first' : ''}${index === shown.length - 1 ? ' is-last' : ''}`}>
+                                <span className="widget-strip__picture"><img src={story.image!} alt="" loading="lazy" /></span>
+                                <span className="widget-strip__text"><small>{story.sourceName}, {relativeTime(story.time)}</small><strong>{story.title}</strong></span>
+                            </a>
+                        ))}
+                    </div>
+                );
+            }}</Body>
         </WidgetFrame>
     );
 }
@@ -302,6 +402,7 @@ function monthStart(): Date {
 export function CalendarWidget({ definition }: { definition: WidgetDefinition }) {
     const view = useSetting<string>(definition, 'view') ?? 'list';
     const height = useHeight(definition);
+    const { tiny } = useSize(definition);
     const [limit, more] = usePaging();
     const month = view === 'month';
     const query = useMemo(() => (month ? { from: isoDay(monthStart()), days: 42, limit: 200 } : { limit }), [month, limit]);
@@ -312,6 +413,17 @@ export function CalendarWidget({ definition }: { definition: WidgetDefinition })
                 if (!data.connected) return <NotConnected />;
                 if (data.error) return <Fill icon="bx-error-circle">{data.error}</Fill>;
                 const events = data.events ?? [];
+                if (tiny) {
+                    const now = new Date();
+                    const next = events.find((event) => new Date(event.end || event.start).getTime() >= now.getTime());
+                    return (
+                        <a className="widget-today" href={CALENDAR_URL}>
+                            <span className="widget-today__day">{now.toLocaleDateString(locale, { weekday: 'short' })}</span>
+                            <strong className="widget-today__date">{now.getDate()}</strong>
+                            {next && <span className="widget-today__next">{next.allDay ? '' : `${new Date(next.start).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })} `}{next.title}</span>}
+                        </a>
+                    );
+                }
                 if (month) return <MonthGrid events={events} height={height} />;
                 return <List height={height} more={{ href: CALENDAR_URL }} empty={t('Nothing planned.')} onEnd={() => more(events.length)} rows={events.map((event, index) => {
                     const start = new Date(event.start);
@@ -418,7 +530,7 @@ type ExtData = {
 export function ExtensionWidget({ definition }: { definition: WidgetDefinition }) {
     const [limit, more] = usePaging();
     const state = useWidgetData<ExtData>(definition.extension, definition.id, 120, { limit });
-    const item = useContext(WidgetItem);
+    const { w } = useSize(definition);
     const height = useHeight(definition);
     const link = state.data?.more;
     return (
@@ -427,7 +539,7 @@ export function ExtensionWidget({ definition }: { definition: WidgetDefinition }
                 if (data.type === 'gallery' && data.images && data.images.length > 0) {
                     const rows = { short: 1, normal: 2, tall: 3 }[height];
                     // As many columns as the width allows, but never more than the photos can fill.
-                    const columns = Math.max(1, Math.min(PHOTO_COLUMNS[item?.size ?? definition.default] ?? 4, Math.floor(data.images.length / rows) || 1));
+                    const columns = Math.max(1, Math.min(Math.round(w * 0.66), Math.floor(data.images.length / rows) || 1));
                     const shown = data.images.slice(0, rows * columns);
                     return (
                         <div className="widget-gallery" style={{ '--rows': rows, '--columns': columns } as CSSProperties}>
@@ -454,6 +566,8 @@ export const WIDGETS: Record<string, (props: { definition: WidgetDefinition }) =
     'core.greeting': GreetingWidget,
     'core.pi-health': PiHealthWidget,
     'core.news': NewsWidget,
+    'core.news-top': TopStoryWidget,
+    'core.news-strip': NewsStripWidget,
     'core.weather': WeatherWidget,
     'core.forecast': ForecastWidget,
     'core.radar': RadarWidget,

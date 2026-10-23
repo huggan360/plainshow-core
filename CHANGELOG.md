@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.9.0
+
+- Design studio rebuilt: the dashboard itself at full size, with a bar on top: Desktop or Phone, the widgets in menus by kind (Dashboard, News, Weather, then each service), and for admins the dashboard being edited (yours, or a role's default). No light and dark switch and no text; the design tokens are behind the palette button.
+- Free sizing: drag any edge of a widget (the orange bars on hover) to size it on a grid of twelve columns and rows of one unit. It snaps to the grid, never smaller than the widget allows, never wider than the page, and stops at its neighbours instead of pushing them. Drag a widget to move it.
+- Phone layout: the phone follows the desktop (top to bottom, in one column) until you change it on the phone; then it is its own, and changing the desktop no longer changes it. "Follow desktop" makes it follow again. A phone can only change its own layout.
+- Small widgets: at two or three columns and rows a widget has no title and shows only what matters: the clock, the temperature, the services as four icons, today and the next event, or the top story.
+- News widgets: Headlines (a list, with or without pictures), Top story (the biggest stories over their pictures, turning every few seconds) and News strip (stories side by side). Each can show the top or the local edition, and a section.
+- The system's own dashboard is now a greeting beside the weather, with the services and the top story under them.
+- News: the headlines beside a section are rows like the widgets', as many as fit beside the feature, ending in a row to the section. The reader puts the article on a page of its own, with the source and links on the left and more to read on the right.
+
 ## v1.8.0
 
 - News: the big title is gone; a bar of sections under the date (Front page, then your topics in your order) opens a topic as its own page, with a line that slides to the open one. Section headings on the front page open their section too.

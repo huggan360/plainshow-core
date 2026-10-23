@@ -159,7 +159,11 @@
                 }
             ],
             "height": "short",
-            "border": "orange"
+            "border": "orange",
+            "min": [
+                3,
+                2
+            ]
         },
         {
             "id": "pi-health",
@@ -211,7 +215,7 @@
         },
         {
             "id": "news",
-            "title": "News",
+            "title": "Headlines",
             "icon": "bx-news",
             "sizes": [
                 "m",
@@ -220,13 +224,220 @@
             ],
             "default": "m",
             "height": "normal",
-            "description": "The latest headlines from your news sources.",
+            "description": "The latest headlines, with or without pictures.",
             "settings": [
+                {
+                    "name": "edition",
+                    "type": "select",
+                    "label": "Edition",
+                    "options": [
+                        {
+                            "value": "top",
+                            "label": "Top news"
+                        },
+                        {
+                            "value": "local",
+                            "label": "Local"
+                        }
+                    ],
+                    "default": "top"
+                },
+                {
+                    "name": "topic",
+                    "type": "select",
+                    "label": "Section",
+                    "options": [
+                        {
+                            "value": "all",
+                            "label": "Front page"
+                        },
+                        {
+                            "value": "sweden",
+                            "label": "Sweden"
+                        },
+                        {
+                            "value": "world",
+                            "label": "World"
+                        },
+                        {
+                            "value": "business",
+                            "label": "Business"
+                        },
+                        {
+                            "value": "sport",
+                            "label": "Sport"
+                        },
+                        {
+                            "value": "culture",
+                            "label": "Culture"
+                        },
+                        {
+                            "value": "science",
+                            "label": "Science"
+                        },
+                        {
+                            "value": "tech",
+                            "label": "Technology"
+                        }
+                    ],
+                    "default": "all"
+                },
                 {
                     "name": "pictures",
                     "type": "toggle",
                     "label": "Pictures",
                     "default": true
+                }
+            ]
+        },
+        {
+            "id": "news-top",
+            "title": "Top story",
+            "icon": "bx-news",
+            "sizes": [
+                "s",
+                "m",
+                "l",
+                "xl"
+            ],
+            "default": "m",
+            "height": "short",
+            "description": "The biggest story right now, over its picture.",
+            "min": [
+                2,
+                2
+            ],
+            "settings": [
+                {
+                    "name": "edition",
+                    "type": "select",
+                    "label": "Edition",
+                    "options": [
+                        {
+                            "value": "top",
+                            "label": "Top news"
+                        },
+                        {
+                            "value": "local",
+                            "label": "Local"
+                        }
+                    ],
+                    "default": "top"
+                },
+                {
+                    "name": "topic",
+                    "type": "select",
+                    "label": "Section",
+                    "options": [
+                        {
+                            "value": "all",
+                            "label": "Front page"
+                        },
+                        {
+                            "value": "sweden",
+                            "label": "Sweden"
+                        },
+                        {
+                            "value": "world",
+                            "label": "World"
+                        },
+                        {
+                            "value": "business",
+                            "label": "Business"
+                        },
+                        {
+                            "value": "sport",
+                            "label": "Sport"
+                        },
+                        {
+                            "value": "culture",
+                            "label": "Culture"
+                        },
+                        {
+                            "value": "science",
+                            "label": "Science"
+                        },
+                        {
+                            "value": "tech",
+                            "label": "Technology"
+                        }
+                    ],
+                    "default": "all"
+                }
+            ]
+        },
+        {
+            "id": "news-strip",
+            "title": "News strip",
+            "icon": "bx-columns",
+            "sizes": [
+                "l",
+                "xl",
+                "full"
+            ],
+            "default": "xl",
+            "height": "short",
+            "description": "A few stories side by side, with their pictures.",
+            "min": [
+                4,
+                2
+            ],
+            "settings": [
+                {
+                    "name": "edition",
+                    "type": "select",
+                    "label": "Edition",
+                    "options": [
+                        {
+                            "value": "top",
+                            "label": "Top news"
+                        },
+                        {
+                            "value": "local",
+                            "label": "Local"
+                        }
+                    ],
+                    "default": "top"
+                },
+                {
+                    "name": "topic",
+                    "type": "select",
+                    "label": "Section",
+                    "options": [
+                        {
+                            "value": "all",
+                            "label": "Front page"
+                        },
+                        {
+                            "value": "sweden",
+                            "label": "Sweden"
+                        },
+                        {
+                            "value": "world",
+                            "label": "World"
+                        },
+                        {
+                            "value": "business",
+                            "label": "Business"
+                        },
+                        {
+                            "value": "sport",
+                            "label": "Sport"
+                        },
+                        {
+                            "value": "culture",
+                            "label": "Culture"
+                        },
+                        {
+                            "value": "science",
+                            "label": "Science"
+                        },
+                        {
+                            "value": "tech",
+                            "label": "Technology"
+                        }
+                    ],
+                    "default": "all"
                 }
             ]
         },

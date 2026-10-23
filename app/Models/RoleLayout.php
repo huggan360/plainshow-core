@@ -18,6 +18,6 @@ class RoleLayout extends Model
 
     protected function casts(): array
     {
-        return ['widgets' => 'array'];
+        return ['widgets' => 'array', 'phone' => 'array'];
     }
 }

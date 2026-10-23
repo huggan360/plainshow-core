@@ -1,6 +1,6 @@
 import AppShell from '@/Layouts/AppShell';
 import { relativeTime } from '@/Components/ui';
-import { CSSProperties, ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, ReactNode, Ref, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { t, locale } from '@/i18n';
 import { expanding, settleExpand } from '@/Widgets/expand';
 import { Place, PlaceSearch, send } from '@/Widgets/weatherKit';
@@ -201,8 +201,8 @@ function Picture({ story, className = '' }: { story: Story; className?: string }
     if (!story.image || broken) return <span className={`nwa-picture nwa-picture--none ${className}`} aria-hidden="true"><i className="bx bx-news" /></span>;
     return <span className={`nwa-picture ${className}`}><img src={story.image} alt="" loading="lazy" onError={() => setBroken(true)} /></span>;
 }
-function Open({ story, onRead, children, className }: { story: Story; onRead: (story: Story) => void; children: ReactNode; className: string }) {
-    return <a href={story.url} className={className} onClick={(event) => { if (event.metaKey || event.ctrlKey) return; event.preventDefault(); onRead(story); }}>{children}</a>;
+function Open({ story, onRead, children, className, ref }: { story: Story; onRead: (story: Story) => void; children: ReactNode; className: string; ref?: Ref<HTMLAnchorElement> }) {
+    return <a ref={ref} href={story.url} className={className} onClick={(event) => { if (event.metaKey || event.ctrlKey) return; event.preventDefault(); onRead(story); }}>{children}</a>;
 }
 
 /** The top of a page: the lead and the next stories beside it, and optionally the latest. */
@@ -281,16 +281,47 @@ function Edition({ stories, title, onRead }: { stories: Story[]; title: string; 
     );
 }
 
-/** A topic: one feature with its picture, and a column of headlines beside it. */
+/**
+ * A topic: one feature with its picture, and beside it a column of headlines
+ * in rows like the widgets' (rounder at the top and bottom). The column is as
+ * tall as the feature: as many headlines as fit, then a row to the section.
+ */
 function Section({ title, stories, onRead, onOpen }: { title: string; stories: Story[]; onRead: (story: Story) => void; onOpen?: () => void }) {
     const [feature, ...rest] = stories;
+    const featureRef = useRef<HTMLAnchorElement>(null);
+    const linesRef = useRef<HTMLUListElement>(null);
+    const [fit, setFit] = useState(rest.length);
+    useLayoutEffect(() => {
+        const measure = () => {
+            const column = linesRef.current;
+            const lead = featureRef.current;
+            if (!column || !lead) return;
+            // One column on narrow screens: four headlines, then the row to the section.
+            if (window.innerWidth <= 991) { setFit(Math.min(rest.length, 4)); return; }
+            const room = lead.offsetHeight;
+            const rows = Array.from(column.children) as HTMLElement[];
+            let used = onOpen ? 52 : 0; // the "more" row
+            let count = 0;
+            for (const row of rows) {
+                if (row.dataset.more) continue;
+                used += row.offsetHeight + 3;
+                if (used > room) break;
+                count++;
+            }
+            setFit(Math.max(2, count));
+        };
+        measure();
+        const observer = new ResizeObserver(measure);
+        if (featureRef.current) observer.observe(featureRef.current);
+        return () => observer.disconnect();
+    }, [rest.length, onOpen]);
     return (
         <section className="nwa-section">
             <h2 className="nwa-section__title">
                 {onOpen ? <button type="button" onClick={onOpen}>{title}<i className="bx bx-chevron-right" aria-hidden="true" /></button> : title}
             </h2>
             <div className="nwa-section__body">
-                <Open story={feature} onRead={onRead} className="nwa-feature">
+                <Open story={feature} onRead={onRead} className="nwa-feature" ref={featureRef}>
                     <Picture story={feature} className="nwa-feature__picture" />
                     <span className="nwa-feature__text">
                         <Kicker story={feature} />
@@ -299,13 +330,15 @@ function Section({ title, stories, onRead, onOpen }: { title: string; stories: S
                         <When story={feature} />
                     </span>
                 </Open>
-                <ul className="nwa-lines">
-                    {rest.map((story) => (
-                        <li key={story.id}><Open story={story} onRead={onRead} className="nwa-line">
+                <ul className="nwa-lines" ref={linesRef}>
+                    {/* Every headline is measured; only those that fit are shown. */}
+                    {rest.map((story, index) => (
+                        <li key={story.id} className={index < fit ? undefined : 'is-hidden'} aria-hidden={index >= fit || undefined}><Open story={story} onRead={onRead} className="nwa-line">
                             <strong>{story.title}</strong>
                             <span className="nwa-line__meta">{story.sourceName}, <When story={story} /></span>
                         </Open></li>
                     ))}
+                    {onOpen && <li data-more="1"><button type="button" className="nwa-line nwa-line--more" onClick={onOpen}>{t('More in {topic}', { topic: title })}<i className="bx bx-right-arrow-alt" aria-hidden="true" /></button></li>}
                 </ul>
             </div>
         </section>
@@ -367,45 +400,75 @@ function Reader({ reading, stories, onRead, onClose }: { reading: Reading; stori
         return () => { alive = false; };
     }, [story?.id, story?.full]);
 
-    const more = story ? stories.filter((other) => other.topic === story.topic && other.id !== story.id).slice(0, 4) : [];
+    const more = story ? stories.filter((other) => other.topic === story.topic && other.id !== story.id).slice(0, 5) : [];
+    const latest = [...stories].sort((x, y) => y.time.localeCompare(x.time)).filter((other) => other.id !== story?.id && !more.includes(other)).slice(0, 6);
     const title = story?.title ?? alert!.title;
     const time = story?.time ?? alert!.time;
+    const [copied, setCopied] = useState(false);
+    const link = story?.url ?? alert?.url ?? '';
+    const copy = () => { navigator.clipboard?.writeText(link).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1600); }).catch(() => undefined); };
     return (
         <div className="nwa-reader" role="dialog" aria-modal="true" aria-label={title}>
-            <article ref={page} className="nwa-reader__page" key={story?.id ?? alert!.id}>
-                <button type="button" className="nwa-reader__back" onClick={onClose}><i className="bx bx-arrow-back" aria-hidden="true" />{t('Back to the news')}</button>
-                {story ? <Kicker story={story} /> : <span className={`nwa-kicker nwa-kicker--${alert!.level}`}><span>{t(ALERT_LEVEL[alert!.level])}</span><span className="nwa-kicker__source">{alert!.source}</span></span>}
-                <h1 className="nwa-reader__title">{title}</h1>
-                <p className="nwa-reader__meta">{new Date(time).toLocaleString(locale, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}{alert?.area ? `, ${alert.area}` : ''}</p>
-                {story?.image && <Picture story={story} className="nwa-reader__picture" />}
-                {alert ? (
-                    <div className="nwa-reader__text">{(alert.body.length ? alert.body : [alert.summary]).map((line, at) => <p key={at}>{line}</p>)}</div>
-                ) : parts === 'loading' ? (
-                    <div className="nwa-reader__loading" aria-busy="true">{story!.summary && <p className="nwa-reader__lede">{story!.summary}</p>}<span /><span /><span /></div>
-                ) : parts ? (
-                    <div className="nwa-reader__text">{parts.map((part, at) => part.type === 'heading' ? <h2 key={at}>{part.text}</h2> : <p key={at} className={at === 0 ? 'nwa-reader__lede' : undefined}>{part.text}</p>)}</div>
-                ) : (
-                    <div className="nwa-reader__text"><p className="nwa-reader__lede">{story!.summary || t('{source} gives only the headline for this story.', { source: story!.sourceName })}</p></div>
-                )}
-                {(story || alert?.url) && (
-                    <a className="nwa-button nwa-button--primary" href={story?.url ?? alert!.url!} target="_blank" rel="noopener noreferrer">
-                        {story ? (parts && parts !== 'loading' ? t('Open at {source}', { source: story.sourceName }) : t('Read the whole story at {source}', { source: story.sourceName })) : t('More at {source}', { source: alert!.source })}
-                        <i className="bx bx-link-external" aria-hidden="true" />
-                    </a>
-                )}
-                {more.length > 0 && (
-                    <section className="nwa-reader__more">
+            <div className="nwa-reader__layout" key={story?.id ?? alert!.id}>
+                {/* Left: where it is from, and what to do with it. */}
+                <aside className="nwa-reader__side nwa-reader__side--left">
+                    <button type="button" className="nwa-reader__back" onClick={onClose}><i className="bx bx-arrow-back" aria-hidden="true" />{t('Back to the news')}</button>
+                    <div className="nwa-reader__facts">
+                        <span><small>{t('Source')}</small><strong>{story?.sourceName ?? alert!.source}</strong></span>
+                        <span><small>{story ? t('Section') : t('Area')}</small><strong>{story?.topicName ?? (alert!.area || t('Sweden'))}</strong></span>
+                        <span><small>{t('Published')}</small><strong>{relativeTime(time)}</strong></span>
+                    </div>
+                    {link && <div className="nwa-reader__actions">
+                        <a className="nwa-button" href={link} target="_blank" rel="noopener noreferrer"><i className="bx bx-link-external" aria-hidden="true" />{t('Open the original')}</a>
+                        <button type="button" className="nwa-button" onClick={copy}><i className={`bx ${copied ? 'bx-check' : 'bx-copy'}`} aria-hidden="true" />{copied ? t('Copied') : t('Copy the link')}</button>
+                    </div>}
+                </aside>
+
+                {/* The article, on its own page. */}
+                <article ref={page} className="nwa-reader__page">
+                    {story ? <Kicker story={story} /> : <span className={`nwa-kicker nwa-kicker--${alert!.level}`}><span>{t(ALERT_LEVEL[alert!.level])}</span><span className="nwa-kicker__source">{alert!.source}</span></span>}
+                    <h1 className="nwa-reader__title">{title}</h1>
+                    <p className="nwa-reader__meta">{new Date(time).toLocaleString(locale, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}{alert?.area ? `, ${alert.area}` : ''}</p>
+                    {story?.image && <Picture story={story} className="nwa-reader__picture" />}
+                    {alert ? (
+                        <div className="nwa-reader__text">{(alert.body.length ? alert.body : [alert.summary]).map((line, at) => <p key={at}>{line}</p>)}</div>
+                    ) : parts === 'loading' ? (
+                        <div className="nwa-reader__loading" aria-busy="true">{story!.summary && <p className="nwa-reader__lede">{story!.summary}</p>}<span /><span /><span /></div>
+                    ) : parts ? (
+                        <div className="nwa-reader__text">{parts.map((part, at) => part.type === 'heading' ? <h2 key={at}>{part.text}</h2> : <p key={at} className={at === 0 ? 'nwa-reader__lede' : undefined}>{part.text}</p>)}</div>
+                    ) : (
+                        <div className="nwa-reader__text"><p className="nwa-reader__lede">{story!.summary || t('{source} gives only the headline for this story.', { source: story!.sourceName })}</p></div>
+                    )}
+                    {link && (
+                        <a className="nwa-button nwa-button--primary nwa-reader__whole" href={link} target="_blank" rel="noopener noreferrer">
+                            {story ? (parts && parts !== 'loading' ? t('Open at {source}', { source: story.sourceName }) : t('Read the whole story at {source}', { source: story.sourceName })) : t('More at {source}', { source: alert!.source })}
+                            <i className="bx bx-link-external" aria-hidden="true" />
+                        </a>
+                    )}
+                </article>
+
+                {/* Right: more on the same subject, and the latest. */}
+                <aside className="nwa-reader__side nwa-reader__side--right">
+                    {more.length > 0 && <section className="nwa-reader__more">
                         <h2 className="nwa-label">{t('More in {topic}', { topic: story!.topicName })}</h2>
-                        {more.map((other) => (
-                            <button key={other.id} type="button" className="nwa-reader__other" onClick={() => onRead(other)}>
-                                <Picture story={other} className="nwa-reader__thumb" />
-                                <span><strong>{other.title}</strong><small>{other.sourceName}, {relativeTime(other.time)}</small></span>
-                            </button>
-                        ))}
-                    </section>
-                )}
-            </article>
+                        {more.map((other) => <ReaderLink key={other.id} story={other} onRead={onRead} />)}
+                    </section>}
+                    {latest.length > 0 && <section className="nwa-reader__more">
+                        <h2 className="nwa-label">{t('Latest')}</h2>
+                        {latest.map((other) => <ReaderLink key={other.id} story={other} onRead={onRead} />)}
+                    </section>}
+                </aside>
+            </div>
         </div>
+    );
+}
+
+function ReaderLink({ story, onRead }: { story: Story; onRead: (story: Story) => void }) {
+    return (
+        <button type="button" className="nwa-reader__other" onClick={() => onRead(story)}>
+            <Picture story={story} className="nwa-reader__thumb" />
+            <span><strong>{story.title}</strong><small>{story.sourceName}, {relativeTime(story.time)}</small></span>
+        </button>
     );
 }
 

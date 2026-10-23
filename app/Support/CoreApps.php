@@ -15,7 +15,7 @@ class CoreApps
     public static function for(User $user): array
     {
         $apps = [
-            ['id' => 'news', 'name' => __('News'), 'icon' => 'bx-news', 'url' => '/news', 'widgets' => ['core.news']],
+            ['id' => 'news', 'name' => __('News'), 'icon' => 'bx-news', 'url' => '/news', 'widgets' => ['core.news', 'core.news-top', 'core.news-strip']],
             ['id' => 'weather', 'name' => __('Weather'), 'icon' => 'bx-cloud-light-rain', 'url' => '/weather', 'widgets' => ['core.weather', 'core.forecast', 'core.radar']],
         ];
 

@@ -13,15 +13,18 @@ use Throwable;
 /** Data for core's own widgets. Each method returns a JSON-ready array. */
 class CoreWidgets
 {
-    public static function data(string $widget, User $user, ?int $limit = null): ?array
+    /** $options: what a widget asks for besides how many (News: topic and edition). */
+    public static function data(string $widget, User $user, ?int $limit = null, array $options = []): ?array
     {
         $limit ??= 12;
+        $topic = in_array($options['topic'] ?? null, News::TOPICS, true) ? $options['topic'] : null;
+        $edition = ($options['edition'] ?? 'top') === 'local' ? 'local' : 'top';
 
         return match ($widget) {
             'greeting' => self::greeting($user),
             'pi-health' => ['system' => SystemStats::snapshot(), 'detailed' => Permissions::can($user, 'core.system.view')],
             'launcher' => ['apps' => self::apps($user)],
-            'news' => ['stories' => News::stories($user, 'top', '', $limit)],
+            'news', 'news-top', 'news-strip' => ['stories' => News::stories($user, $edition, '', $widget === 'news-top' ? max(6, $limit) : $limit, $topic)],
             'activity' => ['events' => self::events(AuditEvent::where('user_id', $user->id), $limit)],
             'admin-users' => self::users($limit),
             'admin-services' => ['services' => self::services()],
