@@ -612,12 +612,14 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .wx-sky--dawn .wx-sky__sun, .wx-sky--dusk .wx-sky__sun { top: auto; bottom: -90px; right: 18%; background: radial-gradient(circle, #fff1c9 0 16%, #ffb067 28%, rgba(255, 120, 70, .45) 46%, transparent 70%); }
 .wx-sky__moon { top: 22px; right: 28px; width: 46px; height: 46px; border-radius: 50%; background: transparent; box-shadow: 10px -6px 0 0 #f1ecd9; filter: drop-shadow(0 0 14px rgba(241, 236, 217, .35)); }
 .wx-sky__stars { inset: 0; background-image: radial-gradient(1.2px 1.2px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 28% 62%, #fff, transparent), radial-gradient(1.4px 1.4px at 46% 30%, #fff, transparent), radial-gradient(1px 1px at 63% 12%, #fff, transparent), radial-gradient(1.2px 1.2px at 78% 48%, #fff, transparent), radial-gradient(1px 1px at 88% 78%, #fff, transparent), radial-gradient(1px 1px at 8% 82%, #fff, transparent), radial-gradient(1.3px 1.3px at 55% 86%, #fff, transparent), radial-gradient(1px 1px at 36% 8%, #fff, transparent), radial-gradient(1px 1px at 94% 26%, #fff, transparent); opacity: .8; animation: wx-twinkle 5s ease-in-out infinite alternate; }
-.wx-sky__cloud { width: 240px; height: 80px; border-radius: 999px; background: rgba(255, 255, 255, .5); filter: blur(14px); animation: wx-drift 38s linear infinite; }
-.wx-sky__cloud--a { top: 12%; left: -30%; }
-.wx-sky__cloud--b { top: 34%; left: -50%; width: 320px; opacity: .7; animation-duration: 52s; animation-delay: -18s; }
-.wx-sky__cloud--c { top: 2%; left: -40%; width: 380px; height: 110px; opacity: .55; animation-duration: 64s; animation-delay: -40s; }
-.wx-sky--night .wx-sky__cloud { background: rgba(160, 170, 196, .28); }
-.wx-sky--rain .wx-sky__cloud, .wx-sky--thunder .wx-sky__cloud { background: rgba(200, 208, 220, .32); }
+/* Clouds are soft puffs drawn with gradients (no blur filter to redo on every frame), each cloud its own shape. */
+.wx-sky__cloud { --cloud: rgba(255, 255, 255, .42); --puff: radial-gradient(closest-side, var(--cloud) 35%, transparent); top: 12%; left: -30%; width: 300px; height: 120px; animation: wx-drift 38s linear infinite; will-change: transform; }
+.wx-sky__cloud--a { background: var(--puff) 0 80% / 38% 62%, var(--puff) 24% 30% / 40% 90%, var(--puff) 56% 0 / 44% 100%, var(--puff) 84% 45% / 34% 72%, var(--puff) 100% 90% / 34% 50%, var(--puff) 50% 100% / 92% 46%; background-repeat: no-repeat; }
+.wx-sky__cloud--b { top: 34%; left: -50%; width: 420px; height: 96px; opacity: .7; animation-duration: 52s; animation-delay: -18s; background: var(--puff) 0 70% / 28% 66%, var(--puff) 20% 25% / 32% 90%, var(--puff) 46% 55% / 30% 80%, var(--puff) 70% 10% / 34% 100%, var(--puff) 100% 65% / 30% 70%, var(--puff) 50% 100% / 100% 50%; background-repeat: no-repeat; }
+.wx-sky__cloud--c { top: 3%; left: -40%; width: 230px; height: 110px; opacity: .6; animation-duration: 64s; animation-delay: -40s; background: var(--puff) 8% 75% / 48% 66%, var(--puff) 50% 0 / 56% 100%, var(--puff) 92% 65% / 46% 74%; background-repeat: no-repeat; }
+.wx-sky__cloud--d { top: 22%; left: -60%; width: 380px; height: 80px; opacity: .45; animation-duration: 46s; animation-delay: -26s; background: var(--puff) 0 60% / 46% 80%, var(--puff) 45% 30% / 50% 100%, var(--puff) 100% 70% / 44% 76%; background-repeat: no-repeat; }
+.wx-sky--night .wx-sky__cloud { --cloud: rgba(160, 170, 196, .24); }
+.wx-sky--rain .wx-sky__cloud, .wx-sky--thunder .wx-sky__cloud { --cloud: rgba(200, 208, 220, .28); }
 .wx-sky { container-type: size; }
 /* Rain: single drops, slanted, each at its own speed; nearer drops are longer, brighter and faster. */
 .wx-drop { position: absolute; top: 0; left: var(--x); z-index: 1; width: 1.5px; height: var(--len); border-radius: 1px; background: linear-gradient(transparent, rgba(225, 236, 255, var(--alpha))); transform: translate3d(0, -40px, 0) rotate(14deg); animation: wx-fall var(--speed) linear var(--delay) infinite; pointer-events: none; }
@@ -626,7 +628,7 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .wx-flake { position: absolute; top: 0; left: var(--x); z-index: 1; width: var(--size); height: var(--size); border-radius: 50%; background: rgba(255, 255, 255, var(--alpha)); transform: translate3d(0, -12px, 0); animation: wx-flake var(--speed) linear var(--delay) infinite; pointer-events: none; }
 @keyframes wx-flake { 25% { transform: translate3d(10px, 25cqh, 0); } 50% { transform: translate3d(-6px, 50cqh, 0); } 75% { transform: translate3d(8px, 75cqh, 0); } to { transform: translate3d(-4px, calc(100cqh + 12px), 0); } }
 .wx-sky__flash { inset: 0; background: rgba(255, 255, 255, .7); opacity: 0; animation: wx-flash 9s ease-out infinite; }
-.wx-sky__fog { left: -20%; right: -20%; height: 34%; top: 38%; background: linear-gradient(90deg, transparent, rgba(235, 238, 242, .55), transparent); filter: blur(10px); animation: wx-fog 22s ease-in-out infinite alternate; }
+.wx-sky__fog { left: -20%; right: -20%; height: 34%; top: 38%; background: linear-gradient(90deg, transparent, rgba(235, 238, 242, .55), transparent); -webkit-mask-image: linear-gradient(transparent, #000 20px, #000 calc(100% - 20px), transparent); mask-image: linear-gradient(transparent, #000 20px, #000 calc(100% - 20px), transparent); animation: wx-fog 22s ease-in-out infinite alternate; }
 .wx-sky__fog--b { top: 64%; opacity: .7; animation-duration: 30s; animation-direction: alternate-reverse; }
 @keyframes wx-glow { to { transform: scale(1.06); opacity: .9; } }
 @keyframes wx-twinkle { to { opacity: .45; } }
@@ -634,6 +636,11 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 @keyframes wx-flash { 0%, 90%, 94%, 100% { opacity: 0; } 91%, 95% { opacity: .55; } }
 @keyframes wx-fog { to { transform: translateX(12%); } }
 @media (prefers-reduced-motion: reduce) { .wx-sky > span, .wx-drop, .wx-flake { animation: none !important; } .wx-drop { transform: translate3d(0, 40cqh, 0) rotate(14deg); } }
+/* The sky stops while the radar covers it. */
+.wxa-frame.is-radar .wxa__skies { display: none; }
+/* The weather icons: our own drawings, sized by the font size like the icon font. */
+.wx-icon { display: inline-block; flex: none; width: 1.1em; height: 1.1em; line-height: 1; vertical-align: -.2em; font-style: normal; }
+.wx-icon svg { display: block; width: 100%; height: 100%; overflow: visible; }
 
 .wx { position: relative; display: flex; flex: 1; flex-direction: column; gap: 10px; min-height: 0; padding: 20px; color: #fff; text-shadow: 0 1px 12px rgba(0, 0, 0, .25); }
 .wx-wait, .widget-radar__wait { flex: 1; display: grid; place-items: center; font-size: 1.6rem; opacity: .8; }
@@ -702,8 +709,7 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .radar__world { position: absolute; inset: 0; will-change: transform; }
 .radar__tile { position: absolute; width: 256px; height: 256px; max-width: none; user-select: none; pointer-events: none; }
 .radar__layer, .radar__labels { position: absolute; inset: 0; transition: opacity .25s ease; }
-.radar__rain { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(3px); transition: opacity .2s ease; }
-.radar__layer .radar__tile { filter: blur(2px); }
+.radar__rain { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity .2s ease; }
 .radar__labels { opacity: .9; }
 .radar__you { position: absolute; z-index: 2; width: 20px; height: 20px; margin: -10px 0 0 -10px; border: 3px solid #fff; border-radius: 50%; background: var(--ps-accent); box-shadow: 0 2px 8px rgba(0, 0, 0, .35); pointer-events: none; }
 .radar__bar { position: absolute; top: 14px; left: 14px; right: 14px; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 8px; pointer-events: none; }
@@ -826,7 +832,6 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .wxa-map { position: absolute; top: -40px; right: -28px; bottom: -20px; width: 62%; overflow: hidden; opacity: .5; mix-blend-mode: soft-light; pointer-events: none;
     -webkit-mask-image: radial-gradient(ellipse 60% 70% at 55% 50%, #000 25%, transparent 75%); mask-image: radial-gradient(ellipse 60% 70% at 55% 50%, #000 25%, transparent 75%); }
 .wxa-map img { position: absolute; width: 256px; height: 256px; max-width: none; filter: grayscale(1) contrast(1.15); }
-.wxa-map__pin { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border: 2px solid #fff; border-radius: 50%; background: #fff; }
 
 /* The coming hours, a step at a time. */
 .wxa-line { display: flex; align-items: stretch; gap: 6px; }
@@ -1115,10 +1120,11 @@ a.widget-row--more:hover { color: var(--ps-accent-text); }
 .nwa-backdrop--morning { background: linear-gradient(160deg, #1b2440 0%, #3b3552 55%, #7d5a5a 100%); }
 .nwa-backdrop--evening { background: linear-gradient(160deg, #1a1530 0%, #3a2140 55%, #6b3340 100%); }
 .nwa-backdrop--night { background: linear-gradient(160deg, #070a16 0%, #111a33 60%, #1c2547 100%); }
-.nwa-backdrop span { position: absolute; width: 46vw; height: 46vw; max-width: 720px; max-height: 720px; border-radius: 50%; filter: blur(80px); opacity: .32; animation: nwa-drift 40s ease-in-out infinite alternate; }
-.nwa-backdrop span:nth-child(1) { top: -18%; right: -10%; background: #fc5000; }
-.nwa-backdrop span:nth-child(2) { bottom: -25%; left: -12%; background: #ffb057; opacity: .18; animation-duration: 52s; }
-.nwa-backdrop span:nth-child(3) { top: 30%; left: 35%; background: #4b6cff; opacity: .16; animation-duration: 64s; }
+.nwa-backdrop span { --glow: #fc5000; position: absolute; width: calc(46vw + 240px); height: calc(46vw + 240px); max-width: 960px; max-height: 960px; margin: -120px; border-radius: 50%; background: radial-gradient(closest-side, var(--glow) 40%, color-mix(in srgb, var(--glow) 50%, transparent) 75%, color-mix(in srgb, var(--glow) 15%, transparent) 90%, transparent); opacity: .32; animation: nwa-drift 40s ease-in-out infinite alternate; will-change: transform; }
+.nwa-backdrop span:nth-child(1) { top: -18%; right: -10%; }
+.nwa-backdrop span:nth-child(2) { --glow: #ffb057; bottom: -25%; left: -12%; opacity: .18; animation-duration: 52s; }
+.nwa-backdrop span:nth-child(3) { --glow: #4b6cff; top: 30%; left: 35%; opacity: .16; animation-duration: 64s; }
+.nwa-frame:has(.nwa-reader, .nwa-drawer, .nwa-setup) .nwa-backdrop span, body:has(.nwa-layer) .nwa-backdrop span { animation-play-state: paused; }
 @keyframes nwa-drift { to { transform: translate(-8%, 10%) scale(1.1); } }
 @media (prefers-reduced-motion: reduce) { .nwa-backdrop span { animation: none; } }
 

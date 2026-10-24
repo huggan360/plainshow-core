@@ -10,15 +10,29 @@ import { clock, esri, intensity, latLonAt, Place, RAIN_STOPS, rainColour, rainRa
  * strength on the map, and point at the rain to read how hard it falls.
  *
  * SMHI's frames are turned back into radar values once, then each frame is
- * drawn onto the map's own grid, blended between radar cells so the rain has
- * soft edges. RainViewer (outside SMHI's radar) comes as map tiles.
+ * drawn onto the map's own grid at full size, blended between radar cells so
+ * the rain has smooth but sharp edges. Where each screen pixel falls in the
+ * radar is worked out on a coarse grid and filled in between, and the colours
+ * come from a table, so a frame is quick to draw. RainViewer (outside SMHI's
+ * radar) comes as map tiles.
  */
 type Radar = {
     provider: 'smhi' | 'rainviewer'; providerName: string; maxZoom?: number;
     grid?: { x0: number; y0: number; cell: number; width: number; height: number };
     frames: { time: string; url: string }[];
 };
-const SCALE = 0.5;
+const SCALE = 1;
+/** Every how many pixels the map projection is worked out exactly; the pixels between are blended. */
+const STEP = 8;
+/** The rain colours for radar values in quarter steps, as RGBA words for a Uint32Array over ImageData. */
+const PALETTE = (() => {
+    const table = new Uint32Array(256 * 4);
+    for (let i = 0; i < table.length; i++) {
+        const [r, g, b, a] = rainColour(i / 4);
+        table[i] = ((Math.round(a) << 24) | (Math.round(b) << 16) | (Math.round(g) << 8) | Math.round(r)) >>> 0;
+    }
+    return table;
+})();
 
 export function RadarMap({ place, zoom: startZoom, interactive = false, onClose }: { place: Place; zoom: number; interactive?: boolean; onClose?: () => void }) {
     const [hours, setHours] = useState(2);
@@ -99,33 +113,51 @@ function RadarView({ place, radar, startZoom, interactive, hours, setHours, onCl
     const lookup = useMemo(() => {
         if (radar.provider !== 'smhi' || !radar.grid || !out.width || !out.height) return null;
         const grid = radar.grid;
+        // The projection exactly on a coarse grid...
+        const gw = Math.ceil(out.width / STEP) + 1, gh = Math.ceil(out.height / STEP) + 1;
+        const gcols = new Float32Array(gw * gh), grows = new Float32Array(gw * gh);
+        for (let gy = 0; gy < gh; gy++) {
+            for (let gx = 0; gx < gw; gx++) {
+                const [lat, lon] = latLonAt(left + (gx * STEP) / SCALE, top + (gy * STEP) / SCALE, zoom);
+                const [east, north] = utm33(lat, lon);
+                gcols[gy * gw + gx] = (east - grid.x0) / grid.cell - 0.5;
+                grows[gy * gw + gx] = (grid.y0 - north) / grid.cell - 0.5;
+            }
+        }
+        // ...and blended for the pixels between; the map bends far too gently for the difference to show.
         const cols = new Float32Array(out.width * out.height);
         const rows = new Float32Array(out.width * out.height);
         for (let y = 0; y < out.height; y++) {
+            const gy = Math.floor(y / STEP), fy = (y - gy * STEP) / STEP;
             for (let x = 0; x < out.width; x++) {
-                const [lat, lon] = latLonAt(left + x / SCALE, top + y / SCALE, zoom);
-                const [east, north] = utm33(lat, lon);
-                cols[y * out.width + x] = (east - grid.x0) / grid.cell - 0.5;
-                rows[y * out.width + x] = (grid.y0 - north) / grid.cell - 0.5;
+                const gx = Math.floor(x / STEP), fx = (x - gx * STEP) / STEP;
+                const a = gy * gw + gx, b = a + gw;
+                const i = y * out.width + x;
+                cols[i] = (gcols[a] * (1 - fx) + gcols[a + 1] * fx) * (1 - fy) + (gcols[b] * (1 - fx) + gcols[b + 1] * fx) * fy;
+                rows[i] = (grows[a] * (1 - fx) + grows[a + 1] * fx) * (1 - fy) + (grows[b] * (1 - fx) + grows[b + 1] * fx) * fy;
             }
         }
         return { cols, rows };
     }, [radar, left, top, zoom, out.width, out.height]);
 
-    // Draw the frame on screen.
+    // Draw the frame on screen, into one picture kept between frames.
+    const picture = useRef<ImageData | null>(null);
     useEffect(() => {
         const element = canvas.current;
         const values = levels[frame];
         if (!element || !lookup || !values || !radar.grid) return;
         const grid = radar.grid;
-        const image = new ImageData(out.width, out.height);
-        for (let i = 0; i < lookup.cols.length; i++) {
-            const value = sample(values, grid.width, grid.height, lookup.cols[i], lookup.rows[i]);
+        if (!picture.current || picture.current.width !== out.width || picture.current.height !== out.height) picture.current = new ImageData(out.width, out.height);
+        const image = picture.current;
+        const words = new Uint32Array(image.data.buffer);
+        words.fill(0);
+        const { cols, rows } = lookup;
+        for (let i = 0; i < cols.length; i++) {
+            const value = sample(values, grid.width, grid.height, cols[i], rows[i]);
             if (value < 2) continue;
-            const [r, g, b, a] = rainColour(value);
-            image.data[i * 4] = r; image.data[i * 4 + 1] = g; image.data[i * 4 + 2] = b; image.data[i * 4 + 3] = a;
+            words[i] = PALETTE[Math.min(PALETTE.length - 1, (value * 4) | 0)];
         }
-        element.width = out.width; element.height = out.height;
+        if (element.width !== out.width || element.height !== out.height) { element.width = out.width; element.height = out.height; }
         element.getContext('2d')!.putImageData(image, 0, 0);
     }, [levels, frame, lookup, out.width, out.height, radar.grid]);
 

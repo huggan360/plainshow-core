@@ -4,8 +4,8 @@ import { t, locale } from '@/i18n';
 import { expanding, settleExpand } from '@/Widgets/expand';
 import { RadarMap } from '@/Widgets/Radar';
 import {
-    clock, Day, dayName, degrees, esri, Forecast, Hour, hourLabel, icon, label, Phase, phaseOf, Place, PlaceSearch, placeUrl,
-    samePlace, send, Sky, tilesFor, useForecast, useJson, useSwipe, useTheme, Wind, worldPixel, Condition,
+    clock, Day, dayName, degrees, esri, Forecast, Hour, hourLabel, label, Phase, phaseOf, Place, PlaceSearch, placeUrl,
+    samePlace, send, Sky, tilesFor, useForecast, useJson, useSwipe, useTheme, WeatherIcon, Wind, worldPixel, Condition,
 } from '@/Widgets/weatherKit';
 
 type Warning = { id: string; level: 'yellow' | 'orange' | 'red'; event: string; title: string; text: string[]; areas: string[]; here: boolean; km: number; start: string | null; end: string | null };
@@ -68,7 +68,8 @@ export default function Weather({ home: startHome, saved: startSaved, initial }:
     // Swiping the top of the page goes to the next or previous of your places.
     const hero = useRef<HTMLDivElement>(null);
     const step = (by: number) => { if (list.length > 1) setPlace(list[((index < 0 ? 0 : index) + by + list.length) % list.length]); };
-    useSwipe(hero, () => step(1), () => step(-1));
+    // The hero is a new element for every place, so the swipe follows it.
+    useSwipe(hero, () => step(1), () => step(-1), place ? `${place.lat},${place.lon}` : null);
 
     const change = (request: Promise<Places>) => {
         setBusy(true);
@@ -122,7 +123,7 @@ export default function Weather({ home: startHome, saved: startSaved, initial }:
                                                 <div className="wxa-hero__wait">{error ? t('The weather service did not answer.') : <i className="bx bx-loader-alt bx-spin" aria-hidden="true" />}</div>
                                             ) : <>
                                                 <div className="wxa-hero__temp">{degrees(data.current.temp)}</div>
-                                                <p className="wxa-hero__condition"><i className={`bx ${icon(data.current.condition, data.current.isDay)}`} aria-hidden="true" />{label(data.current.condition)}</p>
+                                                <p className="wxa-hero__condition"><WeatherIcon condition={data.current.condition} day={data.current.isDay} />{label(data.current.condition)}</p>
                                                 {hereWarning && (
                                                     <button type="button" className={`wxa-warning-pill is-${hereWarning.level}`} onClick={() => warningsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
                                                         <i className="bx bxs-error" aria-hidden="true" />{t(WARNING_LEVEL[hereWarning.level])}: {hereWarning.event}
@@ -182,7 +183,7 @@ function Skies({ forecast, instant }: { forecast: Forecast | null; instant?: boo
     );
 }
 
-/** A quiet map of the place, fading into the sky on the right of the hero. */
+/** A quiet map of the place, without a marker, fading into the sky on the right of the hero. */
 function PlaceMap({ place }: { place: Place }) {
     const box = useRef<HTMLDivElement>(null);
     const theme = useTheme();
@@ -205,7 +206,6 @@ function PlaceMap({ place }: { place: Place }) {
         <div ref={box} className="wxa-map" aria-hidden="true">
             {tiles.map((tile) => <img key={`b${tile.key}`} src={esri('Base', theme, zoom, tile)} alt="" style={{ left: tile.x, top: tile.y }} />)}
             {tiles.map((tile) => <img key={`l${tile.key}`} src={esri('Reference', theme, zoom, tile)} alt="" style={{ left: tile.x, top: tile.y }} />)}
-            <span className="wxa-map__pin" style={{ left: size.width * 0.55, top: size.height * 0.5 }} />
         </div>
     );
 }
@@ -270,7 +270,7 @@ function Timeline({ hours }: { hours: Hour[] }) {
                 {hours.map((hour, at) => (
                     <div key={hour.time} className={`wxa-line__hour${at === first ? ' is-first' : ''}${at === last ? ' is-last' : ''}`}>
                         <span className="wxa-line__time">{hourLabel(hour.time, at)}</span>
-                        <i className={`bx ${icon(hour.condition, hour.isDay)}`} aria-label={label(hour.condition)} />
+                        <WeatherIcon condition={hour.condition} day={hour.isDay} name={label(hour.condition)} />
                         <strong>{degrees(hour.temp)}</strong>
                         <span className="wxa-line__rain">{hour.precip >= 0.1 ? t('{mm} mm', { mm: hour.precip.toFixed(1) }) : hour.chance ? `${hour.chance}%` : ' '}</span>
                         <i className="bx bx-up-arrow-alt wxa-line__wind" style={{ transform: `rotate(${hour.windDir + 180}deg)` }} aria-hidden="true" />
@@ -351,7 +351,7 @@ function HourRows({ hours }: { hours: Hour[] }) {
                 return (
                     <div key={hour.time} className={`wxa-row wxa-row--hour${at === 0 ? ' is-first' : ''}${at === hours.length - 1 ? ' is-last' : ''}${newDay ? ' is-new-day' : ''}`}>
                         <span className="wxa-row__when">{at === 0 ? t('Now') : clock(hour.time)}{newDay && <small>{day}</small>}</span>
-                        <span className="wxa-row__what" title={label(hour.condition)}><i className={`bx ${icon(hour.condition, hour.isDay)}`} aria-hidden="true" /><span>{label(hour.condition)}</span></span>
+                        <span className="wxa-row__what" title={label(hour.condition)}><WeatherIcon condition={hour.condition} day={hour.isDay} /><span>{label(hour.condition)}</span></span>
                         <strong className="wxa-row__temp">{degrees(hour.temp)}</strong>
                         <span className="wxa-row__rain">{hour.precip >= 0.1 ? t('{mm} mm', { mm: hour.precip.toFixed(1) }) : ''}{hour.chance !== null && hour.chance > 0 ? ` ${hour.chance}%` : ''}</span>
                         <span className="wxa-row__wind"><Wind speed={hour.wind} from={hour.windDir} /></span>
@@ -371,7 +371,7 @@ function DayRows({ days }: { days: Day[] }) {
             {days.map((day, at) => (
                 <div key={day.date} className={`wxa-row wxa-row--day${at === 0 ? ' is-first' : ''}${at === days.length - 1 ? ' is-last' : ''}`}>
                     <span className="wxa-row__when">{dayName(day.date, at, true)}</span>
-                    <span className="wxa-row__what" title={label(day.condition)}><i className={`bx ${icon(day.condition, true)}`} aria-hidden="true" /><span>{label(day.condition)}</span></span>
+                    <span className="wxa-row__what" title={label(day.condition)}><WeatherIcon condition={day.condition} /><span>{label(day.condition)}</span></span>
                     <span className="wxa-row__rain">{day.precip >= 0.5 ? t('{mm} mm', { mm: Math.round(day.precip) }) : ''}</span>
                     <span className="wxa-row__range">
                         <span className="wxa-row__low">{degrees(day.min)}</span>

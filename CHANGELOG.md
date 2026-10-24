@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.12.0
+
+- Weather has its own icons, one for every kind of weather and by night too: sun and cloud for partly cloudy, two drops for light rain, more for rain and heavy rain, snow, sleet, fog and thunder.
+- Swiping between your places in the Weather app works every time, not only once.
+- Clouds in the sky are soft puffs of different shapes. The map behind the place has no marker.
+- The radar shows the rain sharper, at full size, and draws each hour with much less work.
+- Lighter on the graphics card: the clouds, fog and News glows look the same without a blur redone on every frame, the sky stops while the radar covers it, and News's glows stop while an article or the settings cover them.
+
 ## v1.11.2
 
 - News on phones and tablets: the search icon, Top news and Local, and settings fit on one row. The reader, the settings and the setup cover the whole screen from the top, so an article opens where you see it, the page behind stays still, and no square corners lie over the frame.

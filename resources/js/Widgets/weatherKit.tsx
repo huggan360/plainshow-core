@@ -1,4 +1,4 @@
-import { CSSProperties, FormEvent, RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { CSSProperties, FormEvent, ReactNode, RefObject, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { t, locale } from '@/i18n';
 
 /*
@@ -24,18 +24,75 @@ const LABELS: Record<Condition, string> = {
 export function label(condition: Condition): string {
     return t(LABELS[condition] ?? 'Cloudy');
 }
-/** One icon set for every condition: the outline weather icons, which all exist in the font. */
-export function icon(condition: Condition, day: boolean): string {
+/*
+ * Our own weather icons, one for every condition, by day and by night: a white
+ * cloud, a yellow sun, a pale moon, blue rain. Drawn on a 32 px grid; the size
+ * follows the font size, as the icon font did. A sun or moon behind a cloud is
+ * cut away around it, so the two never run together.
+ */
+const SUN = '#ffc94a', MOON = '#f1ecd9', RAIN = '#7cc4ff', BOLT = '#ffd84a';
+const CLOUD = <><circle cx="15" cy="11" r="6" /><circle cx="9" cy="15" r="4" /><circle cx="22" cy="14" r="5" /><rect x="9" y="15" width="13" height="4" /></>;
+
+function cloud(transform?: string, opacity?: number) {
+    return <g fill="currentColor" transform={transform} opacity={opacity}>{CLOUD}</g>;
+}
+/** Hides what is behind a cloud placed with `transform`, with a small gap around it. */
+function cutout(id: string, transform: string) {
+    return <mask id={id}><rect width="32" height="32" fill="#fff" /><g transform={transform} fill="#000" stroke="#000" strokeWidth={4}>{CLOUD}</g></mask>;
+}
+function sun(x: number, y: number, r: number) {
+    return <g stroke={SUN} strokeWidth={2} strokeLinecap="round">
+        <circle cx={x} cy={y} r={r} fill={SUN} stroke="none" />
+        {Array.from({ length: 8 }, (_, at) => {
+            const a = (at * Math.PI) / 4, c = Math.cos(a), s = Math.sin(a);
+            return <line key={at} x1={x + c * (r + 2.5)} y1={y + s * (r + 2.5)} x2={x + c * (r + 4.5)} y2={y + s * (r + 4.5)} />;
+        })}
+    </g>;
+}
+function moon(x: number, y: number, r: number, id: string) {
+    return <><mask id={id}><rect width="32" height="32" fill="#fff" /><circle cx={x + r * 0.6} cy={y - r * 0.5} r={r * 0.85} fill="#000" /></mask>
+        <circle cx={x} cy={y} r={r} fill={MOON} mask={`url(#${id})`} /></>;
+}
+function drops(lines: [number, number, number, number][]) {
+    return <g stroke={RAIN} strokeWidth={2.2} strokeLinecap="round">{lines.map(([x1, y1, x2, y2]) => <line key={`${x1},${y1}`} x1={x1} y1={y1} x2={x2} y2={y2} />)}</g>;
+}
+function flake(x: number, y: number) {
+    return <g key={`${x},${y}`} stroke="currentColor" strokeWidth={1.6} strokeLinecap="round">
+        {[90, 30, 150].map((angle) => { const a = (angle * Math.PI) / 180, dx = Math.cos(a) * 2.4, dy = Math.sin(a) * 2.4; return <line key={angle} x1={x - dx} y1={y - dy} x2={x + dx} y2={y + dy} />; })}
+    </g>;
+}
+
+function drawing(condition: Condition, day: boolean, id: string): ReactNode {
     switch (condition) {
-        case 'clear': return day ? 'bx-sun' : 'bx-moon';
-        case 'fog': return 'bx-water';
-        case 'drizzle': return 'bx-cloud-drizzle';
-        case 'rain': return 'bx-cloud-light-rain';
-        case 'heavy-rain': case 'sleet': return 'bx-cloud-rain';
-        case 'snow': return 'bx-cloud-snow';
-        case 'thunder': return 'bx-cloud-lightning';
-        default: return 'bx-cloud';
+        case 'clear': return day ? sun(16, 16, 6) : moon(16, 16, 9, `${id}m`);
+        case 'partly': {
+            const front = 'translate(8 13) scale(.75)';
+            return <>{cutout(`${id}c`, front)}<g mask={`url(#${id}c)`}>{day ? sun(11, 14, 5) : moon(12, 13, 7.5, `${id}m`)}</g>{cloud(front)}</>;
+        }
+        case 'cloudy': return cloud('translate(0 4)');
+        case 'overcast': {
+            const front = 'translate(-2 7)';
+            return <>{cutout(`${id}c`, front)}<g mask={`url(#${id}c)`}>{cloud('translate(9 1) scale(.75)', 0.6)}</g>{cloud(front)}</>;
+        }
+        case 'fog': return <>{cloud('translate(0 -1)')}<g stroke="currentColor" strokeWidth={2} strokeLinecap="round" opacity={0.85}><line x1="5" y1="22" x2="23" y2="22" /><line x1="9" y1="25.5" x2="27" y2="25.5" /><line x1="7" y1="29" x2="19" y2="29" /></g></>;
+        case 'drizzle': return <>{cloud()}{drops([[12, 23, 11, 26], [20, 23, 19, 26]])}</>;
+        case 'rain': return <>{cloud()}{drops([[10.5, 23, 9, 27.5], [16, 23, 14.5, 27.5], [21.5, 23, 20, 27.5]])}</>;
+        case 'heavy-rain': return <>{cloud()}{drops([[9, 22.5, 6.8, 29.5], [14, 22.5, 11.8, 29.5], [19, 22.5, 16.8, 29.5], [24, 22.5, 21.8, 29.5]])}</>;
+        case 'sleet': return <>{cloud()}{drops([[11, 23, 9.6, 27.5]])}{flake(20.5, 25.5)}</>;
+        case 'snow': return <>{cloud()}{flake(10, 24.5)}{flake(16, 28)}{flake(22, 24.5)}</>;
+        case 'thunder': return <>{cloud()}<polygon points="16.5,18 11.5,25.5 15.5,25.5 13.5,31 20.5,22.5 16.5,22.5 18.5,18" fill={BOLT} /></>;
+        default: return cloud('translate(0 4)');
     }
+}
+
+/** The icon for a condition; with a `name` it is read out, else it is decoration. */
+export function WeatherIcon({ condition, day = true, name, className }: { condition: Condition; day?: boolean; name?: string; className?: string }) {
+    const id = `wxi${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+    return (
+        <i className={`wx-icon${className ? ` ${className}` : ''}`} role={name ? 'img' : undefined} aria-label={name} aria-hidden={name ? undefined : true}>
+            <svg viewBox="0 0 32 32" aria-hidden="true">{drawing(condition, day, id)}</svg>
+        </i>
+    );
 }
 export const degrees = (value: number | null | undefined) => (value === null || value === undefined ? '' : `${Math.round(value)}°`);
 export const samePlace = (a: Place | null | undefined, b: Place | null | undefined) => !!a && !!b && Math.abs(a.lat - b.lat) < 0.01 && Math.abs(a.lon - b.lon) < 0.01;
@@ -45,9 +102,10 @@ export const clock = (iso: string) => new Date(iso).toLocaleTimeString('sv-SE', 
  * A sideways swipe on an element: left or right, when the finger (or mouse)
  * moves at least 50 px across and clearly more across than up or down. A
  * swipe also swallows the click that would follow it, so a swiped link does
- * not open.
+ * not open. Pass `watch` when the element is replaced (a new key), so the
+ * swipe moves to the new one.
  */
-export function useSwipe(ref: RefObject<HTMLElement | null>, onLeft: () => void, onRight: () => void) {
+export function useSwipe(ref: RefObject<HTMLElement | null>, onLeft: () => void, onRight: () => void, watch?: unknown) {
     const left = useRef(onLeft);
     const right = useRef(onRight);
     left.current = onLeft;
@@ -67,12 +125,16 @@ export function useSwipe(ref: RefObject<HTMLElement | null>, onLeft: () => void,
             if (dx < 0) left.current(); else right.current();
         };
         const click = (event: MouseEvent) => { if (swiped) { event.preventDefault(); event.stopPropagation(); swiped = false; } };
+        const cancel = () => { start = null; };
         element.addEventListener('pointerdown', down);
         element.addEventListener('pointerup', up);
-        element.addEventListener('pointercancel', () => { start = null; });
+        element.addEventListener('pointercancel', cancel);
         element.addEventListener('click', click, true);
-        return () => { element.removeEventListener('pointerdown', down); element.removeEventListener('pointerup', up); element.removeEventListener('click', click, true); };
-    }, [ref]);
+        return () => {
+            element.removeEventListener('pointerdown', down); element.removeEventListener('pointerup', up);
+            element.removeEventListener('pointercancel', cancel); element.removeEventListener('click', click, true);
+        };
+    }, [ref, watch]);
 }
 
 /** How wide an element is, kept up to date. */
@@ -222,14 +284,15 @@ function fallCount(condition: Condition | undefined, precip: number): { drops: n
 export function Sky({ phase, condition, precip = 0 }: { phase: Phase; condition?: Condition; precip?: number }) {
     const group = groupOf(condition);
     const night = phase === 'night';
-    const clouds = group !== 'clear';
+    // Each cloud has its own shape; a partly cloudy sky has two of them.
+    const clouds = group === 'clear' ? [] : group === 'partly' ? ['a', 'b'] : ['a', 'b', 'c', 'd'];
     const { drops, flakes } = fallCount(condition, precip);
     const heavy = condition === 'heavy-rain' || condition === 'thunder';
     return (
         <div className={`wx-sky wx-sky--${phase} wx-sky--${group}${heavy ? ' wx-sky--heavy' : ''}`} aria-hidden="true">
             {night && (group === 'clear' || group === 'partly') && <span className="wx-sky__stars" />}
             {(group === 'clear' || group === 'partly') && <span className={night ? 'wx-sky__moon' : 'wx-sky__sun'} />}
-            {clouds && <><span className="wx-sky__cloud wx-sky__cloud--a" /><span className="wx-sky__cloud wx-sky__cloud--b" />{group !== 'partly' && <span className="wx-sky__cloud wx-sky__cloud--c" />}</>}
+            {clouds.map((shape) => <span key={shape} className={`wx-sky__cloud wx-sky__cloud--${shape}`} />)}
             {Array.from({ length: drops }, (_, index) => {
                 const depth = seeded(index, 1);
                 return <i key={`d${index}`} className="wx-drop" style={{

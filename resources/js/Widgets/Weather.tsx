@@ -5,7 +5,7 @@ import { SharedProps } from '@/types';
 import { Fill } from './List';
 import { ExpandButton, useBorder, useHeight, useSetting, useSize, WidgetDefinition } from './base';
 import { RadarMap } from './Radar';
-import { Day, dayName, degrees, Forecast, Hour, hourLabel, icon, label, phaseOf, Place, PlaceSearch, placeUrl, send, Sky, useForecast, useWidth, Wind } from './weatherKit';
+import { Day, dayName, degrees, Forecast, Hour, hourLabel, label, phaseOf, Place, PlaceSearch, placeUrl, send, Sky, useForecast, useWidth, WeatherIcon, Wind } from './weatherKit';
 
 export type { Place } from './weatherKit';
 export { PlaceSearch } from './weatherKit';
@@ -64,7 +64,7 @@ export function Hours({ hours, count: most }: { hours: Hour[]; count: number }) 
             {hours.slice(0, count).map((hour, index) => (
                 <div key={hour.time} className={`wx-hour${index === 0 ? ' is-first' : ''}${index === count - 1 ? ' is-last' : ''}`}>
                     <span className="wx-hour__time">{hourLabel(hour.time, index)}</span>
-                    <i className={`bx ${icon(hour.condition, hour.isDay)}`} aria-label={label(hour.condition)} />
+                    <WeatherIcon condition={hour.condition} day={hour.isDay} name={label(hour.condition)} />
                     <strong>{degrees(hour.temp)}</strong>
                     <span className="wx-hour__rain">{hour.precip >= 0.1 ? t('{mm} mm', { mm: hour.precip.toFixed(1) }) : ' '}</span>
                 </div>
@@ -82,7 +82,7 @@ function Waiting({ error }: { error: boolean }) {
 function TinyWeather({ place, data }: { place: Place; data: Forecast }) {
     return (
         <div className="wx-tiny">
-            <i className={`bx ${icon(data.current.condition, data.current.isDay)}`} aria-label={label(data.current.condition)} />
+            <WeatherIcon condition={data.current.condition} day={data.current.isDay} name={label(data.current.condition)} />
             <span className="wx-tiny__temp">{degrees(data.current.temp)}</span>
             <span className="wx-tiny__place">{place.name}</span>
         </div>
@@ -104,7 +104,7 @@ export function WeatherWidget({ definition }: { definition: WidgetDefinition }) 
                 <div className="wx__now">
                     <span className="wx__temp">{degrees(data.current.temp)}</span>
                     <span className="wx__what">
-                        <i className={`bx ${icon(data.current.condition, data.current.isDay)} wx__icon`} aria-hidden="true" />
+                        <WeatherIcon condition={data.current.condition} day={data.current.isDay} className="wx__icon" />
                         <span>{label(data.current.condition)}</span>
                         {today && <span className="wx__range">{t('{max} / {min}', { max: degrees(today.max), min: degrees(today.min) })}</span>}
                     </span>
@@ -134,7 +134,7 @@ export function ForecastWidget({ definition }: { definition: WidgetDefinition })
                         <span className="wx__temp">{degrees(data.current.temp)}</span>
                         <span className="wx__what">
                             <span className="wx__place"><i className="bx bxs-map" aria-hidden="true" />{place.name}</span>
-                            <span><i className={`bx ${icon(data.current.condition, data.current.isDay)}`} aria-hidden="true" /> {label(data.current.condition)}</span>
+                            <span><WeatherIcon condition={data.current.condition} day={data.current.isDay} /> {label(data.current.condition)}</span>
                         </span>
                     </div>
                     <div className="wx__facts wx__facts--column">
@@ -165,7 +165,7 @@ export function Days({ days: all, rows }: { days: Day[]; rows: boolean }) {
                 {days.map((day, index) => (
                     <div key={day.date} className={`wx-day${index === 0 ? ' is-first' : ''}${index === days.length - 1 ? ' is-last' : ''}`}>
                         <span>{dayName(day.date, index)}</span>
-                        <i className={`bx ${icon(day.condition, true)}`} aria-label={label(day.condition)} />
+                        <WeatherIcon condition={day.condition} name={label(day.condition)} />
                         <strong>{degrees(day.max)}</strong>
                         <span className="wx-day__low">{degrees(day.min)}</span>
                     </div>
@@ -178,7 +178,7 @@ export function Days({ days: all, rows }: { days: Day[]; rows: boolean }) {
             {days.map((day, index) => (
                 <div key={day.date} className={`wx-week__row${index === 0 ? ' is-first' : ''}${index === days.length - 1 ? ' is-last' : ''}`}>
                     <span className="wx-week__name">{dayName(day.date, index)}</span>
-                    <i className={`bx ${icon(day.condition, true)}`} aria-label={label(day.condition)} />
+                    <WeatherIcon condition={day.condition} name={label(day.condition)} />
                     <span className="wx-week__rain">{day.precip >= 0.5 ? t('{mm} mm', { mm: Math.round(day.precip) }) : ''}</span>
                     <span className="wx-week__low">{degrees(day.min)}</span>
                     <span className="wx-week__bar"><span style={{ left: `${((day.min - low) / span) * 100}%`, right: `${100 - ((day.max - low) / span) * 100}%` }} /></span>
