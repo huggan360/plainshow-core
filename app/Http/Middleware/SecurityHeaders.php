@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\Str;
+use PlainShow\Kit\Platform;
 use Symfony\Component\HttpFoundation\Response;
 
 class SecurityHeaders
@@ -21,17 +22,19 @@ class SecurityHeaders
             return $response;
         }
 
+        // Pictures may come from any app of this PlainShow; forms go to Login.
+        $apps = implode(' ', array_values(Platform::urls()));
         $response->headers->set('Content-Security-Policy', implode('; ', [
             "default-src 'self'",
             "script-src 'self' 'nonce-$nonce'",
             // React sets inline style attributes (widths of meters and the like).
             "style-src 'self' 'unsafe-inline'",
             // Map tiles for the rain radar widget (Esri's grey canvas, and RainViewer outside SMHI's radar).
-            "img-src 'self' data: blob: https://*.plainshow.se https://server.arcgisonline.com https://tilecache.rainviewer.com",
+            "img-src 'self' data: blob: $apps https://server.arcgisonline.com https://tilecache.rainviewer.com",
             "font-src 'self'",
             "connect-src 'self'",
             "frame-ancestors 'none'",
-            "form-action 'self' https://login.plainshow.se",
+            "form-action 'self' ".Platform::require('login'),
             "base-uri 'none'",
             "object-src 'none'",
         ]));

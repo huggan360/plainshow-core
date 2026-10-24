@@ -6,6 +6,7 @@ use App\Models\Extension;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use PlainShow\Kit\Platform;
 use PlainShow\Kit\Widgets;
 use Throwable;
 
@@ -92,7 +93,7 @@ class CloudWidgets
             'folder' => isset($file['folder']) ? $text($file['folder'], 200) : null,
             'type' => $text($file['type'] ?? '', 80),
             'changed' => isset($file['changed']) ? $text($file['changed'], 40) : null,
-            'url' => $url($file['url'] ?? null) ?? 'https://cloud.plainshow.se/',
+            'url' => $url($file['url'] ?? null) ?? Platform::require('cloud').'/',
         ], array_slice(array_filter((array) ($data['files'] ?? []), 'is_array'), 0, 50))];
     }
 }

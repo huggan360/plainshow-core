@@ -3,15 +3,15 @@
     "name": "Split",
     "description": "Share costs in groups and settle up with Swish.",
     "icon": "bx-wallet",
-    "url": "https://split.plainshow.se",
-    "api": "https://split.plainshow.se/api/v1",
+    "url": "{url}",
+    "api": "{url}/api/v1",
     "sort": 15,
     "default_access": [
         "admin",
         "moderator",
         "user"
     ],
-    "health": "https://split.plainshow.se/api/v1/health",
+    "health": "{url}/api/v1/health",
     "capabilities": [
         {
             "name": "split.group.create",

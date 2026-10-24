@@ -35,6 +35,8 @@ class HandleInertiaRequests extends Middleware
                 ->map(fn (Extension $extension) => $extension->only(['id', 'name', 'icon', 'url']))
                 ->values() : [],
             // Apps inside the dashboard (sidebar, widget expand), and the person's home for the weather widgets.
+            // Every installed app's address (kit Platform), for links into the apps.
+            'platform' => \PlainShow\Kit\Platform::urls(),
             'coreApps' => $user ? fn () => \App\Support\CoreApps::for($user) : [],
             'adminAreas' => $user ? fn () => \App\Support\AdminAreas::for($user) : [],
             'weatherHome' => $user ? fn () => $user->weather['home'] ?? null : null,

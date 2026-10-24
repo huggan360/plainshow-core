@@ -3,7 +3,7 @@
     "name": "Cloud",
     "description": "Your files, photos and calendar.",
     "icon": "bx-cloud",
-    "url": "https://cloud.plainshow.se",
+    "url": "{url}",
     "sort": 40,
     "default_access": [
         "admin",
@@ -92,5 +92,5 @@
             "settings": []
         }
     ],
-    "api": "https://cloud.plainshow.se/index.php/apps/plainshow/api/v1"
+    "api": "{url}/index.php/apps/plainshow/api/v1"
 }

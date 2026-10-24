@@ -3,15 +3,15 @@
     "name": "Blog",
     "description": "Posts, galleries and stories.",
     "icon": "bx-news",
-    "url": "https://blog.plainshow.se",
-    "api": "https://blog.plainshow.se/api/v1",
+    "url": "{url}",
+    "api": "{url}/api/v1",
     "sort": 10,
     "default_access": [
         "admin",
         "moderator",
         "user"
     ],
-    "health": "https://blog.plainshow.se/api/v1/health",
+    "health": "{url}/api/v1/health",
     "capabilities": [
         {
             "name": "blog.post.view",

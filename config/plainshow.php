@@ -1,7 +1,10 @@
 <?php
 
+use PlainShow\Kit\Platform;
+
 return [
-    'login_url' => env('PLAINSHOW_LOGIN_URL', 'https://login.plainshow.se'),
+    // Every app's address comes from the platform file (kit Platform).
+    'login_url' => env('PLAINSHOW_LOGIN_URL', Platform::url('login') ?? 'https://login.plainshow.se'),
     'client_id' => env('PLAINSHOW_CLIENT_ID'),
     'client_secret' => env('PLAINSHOW_CLIENT_SECRET'),
 

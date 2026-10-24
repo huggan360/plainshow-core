@@ -3,8 +3,8 @@
     "name": "Dashboard",
     "description": "Your PlainShow home: widgets, account and administration.",
     "icon": "bx-grid-alt",
-    "url": "https://plainshow.se",
-    "api": "https://plainshow.se/api/core/v1",
+    "url": "{url}",
+    "api": "{url}/api/core/v1",
     "system": true,
     "sort": 0,
     "default_access": [

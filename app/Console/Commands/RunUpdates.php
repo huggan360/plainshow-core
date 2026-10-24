@@ -6,6 +6,7 @@ use App\Support\Audit;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use PlainShow\Kit\Platform;
 use RuntimeException;
 use Symfony\Component\Process\Process;
 use Throwable;
@@ -260,7 +261,7 @@ class RunUpdates extends Command
         $base = $component['base'];
         $this->exec(['ln', '-sfn', "$base/releases/$release", "$base/current.new"], $base, 20);
         $this->exec(['mv', '-Tf', "$base/current.new", "$base/current"], $base, 20);
-        $this->exec(['sudo', '-n', 'systemctl', 'reload', 'php8.5-fpm'], $base, 60, false);
+        $this->exec(['sudo', '-n', 'systemctl', 'reload', Platform::system('php_fpm_service', 'php8.5-fpm')], $base, 60, false);
         $this->log("Switched to $release.");
         if (! $this->healthy($component)) {
             throw new RuntimeException("$release does not answer its health check either.");

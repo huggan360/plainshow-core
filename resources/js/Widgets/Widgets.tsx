@@ -1,5 +1,6 @@
 import { Avatar, Badge, relativeTime, RoleBadge } from '@/Components/ui';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
+import { SharedProps } from '@/types';
 import { CSSProperties, ReactNode, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSwipe } from './weatherKit';
 import { t, locale } from '@/i18n';
@@ -432,7 +433,10 @@ function NotConnected() {
     return <Fill icon="bx-cloud"><p>{t('You have no Cloud account yet. An administrator can give you access.')}</p></Fill>;
 }
 type CalendarEvent = { title: string; place: string; start: string; end: string; allDay: boolean; calendar: string; color: string | null };
-const CALENDAR_URL = 'https://cloud.plainshow.se/calendar';
+/** An address in Cloud, from the platform's addresses. */
+function useCloudUrl(path = '/'): string {
+    return `${usePage<SharedProps>().props.platform?.cloud ?? ''}${path}`;
+}
 function dayLabel(date: Date): string {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const day = new Date(date); day.setHours(0, 0, 0, 0);
@@ -458,8 +462,9 @@ export function CalendarWidget({ definition }: { definition: WidgetDefinition })
     const month = view === 'month';
     const query = useMemo(() => (month ? { from: isoDay(monthStart()), days: 42, limit: 200 } : { limit }), [month, limit]);
     const state = useWidgetData<CloudState & { events?: CalendarEvent[] }>(definition.extension, definition.id, 300, query);
+    const calendarUrl = useCloudUrl('/calendar');
     return (
-        <WidgetFrame definition={definition} action={<More href={CALENDAR_URL}>{t('Calendar')}</More>}>
+        <WidgetFrame definition={definition} action={<More href={calendarUrl}>{t('Calendar')}</More>}>
             <Body state={state} height={height}>{(data) => {
                 if (!data.connected) return <NotConnected />;
                 if (data.error) return <Fill icon="bx-error-circle">{data.error}</Fill>;
@@ -468,7 +473,7 @@ export function CalendarWidget({ definition }: { definition: WidgetDefinition })
                     const now = new Date();
                     const next = events.find((event) => new Date(event.end || event.start).getTime() >= now.getTime());
                     return (
-                        <a className="widget-today" href={CALENDAR_URL}>
+                        <a className="widget-today" href={calendarUrl}>
                             <span className="widget-today__day">{now.toLocaleDateString(locale, { weekday: 'short' })}</span>
                             <strong className="widget-today__date">{now.getDate()}</strong>
                             {next && <span className="widget-today__next">{next.allDay ? '' : `${new Date(next.start).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })} `}{next.title}</span>}
@@ -476,7 +481,7 @@ export function CalendarWidget({ definition }: { definition: WidgetDefinition })
                     );
                 }
                 if (month) return <MonthGrid events={events} height={height} />;
-                return <List height={height} more={{ href: CALENDAR_URL }} empty={t('Nothing planned.')} onEnd={() => more(events.length)} rows={events.map((event, index) => {
+                return <List height={height} more={{ href: calendarUrl }} empty={t('Nothing planned.')} onEnd={() => more(events.length)} rows={events.map((event, index) => {
                     const start = new Date(event.start);
                     return {
                         key: index,
@@ -551,11 +556,12 @@ function fileIcon(type: string, name: string): string {
 export function FilesWidget({ definition }: { definition: WidgetDefinition }) {
     const [limit, more] = usePaging();
     const state = useWidgetData<CloudState & { files?: CloudFile[] }>(definition.extension, definition.id, 300, { limit });
+    const filesUrl = useCloudUrl();
     const height = useHeight(definition);
     return (
-        <WidgetFrame definition={definition} action={<More href="https://cloud.plainshow.se/">{t('Files')}</More>}>
+        <WidgetFrame definition={definition} action={<More href={filesUrl}>{t('Files')}</More>}>
             <Body state={state} height={height}>{(data) => !data.connected ? <NotConnected /> : data.error ? <Fill icon="bx-error-circle">{data.error}</Fill> : (
-                <List height={height} more={{ href: 'https://cloud.plainshow.se/' }} empty={t('No files yet.')} onEnd={() => more((data.files ?? []).length)} rows={(data.files ?? []).map((file, index) => ({
+                <List height={height} more={{ href: filesUrl }} empty={t('No files yet.')} onEnd={() => more((data.files ?? []).length)} rows={(data.files ?? []).map((file, index) => ({
                     key: index, href: file.url,
                     lead: <Lead icon={fileIcon(file.type, file.name)} />,
                     title: file.name,

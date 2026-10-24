@@ -69,8 +69,18 @@ React and TypeScript (Vite).
   RainViewer radar, Open-Meteo places), cached; no keys. SMHI radar images are
   passed through `/weather/radar/smhi/*.png` and kept in `storage/app/radar`
   for six hours.
+- Addresses and server facts: kit `Platform` reads `/etc/plainshow/platform.json`
+  (written by plainshow-install; on the first PlainShow it holds plainshow.se's
+  layout). Manifests in `extensions/` use `{url}` for the app's address, and an
+  app missing from the file is not registered. `config/updates.php` lists only
+  installed apps and takes folders, the web user and service names from it;
+  `ops/deploy.sh` does the same. Front ends get `platform` (app => address) as a
+  shared prop. Never write an app's address into code.
+- `php artisan plainshow:admin <username>` (password on standard input) makes
+  an administrator; the installer uses it for the first one.
 - Another server: set `PLAINSHOW_PROJECTS`, `PLAINSHOW_CLOUD_SOURCE`,
-  `PLAINSHOW_LATEX_SOURCE` in `.env` to where its checkouts are.
+  `PLAINSHOW_LATEX_SOURCE` in `.env` to where its checkouts are (or `sources`,
+  `cloud_dir` and `latex_dir` in the platform file).
 
 ## The PlainShow platform
 

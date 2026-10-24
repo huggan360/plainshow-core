@@ -13,7 +13,20 @@ from pathlib import Path
 MARKERS = Path('/var/lib/plainshow/account-owners')
 PROJECT_STATE = Path('/etc/plainshow/state/projects.json')
 MANAGER = '/usr/local/libexec/plainshow-manager'
-CLOUD_OCC = '/var/www/html/cloud/occ'
+
+
+def platform_system(key, default):
+    """A fact from the installer's platform file (root-owned, like this helper)."""
+    try:
+        with open('/etc/plainshow/platform.json', encoding='utf-8') as handle:
+            value = json.load(handle).get('system', {}).get(key)
+    except (OSError, ValueError, AttributeError):
+        return default
+    return value if isinstance(value, str) and value else default
+
+
+CLOUD_OCC = platform_system('cloud_dir', '/var/www/html/cloud') + '/occ'
+WEB_USER = platform_system('web_user', 'www-data')
 AGENT_SOCKET = '/run/plainshow/agent.sock'
 PI_NAME = re.compile(r'^[a-z_][a-z0-9_-]{1,30}$')
 CLOUD_NAME = re.compile(r'^[A-Za-z0-9_][A-Za-z0-9_.-]{1,63}$')
@@ -166,7 +179,7 @@ def manage_pi(action, username, user_id):
 
 
 def cloud_exists(username):
-    result = run('runuser', '-u', 'www-data', '--', 'php', CLOUD_OCC, 'user:info', username, check=False)
+    result = run('runuser', '-u', WEB_USER, '--', 'php', CLOUD_OCC, 'user:info', username, check=False)
     return result.returncode == 0
 
 
@@ -180,11 +193,11 @@ def manage_cloud(action, username):
         fail('Unknown Cloud account operation')
     if not cloud_exists(username):
         return
-    run('runuser', '-u', 'www-data', '--', 'php', CLOUD_OCC, 'user:' + action, username)
+    run('runuser', '-u', WEB_USER, '--', 'php', CLOUD_OCC, 'user:' + action, username)
 
 
 def cloud_group_exists(group_id):
-    result = run('runuser', '-u', 'www-data', '--', 'php', CLOUD_OCC, 'group:info', group_id, check=False)
+    result = run('runuser', '-u', WEB_USER, '--', 'php', CLOUD_OCC, 'group:info', group_id, check=False)
     return result.returncode == 0
 
 
@@ -195,18 +208,18 @@ def manage_group(action, group_id, username=None, display_name=None):
         if display_name is None or len(display_name) > 100 or not display_name.strip():
             fail('Invalid group display name')
         if not cloud_group_exists(group_id):
-            run('runuser', '-u', 'www-data', '--', 'php', CLOUD_OCC, 'group:add', group_id, '--display-name=' + display_name)
+            run('runuser', '-u', WEB_USER, '--', 'php', CLOUD_OCC, 'group:add', group_id, '--display-name=' + display_name)
         return
     if action == 'delete':
         if cloud_group_exists(group_id):
-            run('runuser', '-u', 'www-data', '--', 'php', CLOUD_OCC, 'group:delete', group_id)
+            run('runuser', '-u', WEB_USER, '--', 'php', CLOUD_OCC, 'group:delete', group_id)
         return
     if action not in ('add', 'remove') or username is None or not CLOUD_NAME.fullmatch(username):
         fail('Invalid managed Cloud group operation')
     if not cloud_group_exists(group_id) or not cloud_exists(username):
         return
     command = 'group:adduser' if action == 'add' else 'group:removeuser'
-    run('runuser', '-u', 'www-data', '--', 'php', CLOUD_OCC, command, group_id, username)
+    run('runuser', '-u', WEB_USER, '--', 'php', CLOUD_OCC, command, group_id, username)
 
 
 def main(arguments):

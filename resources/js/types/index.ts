@@ -29,6 +29,8 @@ export type SharedProps = {
     flash: { status: string | null; error: string | null };
     errors: Record<string, string>;
     uiVersion: string;
+    /** Every installed app's address, by app id (core, login, cloud, ...). */
+    platform: Record<string, string>;
 };
 
 export function can(capabilities: string[], capability: string): boolean {

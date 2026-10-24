@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Extension;
 use Illuminate\Support\Facades\DB;
 use PlainShow\Kit\Access;
+use PlainShow\Kit\Platform;
 use RuntimeException;
 
 /**
@@ -30,7 +31,23 @@ class Registry
             }
         }
 
-        return $manifests;
+        // Addresses come from the platform file: `{url}` is the app's own
+        // address there. An app that is not installed here is not registered.
+        $installed = [];
+        foreach ($manifests as $id => $manifest) {
+            $base = Platform::url($id);
+            if ($base === null) {
+                continue;
+            }
+            foreach (['url', 'api', 'health'] as $key) {
+                if (isset($manifest[$key]) && is_string($manifest[$key])) {
+                    $manifest[$key] = self::address($manifest[$key], $id, $base);
+                }
+            }
+            $installed[$id] = $manifest;
+        }
+
+        return $installed;
     }
 
     public static function sync(): array
@@ -77,6 +94,21 @@ class Registry
         Permissions::forget();
 
         return $changes;
+    }
+
+    /**
+     * `{url}` becomes the app's address. Older app manifests still name their
+     * plainshow.se address; that part is swapped for the address here too.
+     */
+    private static function address(string $value, string $id, string $base): string
+    {
+        $value = str_replace('{url}', $base, $value);
+        $old = $id === 'core' ? 'https://plainshow.se' : "https://$id.plainshow.se";
+        if (str_starts_with($value, $old) && ! str_starts_with($value, $old.'.')) {
+            $value = $base.substr($value, strlen($old));
+        }
+
+        return $value;
     }
 
     /** @return array<string, mixed> */

@@ -18,6 +18,14 @@ KEEP=3
 
 say() { printf '\033[1m%s\033[0m\n' "$*"; }
 
+# Facts about this server from the platform file (/etc/plainshow/platform.json,
+# written by the installer), with this Pi's values when it says nothing.
+platform() { php -r '$d = json_decode((string) @file_get_contents("/etc/plainshow/platform.json"), true); echo $d["system"][$argv[1]] ?? "";' "$1"; }
+PHP_FPM=$(platform php_fpm_service); PHP_FPM=${PHP_FPM:-php8.5-fpm}
+WEB_SERVICE=$(platform web_service); WEB_SERVICE=${WEB_SERVICE:-apache2}
+WEB_USER=$(platform web_user); WEB_USER=${WEB_USER:-www-data}
+APACHE_INCLUDE=$(platform apache_include_dir)
+
 if [ "$SOURCE" = "--rollback" ]; then
     current=$(readlink "$BASE/current")
     previous=$(ls -1dt "$BASE"/releases/* | grep -vx "$current" | head -1)
@@ -53,6 +61,15 @@ if [ -f package.json ] && grep -q '"build"' package.json; then
         git stash list >/dev/null
         tmp=$(mktemp -d)
         git worktree add -f --detach "$tmp" "$REF" >/dev/null 2>&1
+        # node_modules stays in the source checkout; it is installed again
+        # only when the release's package-lock.json differs from the last one.
+        lock=$(sha256sum "$tmp/package-lock.json" | cut -c1-16)
+        if [ "$(cat "$SOURCE/node_modules/.plainshow-lock" 2>/dev/null)" != "$lock" ]; then
+            (cd "$tmp" && npm ci --no-audit --no-fund --loglevel=error)
+            rm -rf "$SOURCE/node_modules"
+            mv "$tmp/node_modules" "$SOURCE/node_modules"
+            echo "$lock" > "$SOURCE/node_modules/.plainshow-lock"
+        fi
         ln -s "$SOURCE/node_modules" "$tmp/node_modules"
         (cd "$tmp" && npm run build --silent)
         cp -a "$tmp/public/build" "$RELEASE/public/build"
@@ -89,14 +106,15 @@ php artisan view:cache
 # Each app runs in its own PHP-FPM pool as plainshow-<app>. That user reads
 # the code, its .env and keys, and writes storage. Apache (www-data) may read
 # the code to serve static files, but never .env, keys or storage.
+# (www-data is the web server's user on Debian; others name it differently.)
 APP_USER="plainshow-$APP"
 ME=$(id -un)
 sudo -n setfacl -m "u:$APP_USER:x" "$ROOT"
 sudo -n chown "$ME:$APP_USER" "$BASE" "$BASE/releases"
 sudo -n chown -R "$ME:$APP_USER" "$RELEASE" "$BASE/shared"
 sudo -n chmod -R g+rX,o-rwx "$RELEASE"
-sudo -n setfacl -R -m "u:www-data:rX" "$RELEASE"
-sudo -n setfacl -m "u:www-data:x" "$BASE" "$BASE/releases"
+sudo -n setfacl -R -m "u:$WEB_USER:rX" "$RELEASE"
+sudo -n setfacl -m "u:$WEB_USER:x" "$BASE" "$BASE/releases"
 sudo -n chmod 0750 "$BASE" "$BASE/releases" "$BASE/shared"
 sudo -n find "$BASE/shared/storage" "$RELEASE/bootstrap/cache" -type d -exec chmod 2770 {} +
 sudo -n find "$BASE/shared/storage" "$RELEASE/bootstrap/cache" -type f -exec chmod 0660 {} +
@@ -115,7 +133,14 @@ if [ "$APP" = core ]; then
         sudo -n cp "$RELEASE"/vendor/plainshow/kit/ui/errors/* "$ROOT/errors/"
         sudo -n chmod -R a+rX "$ROOT/errors"
     fi
-    if ! sudo -n cmp -s "$RELEASE/ops/apache/plainshow-errors.conf" /etc/apache2/conf-available/plainshow-errors.conf; then
+    # Debian's Apache enables extra config with a2enconf; the installer gives
+    # every other system a folder Apache includes (apache_include_dir).
+    if [ -n "$APACHE_INCLUDE" ]; then
+        if ! sudo -n cmp -s "$RELEASE/ops/apache/plainshow-errors.conf" "$APACHE_INCLUDE/plainshow-errors.conf"; then
+            sudo -n install -m 0644 "$RELEASE/ops/apache/plainshow-errors.conf" "$APACHE_INCLUDE/plainshow-errors.conf"
+            sudo -n apachectl configtest
+        fi
+    elif ! sudo -n cmp -s "$RELEASE/ops/apache/plainshow-errors.conf" /etc/apache2/conf-available/plainshow-errors.conf; then
         sudo -n install -m 0644 "$RELEASE/ops/apache/plainshow-errors.conf" /etc/apache2/conf-available/plainshow-errors.conf
         sudo -n a2enmod -q headers
         sudo -n a2enconf -q plainshow-errors
@@ -127,8 +152,8 @@ ln -sfn "$RELEASE" "$BASE/current.new"
 mv -Tf "$BASE/current.new" "$BASE/current"
 # PHP-FPM and mod_php cache resolved paths and opcode; graceful reloads make
 # every worker pick up the new release without dropping requests.
-sudo -n systemctl reload php8.5-fpm || echo "Reload php8.5-fpm to finish switching." >&2
-sudo -n systemctl reload apache2 || echo "Reload Apache to finish switching." >&2
+sudo -n systemctl reload "$PHP_FPM" || echo "Reload $PHP_FPM to finish switching." >&2
+sudo -n systemctl reload "$WEB_SERVICE" || echo "Reload $WEB_SERVICE to finish switching." >&2
 say "$APP is now $NAME"
 
 # Keep the last few releases for rollback.

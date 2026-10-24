@@ -3,8 +3,8 @@
     "name": "Web",
     "description": "Projects, deployments and the server.",
     "icon": "bx-server",
-    "url": "https://web.plainshow.se",
-    "api": "https://web.plainshow.se/api/v1",
+    "url": "{url}",
+    "api": "{url}/api/v1",
     "sort": 30,
     "default_access": ["admin"],
     "capabilities": [

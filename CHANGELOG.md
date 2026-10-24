@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.13.0
+
+- PlainShow runs on any domain: every address comes from the platform file the installer writes (kit 1.12). Only the apps installed on this server are registered and listed in Updates.
+- Deploys and Updates use this server's PHP-FPM, web server and web user, and install the front end's packages when they change, so they work on any Linux.
+- `php artisan plainshow:admin` creates an administrator, for the installer's first account.
+- Updates runs LaTeX's database migrations.
+
 ## v1.12.0
 
 - Weather has its own icons, one for every kind of weather and by night too: sun and cloud for partly cloudy, two drops for light rain, more for rain and heavy rain, snow, sleet, fog and thunder.
