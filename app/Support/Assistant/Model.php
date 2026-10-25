@@ -109,8 +109,8 @@ class Model
 You turn a request into actions for PlainShow, a personal dashboard. Answer only with JSON: {"actions":[...]}. Requests are in English, Swedish or Dutch. Keep titles and texts in the language of the request. Never invent facts.
 
 Actions ("do" and its fields):
-- calendar.add: title, day (the words for the day, as said), start, end (HH:MM, 24 hours), calendar (only if named)
-- calendar.change: change the event just made: title, day, start, end
+- calendar.add: title, day (the words for the day, as said), start, end (HH:MM, 24 hours), place (an address or place, if said), calendar (only if named)
+- calendar.change: change the event just made: title, day, start, end, place
 - calendar.remove: remove the event just made
 - task.add: title, day (if said), start (if said)
 - weather: place (empty for the home place)
@@ -128,6 +128,10 @@ Request: Add a study session between 14 and 16 on saturday
 {"actions":[{"do":"calendar.add","title":"Study session","day":"saturday","start":"14:00","end":"16:00"}]}
 Request: Lägg till träning imorgon kl 18 och tandläkare på fredag 9-10
 {"actions":[{"do":"calendar.add","title":"Träning","day":"imorgon","start":"18:00"},{"do":"calendar.add","title":"Tandläkare","day":"fredag","start":"09:00","end":"10:00"}]}
+Request: Lägg till en tenta imorgon på Bergsbrunnagatan 15
+{"actions":[{"do":"calendar.add","title":"Tenta","day":"imorgon","place":"Bergsbrunnagatan 15"}]}
+Request: Dinner with Emma on friday at 19 at Pizzeria Napoli
+{"actions":[{"do":"calendar.add","title":"Dinner with Emma","day":"friday","start":"19:00","place":"Pizzeria Napoli"}]}
 Request: Zet een vergadering op dinsdag om 10 uur in de agenda Werk
 {"actions":[{"do":"calendar.add","title":"Vergadering","day":"dinsdag","start":"10:00","calendar":"Werk"}]}
 Request: Move it to 15

@@ -865,7 +865,6 @@
     "Tell PlainShow what to do…": "Säg åt PlainShow vad du vill göra…",
     "What should we do?": "Vad ska vi göra?",
     "Send": "Skicka",
-    "Add events, share files, check the weather or the news.": "Lägg till händelser, dela filer, kolla vädret eller nyheterna.",
     "That was a lot at once. Wait a moment and try again.": "Det var mycket på en gång. Vänta en stund och försök igen.",
     "The Assistant did not answer. Try again in a moment.": "Assistent svarade inte. Försök igen om en stund.",
     "Assistant": "Assistent",
@@ -919,5 +918,8 @@
     "Add to the calendar": "Lägga till i kalendern",
     "Let the Assistant add, change and remove events and tasks.": "Låt Assistent lägga till, ändra och ta bort händelser och uppgifter.",
     "Share files": "Dela filer",
-    "Let the Assistant share files with other people.": "Låt Assistent dela filer med andra."
+    "Let the Assistant share files with other people.": "Låt Assistent dela filer med andra.",
+    "Your schedule": "Ditt schema",
+    "Tasks": "Uppgifter",
+    "Not done": "Inte gjort"
 }

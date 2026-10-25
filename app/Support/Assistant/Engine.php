@@ -43,6 +43,9 @@ class Engine
     /** The request as typed, to check the model against. */
     private string $request = '';
 
+    /** Whether the request holds one dated thing only, so its own words can give the day. */
+    private bool $single = false;
+
     public function __construct(private readonly User $user, private readonly Model $model = new Model)
     {
         $this->when = new When;
@@ -63,7 +66,9 @@ class Engine
             if (! empty($last['pending']) && $this->answerPending($last['pending'], $request)) {
                 return $this->finish($request, $started);
             }
-            foreach ($this->model->actions($this->context($last), $request) as $action) {
+            $actions = $this->model->actions($this->context($last), $request);
+            $this->single = count(array_filter($actions, fn ($action) => in_array($action['do'], ['calendar.add', 'calendar.change', 'task.add'], true))) === 1;
+            foreach ($actions as $action) {
                 $this->run($action);
             }
         } catch (RuntimeException $error) {
@@ -163,15 +168,16 @@ class Engine
     private function addEvent(array $action, ?int $calendarId = null): void
     {
         $title = $this->text($action['title'] ?? '') ?: __('Event');
-        $day = $action['date'] ?? $this->when->day($action['day'] ?? null) ?? $this->when->today();
+        $day = $action['date'] ?? $this->day($action) ?? $this->when->today();
         $start = $action['startTime'] ?? $this->when->time($action['start'] ?? null);
         $end = $action['endTime'] ?? $this->when->time($action['end'] ?? null);
-        $resolved = ['do' => 'calendar.add', 'title' => $title, 'date' => $day, 'startTime' => $start, 'endTime' => $end];
+        $place = $this->text($action['place'] ?? '');
+        $resolved = ['do' => 'calendar.add', 'title' => $title, 'date' => $day, 'startTime' => $start, 'endTime' => $end, 'place' => $place];
         // Neither a day nor a time: ask, and read the answer without the model.
-        if (! isset($action['date']) && $this->when->day($action['day'] ?? null) === null && $start === null) {
+        if (! isset($action['date']) && $this->day($action) === null && $start === null) {
             if ($this->out['question'] === null) {
                 $this->out['question'] = ['text' => __('When is “:title”?', ['title' => $title]), 'choices' => []];
-                $this->memory['pending'] = ['action' => ['do' => 'calendar.add', 'title' => $title, 'calendar' => $action['calendar'] ?? ''], 'need' => 'when'];
+                $this->memory['pending'] = ['action' => ['do' => 'calendar.add', 'title' => $title, 'calendar' => $action['calendar'] ?? '', 'place' => $place], 'need' => 'when'];
             }
 
             return;
@@ -180,7 +186,7 @@ class Engine
         if ($calendarId === null) {
             return;
         }
-        $body = ['calendar' => $calendarId, 'title' => $title, 'allDay' => $start === null];
+        $body = ['calendar' => $calendarId, 'title' => $title, 'allDay' => $start === null, 'place' => $place];
         if ($start === null) {
             $body += ['start' => $day, 'end' => $day];
         } else {
@@ -202,7 +208,10 @@ class Engine
         if ($this->text($action['title'] ?? '') !== '') {
             $changes['title'] = $this->text($action['title']);
         }
-        $day = $this->when->day($action['day'] ?? null) ?? substr($event['start'], 0, 10);
+        if ($this->text($action['place'] ?? '') !== '') {
+            $changes['place'] = $this->text($action['place']);
+        }
+        $day = $this->day($action) ?? substr($event['start'], 0, 10);
         $start = $this->when->time($action['start'] ?? null);
         $end = $this->when->time($action['end'] ?? null);
         if ($start !== null || ($action['day'] ?? '') !== '') {
@@ -238,7 +247,7 @@ class Engine
     private function addTask(array $action, ?int $calendarId = null): void
     {
         $title = $this->text($action['title'] ?? '') ?: __('Task');
-        $day = $action['date'] ?? $this->when->day($action['day'] ?? null);
+        $day = $action['date'] ?? $this->day($action);
         $time = $action['startTime'] ?? $this->when->time($action['start'] ?? null);
         $resolved = ['do' => 'task.add', 'title' => $title, 'date' => $day, 'startTime' => $time];
         $calendarId ??= $this->chooseCalendar('tasks', (string) ($action['calendar'] ?? ''), $resolved, __('Which list should “:title” go in?', ['title' => $title]));
@@ -367,7 +376,13 @@ class Engine
      */
     private function checked(array $action): array
     {
-        preg_match_all('/\d{1,2}/', $this->request, $found);
+        // Numbers that belong to the place ("Bergsbrunnagatan 15") are not times.
+        $said = $this->request;
+        $place = $this->text($action['place'] ?? '');
+        if ($place !== '') {
+            $said = str_ireplace($place, ' ', $said);
+        }
+        preg_match_all('/\d{1,2}/', $said, $found);
         $numbers = array_map('intval', $found[0]);
         foreach (['start', 'end'] as $field) {
             $time = $this->when->time($action[$field] ?? null);
@@ -392,6 +407,12 @@ class Engine
         $words = preg_replace('/\b(my|the|a|latest|last|newest|recent|uploaded|min|mitt|mina|senaste|sista|nyaste|uppladdade|mijn|laatste|nieuwste|song|songs|music|track|file|files|photo|photos|picture|pictures|image|video|document|låt|låten|låtar|musik|fil|filen|filer|bild|bilden|bilder|foto|fotot|dokument|liedje|nummer|muziek|bestand|afbeelding)\b/iu', '', $this->text($action['query'] ?? '')) ?? '';
 
         return ServiceCall::as($this->user, 'cloud', 'GET', '/files/find?'.http_build_query(['kind' => $kind, 'q' => trim($words), 'limit' => $limit]))['files'] ?? [];
+    }
+
+    /** The day of an action: the model's words, or with one dated thing in the request, the request's own. */
+    private function day(array $action): ?string
+    {
+        return $this->when->day($action['day'] ?? null) ?? ($this->single ? $this->when->day($this->request) : null);
     }
 
     /** Someone else on this PlainShow by first name, full name or username; small typos are forgiven. */

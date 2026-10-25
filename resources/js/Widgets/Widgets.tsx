@@ -620,23 +620,29 @@ export function ExtensionWidget({ definition }: { definition: WidgetDefinition }
     );
 }
 
-/* ---------- Assistant: say what to do; the Assistant opens with the answer ---------- */
+/* ---------- Assistant: the Assistant's own prompt, on the dashboard ---------- */
+/**
+ * The box you type in on /assistant, and nothing else: one row tall it is just
+ * the box; with two rows or more the Assistant's name sits inside it, above
+ * where you type. Sending opens the Assistant, grown from the widget.
+ */
 function AssistantWidget({ definition }: { definition: WidgetDefinition }) {
-    const box = useRef<HTMLDivElement>(null);
+    const box = useRef<HTMLElement>(null);
     const [text, setText] = useState('');
-    const { tiny } = useSize(definition);
-    const open = (words: string) => expandWidget(box.current?.closest('.ps-widget') ?? null, words.trim() ? `/assistant?q=${encodeURIComponent(words.trim())}` : '/assistant');
+    const { h } = useSize(definition);
+    const open = (words: string) => expandWidget(box.current, words.trim() ? `/assistant?q=${encodeURIComponent(words.trim())}` : '/assistant');
     return (
-        <WidgetFrame definition={definition} className="widget-assistant" expand={tiny ? '/assistant' : undefined}>
-            <div ref={box}>
-                <form onSubmit={(event) => { event.preventDefault(); open(text); }}>
-                    <i className="bx bx-chevron-right-square" aria-hidden="true" />
-                    <input value={text} onChange={(event) => setText(event.target.value)} placeholder={t('Tell PlainShow what to do…')} aria-label={t('What should we do?')} maxLength={500} />
-                    <button type="submit" aria-label={t('Send')}><i className="bx bx-up-arrow-alt" /></button>
+        <section ref={box} className={`ps-frame ps-widget widget-assistant${h <= 1 ? ' is-one-row' : ''}`} aria-label={definition.title}>
+            <div className="ps-frame__panel">
+                <form className="widget-assistant__box" onSubmit={(event) => { event.preventDefault(); open(text); }}>
+                    {h > 1 && <span className="widget-assistant__name"><i className="bx bx-chevron-right-square" aria-hidden="true" />{definition.title}</span>}
+                    <div className="widget-assistant__row">
+                        <input value={text} onChange={(event) => setText(event.target.value)} placeholder={t('Tell PlainShow what to do…')} aria-label={t('What should we do?')} maxLength={500} />
+                        <button type="submit" aria-label={t('Send')}><i className="bx bx-up-arrow-alt" /></button>
+                    </div>
                 </form>
-                {!tiny && <p className="widget-assistant__hint">{t('Add events, share files, check the weather or the news.')}</p>}
             </div>
-        </WidgetFrame>
+        </section>
     );
 }
 

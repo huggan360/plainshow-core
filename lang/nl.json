@@ -873,7 +873,6 @@
     "Tell PlainShow what to do…": "Zeg PlainShow wat er moet gebeuren…",
     "What should we do?": "Wat gaan we doen?",
     "Send": "Versturen",
-    "Add events, share files, check the weather or the news.": "Voeg afspraken toe, deel bestanden, bekijk het weer of het nieuws.",
     "That was a lot at once. Wait a moment and try again.": "Dat was veel tegelijk. Wacht even en probeer het opnieuw.",
     "The Assistant did not answer. Try again in a moment.": "De Assistent antwoordde niet. Probeer het zo opnieuw.",
     "Assistant": "Assistent",
@@ -927,5 +926,8 @@
     "Add to the calendar": "Aan de agenda toevoegen",
     "Let the Assistant add, change and remove events and tasks.": "Laat de Assistent afspraken en taken toevoegen, wijzigen en verwijderen.",
     "Share files": "Bestanden delen",
-    "Let the Assistant share files with other people.": "Laat de Assistent bestanden met anderen delen."
+    "Let the Assistant share files with other people.": "Laat de Assistent bestanden met anderen delen.",
+    "Your schedule": "Je planning",
+    "Tasks": "Taken",
+    "Not done": "Niet gelukt"
 }

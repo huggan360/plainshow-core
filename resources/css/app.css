@@ -1440,139 +1440,101 @@ a:hover > .nwa-picture img, a:hover .nwa-picture img { transform: scale(1.04); }
 }
 
 /* ---------- The Assistant: say it, it is done (Pages/Assistant.tsx) ---------- */
-.assistant { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; min-height: calc(100dvh - var(--ps-topbar) - 48px); padding: 24px 0 32px; }
-@media (min-width: 992px) { .assistant { min-height: calc(100dvh - 64px); } }
-.assistant.is-started { justify-content: flex-end; gap: 14px; }
-/* Once something is asked, the backdrop goes soft behind the work. */
+/* One screen tall: the page itself never scrolls; only an answer taller than the space does. */
+.assistant { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; height: calc(100dvh - var(--ps-topbar) - 40px); min-height: 0; overflow: hidden; }
+@media (min-width: 992px) { .ps-shell--app .assistant { flex: 1; height: auto; } }
+.assistant.is-started { display: grid; grid-template-rows: minmax(0, 1fr) auto auto; justify-items: center; gap: 12px; }
+/* Once something is asked, the page behind goes soft; the sidebar stays sharp. */
 .assistant__veil { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; background: color-mix(in srgb, var(--ps-bg) 38%, transparent); -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); transition: opacity .7s ease, backdrop-filter .7s ease, -webkit-backdrop-filter .7s ease; }
-/* The sidebar stays sharp; only the page behind the work goes soft. */
 @media (min-width: 992px) { .assistant__veil { left: var(--ps-sidebar); } }
 .assistant.is-started .assistant__veil { opacity: 1; -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); }
 .assistant > :not(.assistant__veil) { position: relative; z-index: 1; }
 
-.assistant__hello { display: grid; justify-items: center; gap: 10px; max-width: 640px; text-align: center; animation: assistant-rise .7s cubic-bezier(.2, .8, .2, 1) both; }
-.assistant__logo { height: 46px; width: auto; margin-bottom: 8px; }
+.assistant__hello { display: grid; justify-items: center; gap: 12px; max-width: 640px; text-align: center; animation: assistant-rise .7s cubic-bezier(.2, .8, .2, 1) both; }
+.assistant__logo { height: 46px; width: auto; margin-bottom: 6px; }
 .assistant__headline { margin: 0; font: 400 clamp(28px, 4vw, 40px)/1.15 var(--ps-font-title); color: var(--ps-text-strong); letter-spacing: -.01em; }
 
 /* The prompt: the glass frame, the theme gradient as its ring, glowing while it works. */
 .assistant__prompt { width: min(100%, 720px); padding: var(--ps-frame-pad); border: 1px solid var(--ps-shell-border); border-radius: 30px; background: color-mix(in srgb, var(--ps-shell) 40%, transparent); -webkit-backdrop-filter: blur(9px) saturate(1.3); backdrop-filter: blur(9px) saturate(1.3); }
-.assistant__prompt-ring { position: relative; display: flex; align-items: flex-end; gap: 8px; padding: 10px 10px 10px 46px; border-radius: 20px; background: color-mix(in srgb, var(--ps-panel) 82%, transparent); }
+.assistant__prompt-ring { position: relative; display: flex; align-items: flex-end; gap: 8px; padding: 10px 10px 10px 20px; border-radius: 20px; background: color-mix(in srgb, var(--ps-panel) 82%, transparent); }
 .assistant__prompt-ring::before { content: ''; position: absolute; inset: 0; padding: 3px; border-radius: inherit; pointer-events: none; background: var(--ps-gradient-ring); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
 .assistant__prompt-ring::after { content: ''; position: absolute; inset: -14px; z-index: -1; border-radius: 30px; background: var(--ps-gradient-ring); filter: blur(24px); opacity: .14; transition: opacity .5s ease; }
 .assistant.is-working .assistant__prompt-ring::after { opacity: .38; animation: assistant-breathe 1.6s ease-in-out infinite alternate; }
-.assistant__prompt-icon { position: absolute; left: 18px; bottom: 19px; color: var(--ps-accent-text); font-size: 1.25rem; }
-.assistant__field { flex: 1; min-height: 40px; max-height: 200px; padding: 9px 0; border: 0; resize: none; background: none; color: var(--ps-text); font: 400 var(--ps-text-md)/1.5 var(--ps-font-ui); field-sizing: content; outline: none; }
+.assistant__field { flex: 1; min-height: 40px; max-height: 160px; padding: 9px 0; border: 0; resize: none; background: none; color: var(--ps-text); font: 400 var(--ps-text-md)/1.5 var(--ps-font-ui); field-sizing: content; outline: none; }
 .assistant__field::placeholder { color: var(--ps-text-faint); }
 .assistant__send { display: grid; flex: none; place-items: center; width: 42px; height: 42px; border: 0; border-radius: 14px; background: var(--ps-accent); color: var(--ps-accent-fg); font-size: 1.4rem; cursor: pointer; transition: transform .15s ease, opacity .2s ease, background-color .15s ease; }
 .assistant__send:hover:not(:disabled) { background: var(--ps-accent-hover); transform: translateY(-1px); }
 .assistant__send:disabled { opacity: .35; cursor: default; }
 
 .assistant__ideas { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 720px; }
-.assistant__ideas button { padding: 8px 14px; border: 1px solid var(--ps-shell-border); border-radius: 999px; background: color-mix(in srgb, var(--ps-shell) 55%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--ps-text-soft); font: 500 var(--ps-text-sm) var(--ps-font-ui); cursor: pointer; animation: assistant-rise .6s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(.25s + var(--i) * 70ms); transition: color .15s ease, border-color .15s ease, transform .15s ease; }
-.assistant__ideas button:hover { color: var(--ps-text); border-color: var(--ps-accent); transform: translateY(-1px); }
+.assistant__ideas button { padding: 8px 14px; border: 1px solid var(--ps-shell-border); border-radius: 999px; background: color-mix(in srgb, var(--ps-shell) 55%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--ps-text-soft); font: 500 var(--ps-text-sm) var(--ps-font-ui); cursor: pointer; animation: assistant-rise .6s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(.25s + var(--i) * 70ms); }
+.assistant__ideas button:hover { color: var(--ps-text); border-color: var(--ps-accent); }
 
 /* What you sent: just above the prompt. */
 .assistant__said { display: flex; justify-content: flex-end; width: min(100%, 720px); animation: assistant-sent .5s cubic-bezier(.2, .8, .2, 1) both; }
-.assistant__said span { max-width: 80%; padding: 10px 16px; border-radius: 18px 18px 6px 18px; background: color-mix(in srgb, var(--ps-accent) 16%, var(--ps-panel)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ps-accent) 30%, transparent); color: var(--ps-text); font-size: var(--ps-text-md); white-space: pre-wrap; overflow-wrap: anywhere; }
+.assistant__said span { max-width: 80%; padding: 10px 16px; border-radius: 18px 18px 6px 18px; background: color-mix(in srgb, var(--ps-accent) 16%, var(--ps-panel)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ps-accent) 30%, transparent); color: var(--ps-text); white-space: pre-wrap; overflow-wrap: anywhere; }
 
-/* The work and the answer, above it all. */
-.assistant__stage { display: flex; flex: 1; flex-direction: column; justify-content: flex-end; width: min(100%, 720px); min-height: 0; }
-.assistant-working { display: grid; justify-items: center; gap: 18px; padding: 40px 0 28px; animation: assistant-rise .5s ease both; }
-.assistant-orb { position: relative; width: 112px; height: 112px; }
-.assistant-orb > * { position: absolute; border-radius: 50%; }
-.assistant-orb__glow { inset: -30px; background: radial-gradient(closest-side, color-mix(in srgb, var(--ps-accent) 45%, transparent), transparent); animation: assistant-breathe 1.8s ease-in-out infinite alternate; }
-.assistant-orb__ring { inset: 0; padding: 3px; background: conic-gradient(from 0deg, var(--ps-g1), var(--ps-g2), var(--ps-g3), var(--ps-g4), transparent 70%, var(--ps-g1)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: assistant-spin 1.4s linear infinite; }
-.assistant-orb__ring--2 { inset: 14px; animation-duration: 2.3s; animation-direction: reverse; opacity: .75; }
-.assistant-orb__core { inset: 36px; background: radial-gradient(circle at 35% 30%, var(--ps-g1), var(--ps-g3) 60%, var(--ps-g4)); box-shadow: 0 0 34px color-mix(in srgb, var(--ps-accent) 70%, transparent); animation: assistant-pulse 1.2s ease-in-out infinite alternate; }
-.assistant-orb__spark { left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px; background: var(--ps-g2); box-shadow: 0 0 10px var(--ps-g2); animation: assistant-orbit 2.4s cubic-bezier(.45, .05, .55, .95) infinite; animation-delay: calc(var(--i) * -.4s); }
-.assistant-working__step { margin: 0; font: 500 var(--ps-text-md) var(--ps-font-ui); color: transparent; background: linear-gradient(90deg, var(--ps-text-muted) 0%, var(--ps-text) 45%, var(--ps-text-muted) 90%) 0 0 / 200% 100%; -webkit-background-clip: text; background-clip: text; animation: assistant-shimmer 1.6s linear infinite, assistant-rise .4s ease both; }
+/* The work and the answer: in the middle of the space, a little above its centre. */
+.assistant__stage { position: relative; width: 100%; min-height: 0; }
+.assistant__swarm { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+.assistant__scroll { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 12px 0 7vh; }
+.assistant__scroll::before, .assistant__scroll::after { content: ''; flex: 1 0 0; }
+.assistant-status { position: absolute; left: 0; right: 0; top: calc(46% + min(130px, 24vh)); margin: 0; text-align: center; font: 500 var(--ps-text-md) var(--ps-font-ui); color: transparent; background: linear-gradient(90deg, var(--ps-text-muted) 0%, var(--ps-text) 45%, var(--ps-text-muted) 90%) 0 0 / 200% 100%; -webkit-background-clip: text; background-clip: text; animation: assistant-shimmer 1.6s linear infinite, assistant-rise .4s ease both; }
 
-.assistant-answer { display: grid; gap: 12px; padding: 12px 0 6px; }
-.assistant-answer__card { animation: assistant-card .65s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 120ms); }
+/* Laid out unseen while the dots take its shape, then shown in their place. */
+.assistant-answer { display: grid; gap: 12px; width: min(100%, 640px); flex: none; opacity: 0; }
+.assistant-answer.is-shown { opacity: 1; }
+.assistant-answer.is-shown .assistant-answer__block { animation: assistant-appear .7s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 90ms); }
 .assistant-words { margin: 0; color: var(--ps-text); font: 400 var(--ps-text-lg)/1.5 var(--ps-font-title); }
-.assistant-words span { display: inline-block; animation: assistant-word .45s ease both; animation-delay: calc(var(--i) * 120ms + 150ms + var(--w) * 28ms); }
+.assistant-answer.is-shown .assistant-words span { display: inline-block; animation: assistant-word .45s ease both; animation-delay: calc(var(--i) * 90ms + 150ms + var(--w) * 28ms); }
 .assistant-question { display: grid; gap: 10px; }
 .assistant-question__choices { display: flex; flex-wrap: wrap; gap: 8px; }
-.assistant-question__choices button { padding: 8px 16px; border: 1px solid var(--ps-accent); border-radius: 999px; background: var(--ps-accent-bg); color: var(--ps-text); font: 600 var(--ps-text-sm) var(--ps-font-ui); cursor: pointer; animation: assistant-rise .45s ease both; animation-delay: calc(.4s + var(--i) * 60ms); }
+.assistant-question__choices button { padding: 8px 16px; border: 1px solid var(--ps-accent); border-radius: 999px; background: var(--ps-accent-bg); color: var(--ps-text); font: 600 var(--ps-text-sm) var(--ps-font-ui); cursor: pointer; }
 .assistant-question__choices button:hover { background: var(--ps-accent); color: var(--ps-accent-fg); }
 
-/* Cards. */
-.assistant-card > .ps-frame__panel { padding: 18px 20px; }
-.assistant-card__head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.assistant-card__icon { display: grid; flex: none; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: var(--ps-accent-bg); color: var(--ps-accent-text); font-size: 1.2rem; }
-.assistant-card__title { margin: 0; font: 400 var(--ps-text-lg) var(--ps-font-title); color: var(--ps-text-strong); }
-.assistant-card__action { margin-left: auto; }
-.assistant-badge { padding: 2px 9px; border-radius: 999px; font: 600 var(--ps-text-xs) var(--ps-font-ui); background: var(--ps-green-bg); color: var(--ps-green); animation: assistant-pop .5s cubic-bezier(.3, 1.6, .5, 1) both; animation-delay: .35s; }
-.assistant-badge.is-changed { background: var(--ps-blue-bg); color: var(--ps-blue); }
-.assistant-badge.is-removed { background: var(--ps-red-bg); color: var(--ps-red); }
-.assistant-card--error > .ps-frame__panel { display: flex; align-items: center; gap: 10px; padding: 14px 18px; color: var(--ps-text-soft); }
-.assistant-card--error i { color: var(--ps-red); font-size: 1.3rem; }
-
-.assistant-event { display: flex; align-items: center; gap: 16px; }
-.assistant-event.is-removed { opacity: .55; text-decoration: line-through; }
-.assistant-event__date { display: grid; flex: none; place-items: center; width: 62px; padding: 6px 0 8px; border-radius: 14px; background: color-mix(in srgb, var(--tone) 16%, var(--ps-raised)); box-shadow: inset 0 3px 0 var(--tone); }
-.assistant-event__date span { color: var(--ps-text-muted); font: 600 var(--ps-text-xs) var(--ps-font-ui); text-transform: uppercase; letter-spacing: .06em; }
-.assistant-event__date strong { font: 400 28px/1 var(--ps-font-title); color: var(--ps-text-strong); }
-.assistant-event__text { display: grid; gap: 2px; min-width: 0; }
-.assistant-event__text > strong { font-size: var(--ps-text-lg); color: var(--ps-text-strong); }
-.assistant-event__text > span:first-letter { text-transform: uppercase; }
-.assistant-event__text > span, .assistant-task span { color: var(--ps-text-soft); font-size: var(--ps-text-sm); }
-.assistant-event__calendar { display: inline-flex; align-items: center; gap: 6px; color: var(--ps-text-muted) !important; }
-.assistant-event__calendar i { width: 8px; height: 8px; border-radius: 50%; }
-.assistant-task { display: flex; align-items: flex-start; gap: 14px; }
-.assistant-task > div { display: grid; gap: 2px; }
-.assistant-task strong { font-size: var(--ps-text-lg); color: var(--ps-text-strong); }
-.assistant-task__box { flex: none; width: 22px; height: 22px; margin-top: 3px; border: 2px solid var(--ps-accent); border-radius: 7px; }
-
+/* Answers are widgets: the dashboard's frame, head and rows. */
+.assistant-widget > .ps-frame__panel { padding: 18px; }
+.assistant-rows { display: grid; gap: 3px; --ps-cap: 14px; }
+.assistant-rows .widget-row { min-height: 54px; padding-top: 8px; padding-bottom: 8px; }
+.assistant-rows .widget-row__title { font-size: var(--ps-text-md); }
+.assistant-rows .widget-row__meta { font-size: var(--ps-text-sm); }
+.assistant-rows .widget-row__meta::first-letter { text-transform: uppercase; }
+.assistant-rows .widget-day { width: 40px; height: 40px; }
+.assistant-rows .is-removed .widget-row__title { text-decoration: line-through; color: var(--ps-text-muted); }
+.assistant-rows .assistant-error .widget-row__title { white-space: normal; }
+.assistant-state { padding: 2px 9px; border-radius: 999px; background: var(--ps-green-bg); color: var(--ps-green); font: 600 var(--ps-text-xs) var(--ps-font-ui); }
+.assistant-state.is-changed { background: var(--ps-blue-bg); color: var(--ps-blue); }
+.assistant-state.is-removed { background: var(--ps-red-bg); color: var(--ps-red); }
+.assistant-check { width: 20px; height: 20px; margin: 0 10px; border: 2px solid var(--ps-accent); border-radius: 6px; }
+.assistant-tile { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--ps-accent-bg); color: var(--ps-accent-text); font-size: 1.25rem; }
+.assistant-thumb { width: 56px; height: 40px; border-radius: 9px; object-fit: cover; }
+.assistant-done { color: var(--ps-green); font-size: 1.3rem; }
+.assistant-go .widget-row__trail { color: var(--ps-accent-text); font-size: 1.4rem; transition: transform .2s ease; }
+.assistant-go:hover .widget-row__trail, .assistant-go.is-going .widget-row__trail { transform: translateX(4px); }
+.assistant-go.is-going { position: relative; overflow: hidden; }
+.assistant-go.is-going::after { content: ''; position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--ps-gradient); transform-origin: left; animation: assistant-progress 2.3s linear both; }
 .assistant-weather .ps-widget { min-height: 300px; }
-.assistant-news { display: grid; gap: 4px; }
-.assistant-news__story { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 12px; color: inherit; text-decoration: none; transition: background-color .15s ease; }
-.assistant-news__story:hover { background: var(--ps-hover); }
-.assistant-news__story img { flex: none; width: 74px; height: 52px; border-radius: 9px; object-fit: cover; }
-.assistant-news__story.is-lead img { width: 120px; height: 80px; }
-.assistant-news__text { display: grid; gap: 2px; min-width: 0; }
-.assistant-news__text strong { color: var(--ps-text-strong); font-weight: 600; line-height: 1.35; }
-.assistant-news__story.is-lead strong { font: 400 var(--ps-text-lg)/1.3 var(--ps-font-title); }
-.assistant-news__text small { color: var(--ps-text-muted); font-size: var(--ps-text-xs); }
-
-.assistant-file { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 12px; color: inherit; text-decoration: none; }
-.assistant-file:hover { background: var(--ps-hover); }
-.assistant-file__icon { display: grid; flex: none; place-items: center; width: 46px; height: 46px; border-radius: 13px; background: var(--ps-gradient); color: var(--ps-accent-fg); font-size: 1.45rem; }
-.assistant-file__text { display: grid; min-width: 0; }
-.assistant-file__text strong { overflow: hidden; color: var(--ps-text-strong); text-overflow: ellipsis; white-space: nowrap; }
-.assistant-file__text small { color: var(--ps-text-muted); font-size: var(--ps-text-xs); }
-.assistant-shared { position: relative; display: flex; align-items: center; gap: 10px; margin: 6px 0 0 30px; padding-top: 10px; color: var(--ps-text-soft); font-size: var(--ps-text-sm); }
-.assistant-shared__line { position: absolute; left: -6px; top: -4px; width: 22px; height: 26px; border-left: 2px solid var(--ps-accent); border-bottom: 2px solid var(--ps-accent); border-bottom-left-radius: 12px; animation: assistant-draw .6s ease both; animation-delay: .4s; transform-origin: top; }
-
-.assistant-link { display: block; color: inherit; text-decoration: none; }
-.assistant-link > .ps-frame__panel { display: flex; align-items: center; gap: 14px; padding: 16px 20px; }
-.assistant-link__text { display: grid; flex: 1; min-width: 0; }
-.assistant-link__text strong { color: var(--ps-text-strong); font: 400 var(--ps-text-lg) var(--ps-font-title); }
-.assistant-link__text small { color: var(--ps-text-muted); }
-.assistant-link__arrow { font-size: 1.5rem; color: var(--ps-accent-text); transition: transform .2s ease; }
-.assistant-link:hover .assistant-link__arrow, .assistant-link.is-going .assistant-link__arrow { transform: translateX(4px); }
-.assistant-link__progress { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--ps-gradient); transform-origin: left; animation: assistant-progress 1.5s linear both; }
 
 @keyframes assistant-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes assistant-sent { from { opacity: 0; transform: translateY(18px) scale(.96); } to { opacity: 1; transform: none; } }
-@keyframes assistant-card { from { opacity: 0; transform: translateY(22px) scale(.97); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes assistant-appear { from { opacity: 0; transform: scale(.985); filter: blur(5px) brightness(1.6); } to { opacity: 1; transform: none; filter: none; } }
 @keyframes assistant-word { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
-@keyframes assistant-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
-@keyframes assistant-spin { to { transform: rotate(360deg); } }
-@keyframes assistant-pulse { from { transform: scale(.88); } to { transform: scale(1.06); } }
 @keyframes assistant-breathe { from { opacity: .35; transform: scale(.94); } to { opacity: .85; transform: scale(1.04); } }
-@keyframes assistant-orbit { from { transform: rotate(0deg) translateX(58px) scale(.6); opacity: .3; } 50% { opacity: 1; transform: rotate(180deg) translateX(66px) scale(1); } to { transform: rotate(360deg) translateX(58px) scale(.6); opacity: .3; } }
 @keyframes assistant-shimmer { to { background-position: -200% 0; } }
-@keyframes assistant-draw { from { transform: scaleY(0); } to { transform: none; } }
 @keyframes assistant-progress { from { transform: scaleX(0); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .assistant *, .assistant *::before, .assistant *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; } }
 
-/* The Assistant widget: the prompt on the dashboard. */
-.widget-assistant .ps-widget__body { justify-content: center; }
-.widget-assistant form { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border-radius: 16px; background: var(--ps-raised); box-shadow: inset 0 0 0 1px var(--ps-shell-border); transition: box-shadow .2s ease; }
-.widget-assistant form:focus-within { box-shadow: inset 0 0 0 2px var(--ps-accent); }
-.widget-assistant form > i { color: var(--ps-accent-text); font-size: 1.2rem; }
-.widget-assistant input { flex: 1; min-width: 0; border: 0; background: none; color: var(--ps-text); font: inherit; outline: none; }
-.widget-assistant button { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 11px; background: var(--ps-accent); color: var(--ps-accent-fg); font-size: 1.25rem; cursor: pointer; }
-.widget-assistant button:disabled { opacity: .4; }
-.widget-assistant__hint { margin: 10px 2px 0; color: var(--ps-text-muted); font-size: var(--ps-text-xs); }
+/* The Assistant widget: the Assistant's prompt box on the dashboard, nothing more. */
+.widget-assistant > .ps-frame__panel { display: flex; padding: 8px; }
+.widget-assistant__box { position: relative; display: flex; flex: 1; flex-direction: column; justify-content: center; gap: 6px; min-height: 0; padding: 8px 8px 8px 18px; border-radius: calc(var(--ps-frame-radius) - var(--ps-frame-pad) - 8px); background: color-mix(in srgb, var(--ps-panel) 82%, transparent); }
+.widget-assistant__box::before { content: ''; position: absolute; inset: 0; padding: 3px; border-radius: inherit; pointer-events: none; background: var(--ps-gradient-ring); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+.widget-assistant__box:focus-within::after { content: ''; position: absolute; inset: -8px; z-index: -1; border-radius: inherit; background: var(--ps-gradient-ring); filter: blur(18px); opacity: .25; }
+.widget-assistant__name { display: inline-flex; align-items: center; gap: 6px; color: var(--ps-text-muted); font: 600 var(--ps-text-xs) var(--ps-font-ui); letter-spacing: .04em; text-transform: uppercase; }
+.widget-assistant__name i { color: var(--ps-accent-text); font-size: 1rem; }
+.widget-assistant__row { display: flex; align-items: center; gap: 8px; }
+.widget-assistant input { flex: 1; min-width: 0; height: 40px; border: 0; background: none; color: var(--ps-text); font: 400 var(--ps-text-md) var(--ps-font-ui); outline: none; }
+.widget-assistant input::placeholder { color: var(--ps-text-faint); }
+.widget-assistant button { display: grid; flex: none; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 13px; background: var(--ps-accent); color: var(--ps-accent-fg); font-size: 1.35rem; cursor: pointer; transition: background-color .15s ease, transform .15s ease; }
+.widget-assistant button:hover { background: var(--ps-accent-hover); transform: translateY(-1px); }
+.widget-assistant.is-one-row > .ps-frame__panel { padding: 6px; }
+.widget-assistant.is-one-row .widget-assistant__box { padding: 4px 6px 4px 16px; }

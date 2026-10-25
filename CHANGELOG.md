@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.16.0
+
+- The Assistant works as a drone show: glowing dots in the theme colour gather into a grid, wheel round and form icons, then fly into the exact shape of the answer, which takes their place.
+- Answers are widgets in the dashboard's own look; several events become one schedule, several tasks one list.
+- The work and the answer sit a little above the middle of the screen, and the page no longer scrolls unless an answer is taller than the screen. No icon inside the prompt.
+- Events keep the place you name ("på Bergsbrunnagatan 15"); a house number is never taken for a time.
+- The Assistant widget is just the prompt, one row tall or more; from two rows its name sits inside the box.
+
 ## v1.15.5
 
 - No suggestions under the Assistant's prompt for now.

@@ -1,0 +1,214 @@
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+
+/*
+ * The Assistant at work, as a drone show: glowing dots in the theme colour
+ * rise from the prompt into a grid, wheel round in a ring and rearrange
+ * into icons (a calendar, a cloud, news, a folder, a file) while they work.
+ * When the answer is ready, land() flies them into the exact outline of what
+ * is about to appear (a widget, a card, a message) and they fade as it fades
+ * in. Drawn on one canvas, additively, with a pre-rendered glow per colour.
+ */
+export type SwarmHandle = {
+    /** Fly into this box (relative to the swarm's own box), then call done. */
+    land: (box: { x: number; y: number; width: number; height: number }, done: () => void) => void;
+};
+
+type Dot = { x: number; y: number; tx: number; ty: number; delay: number; size: number; colour: number; phase: number };
+type Point = [number, number];
+
+const ICONS = ['bx-calendar', 'bx-cloud-light-rain', 'bx-news', 'bx-folder', 'bx-file', 'bx-chevron-right-square'];
+const HOLD = 1500;
+
+/** Points inside a Boxicons glyph, centred on 0,0 and `size` across, read from the font itself. */
+function glyph(icon: string, size: number): Point[] {
+    const probe = document.createElement('i');
+    probe.className = `bx ${icon}`;
+    probe.style.cssText = 'position:absolute;visibility:hidden;font-size:16px';
+    document.body.appendChild(probe);
+    const content = getComputedStyle(probe, '::before').content.replace(/^["']|["']$/g, '');
+    const family = getComputedStyle(probe).fontFamily;
+    probe.remove();
+    const pixels = Math.round(size);
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = pixels;
+    const context = canvas.getContext('2d');
+    if (!context || !content || content === 'none') return [];
+    context.font = `${pixels * 0.92}px ${family}`;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(content, pixels / 2, pixels / 2);
+    const data = context.getImageData(0, 0, pixels, pixels).data;
+    const points: Point[] = [];
+    const step = Math.max(3, Math.round(pixels / 34));
+    for (let y = 0; y < pixels; y += step) {
+        for (let x = 0; x < pixels; x += step) {
+            if (data[(y * pixels + x) * 4 + 3] > 140) points.push([x - pixels / 2, y - pixels / 2]);
+        }
+    }
+    return points;
+}
+
+/** n points spread over a set: every point once, then again, evenly. */
+function spread(points: Point[], n: number): Point[] {
+    if (!points.length) return Array.from({ length: n }, () => [0, 0]);
+    return Array.from({ length: n }, (_, index) => points[Math.floor((index * points.length) / n) % points.length]);
+}
+
+/** The outline of a rounded box and a light fill inside it: the shape of what is coming. */
+function boxShape(width: number, height: number, n: number): Point[] {
+    const radius = Math.min(22, width / 6, height / 3);
+    const outline = Math.round(n * 0.62);
+    const perimeter = 2 * (width + height);
+    const points: Point[] = [];
+    for (let index = 0; index < outline; index++) {
+        let d = (index / outline) * perimeter;
+        let x: number, y: number;
+        if (d < width) { x = d; y = 0; } else if ((d -= width) < height) { x = width; y = d; } else if ((d -= height) < width) { x = width - d; y = height; } else { d -= width; x = 0; y = height - d; }
+        // Round the corners in.
+        const cx = Math.min(Math.max(x, radius), width - radius), cy = Math.min(Math.max(y, radius), height - radius);
+        const dx = x - cx, dy = y - cy, length = Math.hypot(dx, dy);
+        if (length > radius) { x = cx + (dx / length) * radius; y = cy + (dy / length) * radius; }
+        points.push([x, y]);
+    }
+    const inner = n - outline;
+    const columns = Math.max(2, Math.round(Math.sqrt(inner * (width / Math.max(height, 1)))));
+    const rows = Math.max(1, Math.ceil(inner / columns));
+    for (let index = 0; index < inner; index++) {
+        const column = index % columns, row = Math.floor(index / columns);
+        points.push([16 + ((column + 0.5) / columns) * (width - 32), 18 + ((row + 0.5) / rows) * Math.max(0, height - 36)]);
+    }
+    return points;
+}
+
+/** A theme colour (#rrggbb, as the kit defines them) with an alpha. */
+function rgba(colour: string, alpha: number): string {
+    const hex = colour.replace('#', '');
+    if (!/^[0-9a-f]{6}$/i.test(hex)) return colour;
+    return `rgba(${parseInt(hex.slice(0, 2), 16)}, ${parseInt(hex.slice(2, 4), 16)}, ${parseInt(hex.slice(4, 6), 16)}, ${alpha})`;
+}
+
+function sprite(colour: string): HTMLCanvasElement {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 32;
+    const context = canvas.getContext('2d')!;
+    const glow = context.createRadialGradient(16, 16, 0, 16, 16, 16);
+    glow.addColorStop(0, '#ffffff');
+    glow.addColorStop(0.18, rgba(colour, 1));
+    glow.addColorStop(0.45, rgba(colour, 0.35));
+    glow.addColorStop(1, rgba(colour, 0));
+    context.fillStyle = glow;
+    context.fillRect(0, 0, 32, 32);
+    return canvas;
+}
+
+export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Swarm({ className }, ref) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const landing = useRef<{ box: { x: number; y: number; width: number; height: number }; done: () => void; at: number; called: boolean } | null>(null);
+
+    useImperativeHandle(ref, () => ({
+        land: (box, done) => { landing.current = { box, done, at: performance.now(), called: false }; },
+    }), []);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const context = canvas?.getContext('2d');
+        if (!canvas || !context) return;
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        let width = 0, height = 0;
+        const resize = () => {
+            width = canvas.clientWidth; height = canvas.clientHeight;
+            canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
+            context.setTransform(ratio, 0, 0, ratio, 0, 0);
+        };
+        resize();
+        const observer = new ResizeObserver(resize);
+        observer.observe(canvas);
+
+        const root = getComputedStyle(document.documentElement);
+        const colours = ['--ps-g1', '--ps-g2', '--ps-g3', '--ps-g4'].map((name) => root.getPropertyValue(name).trim() || '#fc5000');
+        const sprites = colours.map(sprite);
+        const count = width < 600 ? 110 : 150;
+        const size = () => Math.max(120, Math.min(220, Math.min(width, height) * 0.36));
+        const centre = (): Point => [width / 2, height * 0.46];
+        const dots: Dot[] = Array.from({ length: count }, (_, index) => ({
+            // They rise from the prompt below.
+            x: width / 2 + (Math.random() - 0.5) * 240, y: height + 30 + Math.random() * 60, tx: 0, ty: 0,
+            delay: Math.random() * 0.35, size: 1.4 + Math.random() * 1.8, colour: index % 4, phase: Math.random() * Math.PI * 2,
+        }));
+        const icons: Point[][] = [];
+        document.fonts?.ready.then(() => ICONS.forEach((icon) => icons.push(glyph(icon, size()))));
+
+        const shapes = ['grid', 'ring', 'icon'] as const;
+        const started = performance.now();
+        let fade = 1;
+        let frame = 0;
+        let last = started;
+
+        const draw = (now: number) => {
+            const dt = Math.min(0.05, (now - last) / 1000);
+            last = now;
+            const [cx, cy] = centre();
+            const s = size();
+            const land = landing.current;
+            let targets: Point[];
+            if (land) {
+                targets = spread(boxShape(land.box.width, land.box.height, count), count).map(([x, y]) => [land.box.x + x, land.box.y + y]);
+            } else {
+                const step = Math.floor((now - started) / HOLD);
+                // grid, ring, icon, ring, icon, ...
+                const kind = step === 0 ? 'grid' : shapes[1 + ((step - 1) % 2)];
+                if (kind === 'grid') {
+                    const columns = Math.ceil(Math.sqrt(count));
+                    targets = dots.map((_, index) => [cx - s / 2 + ((index % columns) + 0.5) * (s / columns), cy - s / 2 + (Math.floor(index / columns) + 0.5) * (s / columns)]);
+                } else if (kind === 'ring' || !icons.length) {
+                    const turn = (now - started) / 1000 * 1.4;
+                    targets = dots.map((_, index) => {
+                        const angle = (index / count) * Math.PI * 2 + turn;
+                        const radius = s / 2 * (index % 3 === 0 ? 0.72 : 1);
+                        return [cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius];
+                    });
+                } else {
+                    const shape = spread(icons[Math.floor((step - 1) / 2) % icons.length], count);
+                    targets = shape.map(([x, y]) => [cx + x, cy + y]);
+                }
+            }
+
+            const age = (now - started) / 1000;
+            let settled = 0;
+            dots.forEach((dot, index) => {
+                const [tx, ty] = targets[index];
+                const wobble = land ? 0 : 1.6;
+                dot.tx = tx + Math.cos(age * 2 + dot.phase) * wobble;
+                dot.ty = ty + Math.sin(age * 2.3 + dot.phase) * wobble;
+                const ready = age > dot.delay;
+                const pull = 1 - Math.exp(-dt * (land ? 9 : 6) * (ready ? 1 : 0.2));
+                dot.x += (dot.tx - dot.x) * pull;
+                dot.y += (dot.ty - dot.y) * pull;
+                if (Math.hypot(dot.tx - dot.x, dot.ty - dot.y) < 3) settled++;
+            });
+
+            if (land && !land.called && (settled > count * 0.85 || now - land.at > 1100)) {
+                land.called = true;
+                land.done();
+            }
+            if (land?.called) fade = Math.max(0, fade - dt * 2.4);
+
+            context.clearRect(0, 0, width, height);
+            context.globalCompositeOperation = 'lighter';
+            dots.forEach((dot) => {
+                const twinkle = 0.65 + 0.35 * Math.sin(age * 4 + dot.phase);
+                const boost = land ? 1.25 : 1;
+                context.globalAlpha = Math.min(1, twinkle * boost) * fade;
+                const r = dot.size * 4.2 * (land ? 1.15 : 1);
+                context.drawImage(sprites[dot.colour], dot.x - r, dot.y - r, r * 2, r * 2);
+            });
+            context.globalAlpha = 1;
+            context.globalCompositeOperation = 'source-over';
+            if (fade > 0) frame = requestAnimationFrame(draw);
+        };
+        frame = requestAnimationFrame(draw);
+        return () => { cancelAnimationFrame(frame); observer.disconnect(); };
+    }, []);
+
+    return <canvas ref={canvasRef} className={className} aria-hidden="true" />;
+});
