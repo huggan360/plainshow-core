@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.17.2
+
+- The Assistant's replies use only what was really done this time: no example sentences copied, no weather or news carried over from earlier messages, and no stray Chinese characters.
+- A greeting or a thank-you is answered straight away, without planning first.
+
 ## v1.17.1
 
 - The Assistant answers faster: it reads shorter notes from earlier in the window and only the headlines of the news, and no longer writes text it throws away.

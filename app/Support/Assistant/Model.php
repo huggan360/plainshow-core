@@ -52,7 +52,7 @@ class Model
     public function review(string $earlier, string $request, array $done, string $language = 'English'): array
     {
         $lines = array_map(fn ($line) => '- '.$line, $done ?: ['Nothing was done; this is small talk or a question to answer.']);
-        $data = $this->ask("Task: check\n".$earlier."\nRequest: ".$request."\nDone:\n".implode("\n", $lines)."\nReply in $language.", self::checkSchema(), 320, 0.5);
+        $data = $this->ask("Task: check\n".$earlier."\nRequest: ".$request."\nDone:\n".implode("\n", $lines)."\nReply in $language.", self::checkSchema(), 320, 0.4);
 
         return [
             'ok' => (bool) ($data['ok'] ?? true),
@@ -143,7 +143,8 @@ class Model
             'properties' => [
                 'ok' => ['type' => 'boolean'],
                 'fix' => ['type' => 'object', 'properties' => ['title' => $string, 'day' => $string, 'start' => $string, 'end' => $string, 'place' => $string]],
-                'reply' => ['type' => 'string', 'maxLength' => 420],
+                // Latin letters only: a small Qwen now and then slips into Chinese.
+                'reply' => ['type' => 'string', 'maxLength' => 420, 'pattern' => '^[\\u0020-\\u007E\\u00A0-\\u024F\\u2013\\u2014\\u2018-\\u201E\\u2026]*$'],
             ],
             'required' => ['ok', 'fix', 'reply'],
         ];
@@ -249,44 +250,11 @@ Request: Vad kan du hjälpa till med?
 {"actions":[{"do":"say"}]}
 
 ## Task: check
-You get the request, what was said earlier in this window, and under "Done" what the apps really did. Compare them.
+You get the request, under "Done" what the apps really did, and maybe the last thing said before, only as background. Compare the request with Done.
 - ok: false only when something done differs from what was asked (a wrong or missing day, time, place or title of the event just made).
 - fix: then the right values for that event (title, day, start, end, place, as for calendar.change); otherwise {}.
-- reply: your own answer to the person, in the language of the request: short (one to three sentences), warm and natural, in your own words; the examples only show the tone, never copy them. When the weather, news or a schedule was shown, sum up what matters in it (the day's plan, what to wear, the biggest stories). Say what happened, as Done tells it, with the fix if there is one. Do not list everything; the cards beside your reply show the details. When Done says a question is needed, the reply asks it. When something failed, say so plainly. Never say something was done that Done does not say. For small talk (a greeting, thanks, a question about you), answer like a friendly person would, in your own words; you can help with calendars, tasks, weather, news, files and opening apps. Always reply in the language the message names.
+- reply: your own answer to the person, in the language of the request: short (one to three sentences), warm and natural, in your own words; the examples only show the tone, never copy them. When the weather, news or a schedule was shown, sum up what matters in it (the day's plan, what to wear, the biggest stories). Say what happened, as Done tells it, with the fix if there is one. Use only facts from Done: never times, weather, news or events from anywhere else, and never repeat what was said earlier. Do not list everything; the cards beside your reply show the details. When Done says a question is needed, the reply asks it. When something failed, say so plainly. Never say something was done that Done does not say. For small talk (a greeting, thanks, a question about you), answer like a friendly person would, in your own words; you can help with calendars, tasks, weather, news, files and opening apps. Always reply in the language the message names. Write it fresh each time.
 
-Examples:
-Task: check
-Request: Lägg till tenta imorgon kl 14 på Bergsbrunnagatan 15
-Done:
-- Event added: "Tenta", Monday 2026-10-26, all day, place Bergsbrunnagatan 15, calendar Skola.
-Reply in Swedish.
-{"ok":false,"fix":{"start":"14:00"},"reply":"Tentan ligger i Skola imorgon kl 14, på Bergsbrunnagatan 15. Lycka till!"}
-Task: check
-Request: What's the weather in Lund?
-Done:
-- Weather shown for Lund: now 8°, light rain; today 6° to 10°.
-Reply in English.
-{"ok":true,"fix":{},"reply":"It's 8 degrees with a little rain in Lund right now, so bring an umbrella."}
-Task: check
-Request: Sammanfatta min dag
-Done:
-- Schedule for Monday 2026-10-26: 09:00-10:00 Föreläsning at Hus C; 18:00-19:00 Träning at Friskis.
-- Weather shown for Lund: now 7°, cloudy. Monday 5° to 9°, light rain, 2.1 mm.
-- News shown (top): Regeringen lägger fram budget: Satsningar på skolan | Storm väntas i norr: SMHI varnar.
-Reply in Swedish.
-{"ok":true,"fix":{},"reply":"Du har föreläsning kl 9 och träning kl 18. Det blir lätt regn och runt 9 grader, så ta med jacka. I nyheterna: regeringens budget och en storm på väg i norr."}
-Task: check
-Request: Skapa en ny kalender
-Done:
-- Question needed: the name of the new calendar.
-Reply in Swedish.
-{"ok":true,"fix":{},"reply":"Visst! Vad ska kalendern heta?"}
-Task: check
-Request: Add a meeting
-Done:
-- Question needed: When is “Meeting”?
-Reply in English.
-{"ok":true,"fix":{},"reply":"Sure, when is the meeting?"}
 TEXT;
     }
 }
