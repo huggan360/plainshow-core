@@ -629,18 +629,16 @@ export function ExtensionWidget({ definition }: { definition: WidgetDefinition }
 function AssistantWidget({ definition }: { definition: WidgetDefinition }) {
     const box = useRef<HTMLElement>(null);
     const [text, setText] = useState('');
-    const { h } = useSize(definition);
     const border = useBorder(definition.border);
     const open = (words: string) => expandWidget(box.current, words.trim() ? `/assistant?q=${encodeURIComponent(words.trim())}` : '/assistant');
+    // Just a field to write in, the whole widget, with the send button in its corner.
     return (
-        <section ref={box} className={`ps-frame ps-widget widget-assistant${h <= 1 ? ' is-one-row' : ''}`} data-border={border} aria-label={definition.title}>
+        <section ref={box} className="ps-frame ps-widget widget-assistant" data-border={border} aria-label={definition.title}>
             <div className="ps-frame__panel">
-                <form className="widget-assistant__box" onSubmit={(event) => { event.preventDefault(); open(text); }}>
-                    {h > 1 && <span className="widget-assistant__name"><i className="bx bx-chevron-right-square" aria-hidden="true" />{definition.title}</span>}
-                    <div className="widget-assistant__row">
-                        <input value={text} onChange={(event) => setText(event.target.value)} placeholder={t('Tell PlainShow what to do…')} aria-label={t('What should we do?')} maxLength={500} />
-                        <button type="submit" aria-label={t('Send')}><i className="bx bx-up-arrow-alt" /></button>
-                    </div>
+                <form className="widget-assistant__form" onSubmit={(event) => { event.preventDefault(); open(text); }}>
+                    <textarea value={text} onChange={(event) => setText(event.target.value)} placeholder={t('Tell PlainShow what to do…')} aria-label={t('What should we do?')} maxLength={500} rows={1}
+                        onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); open(text); } }} />
+                    <button type="submit" aria-label={t('Send')}><i className="bx bx-up-arrow-alt" /></button>
                 </form>
             </div>
         </section>

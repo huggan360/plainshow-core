@@ -133,6 +133,14 @@ class Engine
      */
     private function review(): void
     {
+        // A task manager first: cards speak for themselves. The model writes only where words help:
+        // after a change (to check it), for a question, for small talk, or when asked to sum up.
+        $wrote = (bool) array_filter($this->out['cards'], fn ($card) => in_array($card['type'], ['event', 'task', 'calendar', 'file'], true));
+        $talk = ! $this->out['cards'] && ! $this->out['redirect'];
+        $sumUp = (bool) preg_match('/sammanfatta|summar|samenvat|briefing|vad har hant|vad hander|what happened|whats happening|wat is er gebeurd/', News::fold($this->request));
+        if (! $wrote && ! $talk && ! $sumUp && $this->out['question'] === null) {
+            return;
+        }
         $done = $this->facts();
         try {
             // No earlier lines here: the model repeats them. It answers this request from what was done.
@@ -143,6 +151,14 @@ class Engine
         // A fix counts even when the model still says ok; checked() keeps only what the request says.
         if ($check['fix'] && ($this->memory['event']['uid'] ?? null) !== null && $this->madeEvent) {
             $this->fix($check['fix']);
+        }
+        // Numbers it names must be in what was done or said; otherwise it made them up.
+        $known = $this->request.' '.implode(' ', $done);
+        preg_match_all('/\d+(?:[.,:]\d+)?/', $check['reply'], $numbers);
+        foreach ($numbers[0] as $number) {
+            if (! str_contains($known, $number) && ! str_contains($known, str_replace(',', '.', $number))) {
+                return;
+            }
         }
         if ($check['reply'] === '') {
             return;

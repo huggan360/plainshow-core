@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.18.0
+
+- The Assistant is a task manager first: widgets answer most requests on their own, quicker, and it only writes when words help (after it changes something, to ask, for small talk, or when you ask it to sum up). A reply naming a number that is not in what was shown is dropped.
+- The model runs at the lowest priority, so the sites always go first, and it keeps the instructions it has read on disk: opening the Assistant no longer keeps the processor busy for a minute.
+- The Assistant widget is only a field to write in, with the send button in its lower corner; no title, no box inside the box.
+- The working dots circle once at the start, then turn from one icon straight into the next, with a softer glow.
+
 ## v1.17.6
 
 - "Good morning!" and other English greetings get an English answer, and replies stay closer to what was shown.

@@ -92,8 +92,12 @@ React and TypeScript (Vite).
   answers with cards (a day's timeline, events, weather, news, files), the
   reply under them, a question, or a page to open. Turns are kept seven days
   (`core_assistant_turns`); memory and the earlier lines the model reads stay
-  within one opening of the page (`conversation`, made by the page). Without
-  the model's check, the engine's own short texts are shown. Capability `core.assistant.use`.
+  within one opening of the page (`conversation`, made by the page). The check
+  runs only after a change, for a question, small talk or a summary; other
+  answers are cards alone. Without the model's check, the engine's own short
+  texts are shown. The model runs at Nice 15 with low CPU and IO weight, and
+  `Model::warm()` restores its read instructions from llama.cpp's slot file
+  (`/var/lib/plainshow-ai`, named by the instructions' hash) or saves them. Capability `core.assistant.use`.
   News opens from links: `/news?topic=sweden`, `?tab=local`, `?q=…`, `?read=<id>`.
 - `php artisan plainshow:admin <username>` (password on standard input) makes
   an administrator; the installer uses it for the first one.

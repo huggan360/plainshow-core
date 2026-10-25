@@ -90,17 +90,25 @@ class Model
     }
 
     /**
-     * Wakes the model and has it read the instructions once, so they are in
-     * its cache before the first real request (the Assistant page asks this
-     * as it opens; typing takes longer than this does).
+     * Wakes the model with the instructions already read. Reading them takes
+     * the Pi a minute at full speed, so once read they are kept on disk
+     * (llama.cpp's slot file, `--slot-save-path`) and a fresh start loads
+     * them back instead. When the instructions change, the first warm-up
+     * reads them again and keeps the new ones.
      */
     public function warm(): void
     {
+        $base = rtrim((string) config('plainshow.assistant_url'), '/');
+        $file = 'instructions-'.substr(sha1(self::instructions()), 0, 12).'.bin';
         try {
-            Http::timeout(60)->connectTimeout(30)->post(rtrim((string) config('plainshow.assistant_url'), '/').'/v1/chat/completions', [
+            Http::timeout(60)->connectTimeout(30)->post("$base/slots/0?action=restore", ['filename' => $file]);
+            $response = Http::timeout(120)->connectTimeout(30)->post("$base/v1/chat/completions", [
                 'messages' => [['role' => 'system', 'content' => self::instructions()], ['role' => 'user', 'content' => "Task: plan\nRequest: hi"]],
                 'chat_template_kwargs' => ['enable_thinking' => false], 'max_tokens' => 1, 'cache_prompt' => true,
             ]);
+            if ((int) $response->json('timings.prompt_n', 0) > 500) {
+                Http::timeout(60)->post("$base/slots/0?action=save", ['filename' => $file]);
+            }
         } catch (Throwable) {
             // Asleep or busy: the real request will wake it.
         }

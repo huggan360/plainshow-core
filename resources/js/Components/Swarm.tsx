@@ -2,8 +2,9 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 
 /*
  * The Assistant at work, as a drone show: glowing dots in the theme colour
- * rise from the prompt into a grid, wheel round in a ring and rearrange
- * into icons (a calendar, a cloud, news, a folder, a file) while they work.
+ * rise from the prompt into a grid, wheel round in a ring once, then
+ * rearrange from one icon straight into the next (a calendar, a cloud,
+ * news, a folder, a file) while they work.
  * When the answer is ready, land() flies them into the exact shape of what is
  * about to appear: the outline of each widget, and the very letters of any
  * words, read from the page's own font where the text will stand. More dots
@@ -158,9 +159,9 @@ function sprite(colour: string): HTMLCanvasElement {
     canvas.width = canvas.height = 32;
     const context = canvas.getContext('2d')!;
     const glow = context.createRadialGradient(16, 16, 0, 16, 16, 16);
-    glow.addColorStop(0, '#ffffff');
-    glow.addColorStop(0.18, rgba(colour, 1));
-    glow.addColorStop(0.45, rgba(colour, 0.35));
+    glow.addColorStop(0, rgba(colour, 1));
+    glow.addColorStop(0.22, rgba(colour, 0.85));
+    glow.addColorStop(0.4, rgba(colour, 0.12));
     glow.addColorStop(1, rgba(colour, 0));
     context.fillStyle = glow;
     context.fillRect(0, 0, 32, 32);
@@ -208,7 +209,6 @@ export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Sw
         const icons: Point[][] = [];
         document.fonts?.ready.then(() => ICONS.forEach((icon) => icons.push(glyph(icon, size()))));
 
-        const shapes = ['grid', 'ring', 'icon'] as const;
         const started = performance.now();
         let fade = 1;
         let frame = 0;
@@ -233,8 +233,8 @@ export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Sw
                 fine = dots.map((_, index) => land.shape.fine[index % land.shape.fine.length]);
             } else {
                 const step = Math.floor((now - started) / HOLD);
-                // grid, ring, icon, ring, icon, ...
-                const kind = step === 0 ? 'grid' : shapes[1 + ((step - 1) % 2)];
+                // grid, ring, then icon after icon
+                const kind = step === 0 ? 'grid' : step === 1 ? 'ring' : 'icon';
                 if (kind === 'grid') {
                     const columns = Math.ceil(Math.sqrt(count));
                     targets = dots.map((_, index): Point => [cx - s / 2 + ((index % columns) + 0.5) * (s / columns), cy - s / 2 + (Math.floor(index / columns) + 0.5) * (s / columns)]);
@@ -246,7 +246,7 @@ export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Sw
                         return [cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius];
                     });
                 } else {
-                    const shape = spread(icons[Math.floor((step - 1) / 2) % icons.length], count);
+                    const shape = spread(icons[(step - 2) % icons.length], count);
                     targets = shape.map(([x, y]) => [cx + x, cy + y]);
                 }
             }
@@ -277,11 +277,11 @@ export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Sw
             context.globalCompositeOperation = 'lighter';
             dots.forEach((dot, index) => {
                 const small = fine[index] ?? false;
-                const twinkle = small ? 0.9 + 0.1 * Math.sin(age * 4 + dot.phase) : 0.65 + 0.35 * Math.sin(age * 4 + dot.phase);
-                const boost = land ? 1.25 : 1;
+                const twinkle = small ? 0.85 + 0.1 * Math.sin(age * 4 + dot.phase) : 0.55 + 0.25 * Math.sin(age * 4 + dot.phase);
+                const boost = land ? 1.1 : 1;
                 context.globalAlpha = Math.min(1, twinkle * boost) * fade;
                 // On letters the dots shrink to the size of a stroke, so the words can be read.
-                const r = small ? 2.2 + dot.size * 0.35 : dot.size * 4.2 * (land ? 1.15 : 1);
+                const r = small ? 2.2 + dot.size * 0.35 : dot.size * 3 * (land ? 1.1 : 1);
                 context.drawImage(sprites[dot.colour], dot.x - r, dot.y - r, r * 2, r * 2);
             });
             context.globalAlpha = 1;
