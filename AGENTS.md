@@ -76,6 +76,17 @@ React and TypeScript (Vite).
   installed apps and takes folders, the web user and service names from it;
   `ops/deploy.sh` does the same. Front ends get `platform` (app => address) as a
   shared prop. Never write an app's address into code.
+- Composer (`/composer`, `Pages/Composer.tsx`, widget `core.composer`): say what
+  to do, get cards back. `App\Support\Assistant\Model` asks a local model
+  (Qwen3-0.6B Q4_K_M in llama.cpp, `/opt/plainshow-ai`, units `plainshow-ai*`,
+  socket-activated on `127.0.0.1:18090` and stopped after 30 idle minutes) for
+  JSON actions under a schema; `Engine` checks them against the request, works
+  out days and times (`When`, en/sv/nl), does them through the apps' APIs as the
+  person (`App\Support\ServiceCall`, signed like the gateway; Cloud's write
+  endpoints) and answers with cards, a rare message or question, or a page to
+  open. Turns are kept seven days (`core_assistant_turns`); the last one is
+  memory for "move it" and for answers to questions. Capability `core.assistant.use`.
+  News opens from links: `/news?topic=sweden`, `?tab=local`, `?q=…`, `?read=<id>`.
 - `php artisan plainshow:admin <username>` (password on standard input) makes
   an administrator; the installer uses it for the first one.
 - Another server: set `PLAINSHOW_PROJECTS`, `PLAINSHOW_CLOUD_SOURCE`,

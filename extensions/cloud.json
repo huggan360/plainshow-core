@@ -31,6 +31,20 @@
             "description": "Open Calendar, manage calendars and events, and connect calendar apps on other devices.",
             "tier": "user",
             "group": "Calendar"
+        },
+        {
+            "name": "cloud.calendar.edit",
+            "label": "Add to the calendar",
+            "description": "Let the Composer add, change and remove events and tasks.",
+            "tier": "user",
+            "group": "Calendar"
+        },
+        {
+            "name": "cloud.files.share",
+            "label": "Share files",
+            "description": "Let the Composer share files with other people.",
+            "tier": "user",
+            "group": "Files"
         }
     ],
     "widgets": [

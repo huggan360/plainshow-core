@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { SharedProps } from '@/types';
 import { CSSProperties, ReactNode, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSwipe } from './weatherKit';
+import { expandWidget } from './expand';
 import { t, locale } from '@/i18n';
 import { Fill, Height, List, Row } from './List';
 import { Body, ExpandButton, LayoutItem, More, useBorder, useHeight, usePaging, useSetting, useSize, useWidgetData, WidgetDefinition, WidgetFrame, WidgetItem } from './base';
@@ -619,7 +620,28 @@ export function ExtensionWidget({ definition }: { definition: WidgetDefinition }
     );
 }
 
+/* ---------- Composer: say what to do; the Composer opens with the answer ---------- */
+function ComposerWidget({ definition }: { definition: WidgetDefinition }) {
+    const box = useRef<HTMLDivElement>(null);
+    const [text, setText] = useState('');
+    const { tiny } = useSize(definition);
+    const open = (words: string) => expandWidget(box.current?.closest('.ps-widget') ?? null, words.trim() ? `/composer?q=${encodeURIComponent(words.trim())}` : '/composer');
+    return (
+        <WidgetFrame definition={definition} className="widget-composer" expand={tiny ? '/composer' : undefined}>
+            <div ref={box}>
+                <form onSubmit={(event) => { event.preventDefault(); open(text); }}>
+                    <i className="bx bx-sparkles" aria-hidden="true" />
+                    <input value={text} onChange={(event) => setText(event.target.value)} placeholder={t('Tell PlainShow what to do…')} aria-label={t('What should we do?')} maxLength={500} />
+                    <button type="submit" aria-label={t('Send')}><i className="bx bx-up-arrow-alt" /></button>
+                </form>
+                {!tiny && <p className="widget-composer__hint">{t('Add events, share files, check the weather or the news.')}</p>}
+            </div>
+        </WidgetFrame>
+    );
+}
+
 export const WIDGETS: Record<string, (props: { definition: WidgetDefinition }) => ReactNode> = {
+    'core.composer': ComposerWidget,
     'core.greeting': GreetingWidget,
     'core.pi-health': PiHealthWidget,
     'core.news': NewsWidget,

@@ -27,10 +27,13 @@ type Reading = { kind: 'story'; story: Story } | { kind: 'alert'; alert: Alert }
 export default function News({ preferences: start, region: startRegion, catalogue }: Props) {
     const [preferences, setPreferences] = useState(start);
     const [region, setRegion] = useState(startRegion);
-    const [tab, setTab] = useState<Tab>('top');
-    const [topic, setTopic] = useState<string | null>(null);
-    const [query, setQuery] = useState('');
-    const [search, setSearch] = useState('');
+    // The Composer and links can open a tab, a section, a search or a story: ?tab=local, ?topic=sweden, ?q=…, ?read=<id>.
+    const [link] = useState(() => new URLSearchParams(window.location.search));
+    const [tab, setTab] = useState<Tab>(() => (link.get('tab') === 'local' ? 'local' : 'top'));
+    const [topic, setTopic] = useState<string | null>(() => (link.get('topic') && catalogue.topics.some((item) => item.id === link.get('topic')) ? link.get('topic') : null));
+    const [query, setQuery] = useState(() => link.get('q') ?? '');
+    const [search, setSearch] = useState(() => (link.get('q') ?? '').trim());
+    const [readId, setReadId] = useState(() => link.get('read'));
     const [stories, setStories] = useState<Story[] | null>(null);
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [failed, setFailed] = useState(false);
@@ -39,7 +42,7 @@ export default function News({ preferences: start, region: startRegion, catalogu
     const [version, setVersion] = useState(0);
     const [grown] = useState(expanding);
     const scroller = useRef<HTMLDivElement>(null);
-    const [searching, setSearching] = useState(false);
+    const [searching, setSearching] = useState(() => !!link.get('q'));
     const searchInput = useRef<HTMLInputElement>(null);
     useEffect(() => { if (searching) searchInput.current?.focus(); }, [searching]);
 
@@ -80,6 +83,16 @@ export default function News({ preferences: start, region: startRegion, catalogu
         if (window.innerWidth <= 991) window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     const readStory = (story: Story) => setReading({ kind: 'story', story });
+    // A story asked for in the address opens once it is among the loaded ones.
+    useEffect(() => {
+        if (window.location.search) window.history.replaceState(window.history.state, '', '/news');
+    }, []);
+    useEffect(() => {
+        if (!readId || !stories) return;
+        const story = stories.find((item) => item.id === readId);
+        if (story) setReading({ kind: 'story', story });
+        setReadId(null);
+    }, [stories, readId]);
 
     const town = preferences.place?.name;
     const topicName = topic ? catalogue.topics.find((item) => item.id === topic)?.name ?? topic : null;

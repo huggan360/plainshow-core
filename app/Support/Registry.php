@@ -84,6 +84,10 @@ class Registry
 
             if (! DB::table('core_role_capabilities')->exists()) {
                 foreach (Access::defaultRolePatterns() as $role => $patterns) {
+                    // The Composer and what it does in Cloud, besides the kit's view and create patterns.
+                    if (in_array($role, ['user', 'moderator'], true)) {
+                        $patterns = [...$patterns, 'core.assistant.use', 'cloud.calendar.edit', 'cloud.files.share'];
+                    }
                     foreach ($patterns as $pattern) {
                         DB::table('core_role_capabilities')->insert(['role' => $role, 'capability' => $pattern]);
                     }

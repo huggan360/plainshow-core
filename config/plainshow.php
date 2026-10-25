@@ -17,6 +17,9 @@ return [
     'sudo_command' => 'sudo',
     'protected_pi_username' => env('PLAINSHOW_PROTECTED_PI_USERNAME', 'hugohansson'),
 
+    // The Composer's language model (llama.cpp's server, started on demand by systemd).
+    'assistant_url' => env('PLAINSHOW_ASSISTANT_URL', 'http://127.0.0.1:18090'),
+
     // Where avatars are stored (outside the web root).
     'avatar_disk' => 'local',
 

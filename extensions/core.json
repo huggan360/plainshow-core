@@ -22,6 +22,13 @@
             "group": "Dashboard"
         },
         {
+            "name": "core.assistant.use",
+            "label": "Use the Composer",
+            "description": "Ask the Composer to do things: add events and tasks, share files, show weather and news, open apps.",
+            "tier": "user",
+            "group": "Dashboard"
+        },
+        {
             "name": "core.system.view",
             "label": "See server health details",
             "description": "View processor, memory, storage, temperature and service health information.",
@@ -688,6 +695,25 @@
                 }
             ],
             "height": "normal"
+        },
+        {
+            "id": "composer",
+            "title": "Composer",
+            "icon": "bx-sparkles",
+            "sizes": [
+                "m",
+                "l",
+                "xl",
+                "full"
+            ],
+            "default": "l",
+            "description": "Ask the Composer to do something; it opens with the answer.",
+            "settings": [],
+            "height": "short",
+            "min": [
+                3,
+                2
+            ]
         }
     ],
     "version": "1.0.0"

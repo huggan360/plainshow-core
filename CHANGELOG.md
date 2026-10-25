@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.15.0
+
+- The Composer: tell PlainShow what to do, in English, Swedish or Dutch, and it does it: add, move and remove calendar events, add tasks, share a file with someone, show the weather for a place, show or open the news, open a LaTeX document or any app. It answers with cards (an event, a task, the weather widget, news, a file), now and then a few words or a question, and takes you to a page when you asked to go somewhere. Not a chat: the newest answer replaces the last.
+- It runs on this server with a small language model that starts when asked and sleeps after half an hour of quiet. What was asked is kept for seven days.
+- A Composer widget for the dashboard opens the Composer with what you typed.
+- News can be opened at a section, a search or a story from a link.
+
 ## v1.14.1
 
 - The backdrop's light is as gentle in every theme colour as in orange (kit 1.13.1).
