@@ -177,17 +177,13 @@ class Dashboard
             }
         }
 
-        // Placed widgets keep their column and rise as high as they can (as in the
-        // Design studio); a place that is taken gives the first free one.
+        // Placed widgets keep the place they were given, empty rows above them
+        // included (as in the Design studio); a place that is taken gives the first free one.
         usort($placed, fn ($a, $b) => [$a['y'], $a['x']] <=> [$b['y'], $b['x']]);
         $grid = [];
         $clean = [];
         foreach ([...$placed, ...$legacy] as $entry) {
-            if (isset($entry['x']) && self::fits($grid, $entry['x'], $entry['y'], $entry['w'], $entry['h'])) {
-                while ($entry['y'] > 0 && self::fits($grid, $entry['x'], $entry['y'] - 1, $entry['w'], $entry['h'])) {
-                    $entry['y']--;
-                }
-            } else {
+            if (! isset($entry['x']) || ! self::fits($grid, $entry['x'], $entry['y'], $entry['w'], $entry['h'])) {
                 [$entry['x'], $entry['y']] = self::firstFree($grid, $entry['w'], $entry['h'], isset($entry['y']) ? $entry['y'] : 0);
             }
             self::occupy($grid, $entry);

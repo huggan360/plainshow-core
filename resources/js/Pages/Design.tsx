@@ -326,13 +326,38 @@ function showSize(...args: unknown[]) {
 /** An orange bar on each edge, shown on hover, to size the widget from that side. */
 const handle = (axis: ResizeHandleAxis, ref: Ref<HTMLElement>) => <span ref={ref as Ref<HTMLSpanElement>} className={`studio-handle studio-handle--${axis}`} aria-hidden="true" />;
 
+type Cell = Layout[number];
+
+/**
+ * Where everything stands while one widget moves or grows: every other widget
+ * keeps the place it had when the move began, unless the moving one covers
+ * it; then it steps down just far enough, and those below it after it. So
+ * widgets make way, and go back when the way is free again. Nothing is
+ * pulled up: an empty row stays where it was left.
+ */
+function makeWay(origin: Layout, moving: Cell): Layout {
+    const overlaps = (a: Cell, b: Cell) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    const placed: Cell[] = [moving];
+    const others = origin.filter((cell) => cell.i !== moving.i).sort((a, b) => a.y - b.y || a.x - b.x);
+    for (const cell of others) {
+        const next = { ...cell };
+        for (let blocker = placed.find((other) => overlaps(next, other)); blocker; blocker = placed.find((other) => overlaps(next, other))) {
+            next.y = blocker.y + blocker.h;
+        }
+        placed.push(next);
+    }
+    return origin.map((cell) => placed.find((other) => other.i === cell.i)!);
+}
+
 type CanvasProps = { items: LayoutItem[]; byKey: Map<string, WidgetDefinition>; selected: string | null; onChange: (items: LayoutItem[]) => void; onSelect: (key: string | null) => void; onRemove: (key: string) => void };
 
 function DesktopGrid({ items, byKey, selected, onChange, onSelect, onRemove }: CanvasProps) {
     const [ref, width] = useWidth();
     const [moving, setMoving] = useState(false);
-    // Sizing stops at the neighbours; moving pushes them aside, so a packed dashboard can still be rearranged.
-    const [sizing, setSizing] = useState(false);
+    // While a widget moves or grows: the places at the start, and where everything stands now (makeWay).
+    const origin = useRef<Layout>([]);
+    const [live, setLive] = useState<Layout | null>(null);
+    const settle = (cell: Cell | null) => (cell ? makeWay(origin.current, cell) : origin.current);
     const known = useMemo(() => items.filter((item) => byKey.has(item.key)), [items, byKey]);
     const grid: Layout = useMemo(() => known.map((item) => {
         const definition = byKey.get(item.key)!;
@@ -354,10 +379,16 @@ function DesktopGrid({ items, byKey, selected, onChange, onSelect, onRemove }: C
         <div ref={ref} className={`studio-canvas${moving ? ' is-moving' : ''}`} style={{ '--col': `${column}px`, '--row': `${ROW}px`, '--gap': `${GAP}px` } as CSSProperties}>
             {known.length === 0 && <div className="studio-empty"><i className="bx bx-grid-alt" aria-hidden="true" /></div>}
             {width > 0 && (
-                <ReactGridLayout width={width} layout={grid} cols={COLS} rowHeight={ROW} margin={MARGIN} containerPadding={PADDING}
-                    compactType="vertical" preventCollision={sizing} isResizable isDraggable resizeHandles={DESKTOP_HANDLES} resizeHandle={handle}
-                    draggableCancel=".studio-tools,.studio-handle" onDragStart={() => setMoving(true)} onResizeStart={(...args) => { setMoving(true); setSizing(true); showSize(...args); }}
-                    onResize={showSize} onDragStop={(next) => { setMoving(false); apply(next); }} onResizeStop={(next) => { setMoving(false); setSizing(false); apply(next); }}>
+                // Widgets stay where they are put (no compacting); the grid itself never shifts them, makeWay does.
+                <ReactGridLayout width={width} layout={live ?? grid} cols={COLS} rowHeight={ROW} margin={MARGIN} containerPadding={PADDING}
+                    compactType={null} allowOverlap isResizable isDraggable resizeHandles={DESKTOP_HANDLES} resizeHandle={handle}
+                    draggableCancel=".studio-tools,.studio-handle"
+                    onDragStart={() => { origin.current = grid; setMoving(true); }}
+                    onDrag={(_layout, _old, cell) => setLive(settle(cell))}
+                    onDragStop={(_layout, _old, cell) => { setMoving(false); setLive(null); apply(settle(cell)); }}
+                    onResizeStart={(...args) => { origin.current = grid; setMoving(true); showSize(...args); }}
+                    onResize={(...args) => { showSize(...args); setLive(settle(args[2] as Cell | null)); }}
+                    onResizeStop={(_layout, _old, cell) => { setMoving(false); setLive(null); apply(settle(cell)); }}>
                     {known.map((item) => <div key={item.key}><StudioItem item={item} definition={byKey.get(item.key)!} selected={selected === item.key} onSelect={onSelect} onRemove={onRemove} /></div>)}
                 </ReactGridLayout>
             )}

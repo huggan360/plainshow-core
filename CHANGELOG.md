@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.19.0
+
+- Design studio: widgets stay exactly where you put them, empty rows above them included; nothing is pulled up any more. While you move or resize one, the widgets in its way step down, and go back to their places when the way is free again. Resizing can push the widgets below down too, instead of stopping at them.
+
 ## v1.18.1
 
 - The Assistant widget one row high has its text and send button on one centred line.
