@@ -20,6 +20,7 @@ class CoreApps
             ['id' => 'weather', 'name' => __('Weather'), 'icon' => 'bx-cloud-light-rain', 'url' => '/weather', 'widgets' => ['core.weather', 'core.forecast', 'core.radar']],
         ];
 
-        return array_values(array_filter($apps, fn (array $app) => Permissions::can($user, $app['capability'] ?? 'core.dashboard.use')));
+        return array_values(array_filter($apps, fn (array $app) => Permissions::can($user, $app['capability'] ?? 'core.dashboard.use')
+            && ($app['id'] !== 'assistant' || Assistant\Model::installed())));
     }
 }

@@ -1517,6 +1517,11 @@ a:hover > .nwa-picture img, a:hover .nwa-picture img { transform: scale(1.04); }
 .assistant-slot.is-past { opacity: .55; }
 .assistant-slot.is-now .assistant-slot__time::after { box-shadow: 0 0 10px var(--slot, var(--ps-accent)); }
 .assistant-state.is-now { background: var(--ps-accent-bg); color: var(--ps-accent-text); }
+.assistant-hours { display: flex; justify-content: space-between; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.assistant-hours > span { display: grid; justify-items: center; gap: 4px; min-width: 44px; font-variant-numeric: tabular-nums; }
+.assistant-hours small { color: var(--ps-text-muted); font: 500 var(--ps-text-xs) var(--ps-font-ui); }
+.assistant-hours strong { color: var(--ps-text); font: 600 var(--ps-text-sm) var(--ps-font-ui); }
+.assistant-hours .wx-icon, .assistant-tile .wx-icon { width: 26px; height: 26px; }
 .assistant-swatch { background: color-mix(in srgb, var(--swatch, var(--ps-accent)) 18%, transparent); color: var(--swatch, var(--ps-accent-text)); }
 .assistant-thumb { width: 56px; height: 40px; border-radius: 9px; object-fit: cover; }
 .assistant-done { color: var(--ps-green); font-size: 1.3rem; }

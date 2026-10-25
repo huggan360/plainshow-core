@@ -97,7 +97,9 @@ React and TypeScript (Vite).
   answers are cards alone. Without the model's check, the engine's own short
   texts are shown. The model runs at Nice 15 with low CPU and IO weight, and
   `Model::warm()` restores its read instructions from llama.cpp's slot file
-  (`/var/lib/plainshow-ai`, named by the instructions' hash) or saves them. Capability `core.assistant.use`.
+  (`/var/lib/plainshow-ai`, named by the instructions' hash) or saves them. Capability `core.assistant.use`. The Assistant exists only where the platform
+  file says `system.assistant` = `on` (the installer sets it when it installs
+  the model; `Model::installed()`): otherwise its page, sidebar entry and widget are gone.
   News opens from links: `/news?topic=sweden`, `?tab=local`, `?q=…`, `?read=<id>`.
 - `php artisan plainshow:admin <username>` (password on standard input) makes
   an administrator; the installer uses it for the first one.

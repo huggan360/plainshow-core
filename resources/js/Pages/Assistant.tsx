@@ -8,7 +8,7 @@ import { CSSProperties, FormEvent, KeyboardEvent, ReactNode, useEffect, useLayou
 import { settleExpand } from '@/Widgets/expand';
 import { WidgetItem, WidgetDefinition } from '@/Widgets/base';
 import { WeatherWidget } from '@/Widgets/Weather';
-import { send, Place } from '@/Widgets/weatherKit';
+import { send, Place, Day as ForecastDay, Hour, WeatherIcon, label, degrees, placeUrl } from '@/Widgets/weatherKit';
 
 /*
  * The Assistant: say what to do and it gets done. Not a chat: there is no
@@ -27,6 +27,7 @@ type NewCalendar = { id: number; name: string; color: string | null; events: boo
 type DayEvent = { title: string; place: string; start: string; end: string; allDay: boolean; calendar: string; color: string | null };
 type Card =
     | { type: 'day'; date: string; events: DayEvent[]; url: string }
+    | { type: 'forecast'; place: Place; date: string; day: ForecastDay; hours: Hour[] }
     | { type: 'calendar'; calendar: NewCalendar; state: 'added' | 'exists' }
     | { type: 'event'; event: CalendarEvent; state: 'added' | 'changed' | 'removed' }
     | { type: 'task'; task: Task }
@@ -329,6 +330,25 @@ function Timeline({ date, events, url }: { date: string; events: DayEvent[]; url
     );
 }
 
+/** Another day's weather: the day in short, then its hours as far as the forecast reaches. */
+function DayForecast({ place, date, day, hours }: { place: Place; date: string; day: ForecastDay; hours: Hour[] }) {
+    const name = new Date(`${date}T12:00:00`).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+    return (
+        <Widget title={`${place.name}, ${name}`} action={more(placeUrl(place), t('Weather'))}>
+            <Row first last={!hours.length} lead={<span className="assistant-tile"><WeatherIcon condition={day.condition} /></span>}
+                title={`${degrees(day.min)} – ${degrees(day.max)}`}
+                meta={[label(day.condition), day.precip > 0 ? `${day.precip} mm` : '', `${Math.round(day.wind)} m/s`].filter(Boolean).join(', ')} />
+            {hours.length > 0 && (
+                <div className="widget-row is-last assistant-hours">
+                    {hours.map((hour) => (
+                        <span key={hour.time}><small>{time(hour.time)}</small><WeatherIcon condition={hour.condition} day={hour.isDay} /><strong>{degrees(hour.temp)}</strong></span>
+                    ))}
+                </div>
+            )}
+        </Widget>
+    );
+}
+
 /** The weather widget itself, for the place asked about. */
 function WeatherCard({ place }: { place: Place }) {
     const definition: WidgetDefinition = {
@@ -359,6 +379,7 @@ function CardView({ card, leaving }: { card: Card; leaving: string | null }) {
     switch (card.type) {
         case 'weather': return <WeatherCard place={card.place} />;
         case 'day': return <Timeline date={card.date} events={card.events} url={card.url} />;
+        case 'forecast': return <DayForecast place={card.place} date={card.date} day={card.day} hours={card.hours} />;
         case 'calendar': {
             const { calendar } = card;
             return (

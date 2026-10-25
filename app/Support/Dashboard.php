@@ -71,6 +71,10 @@ class Dashboard
                 if (isset($widget['capability']) && ! $can($widget['capability'])) {
                     continue;
                 }
+                // The Assistant's widget only where the model is installed.
+                if ($extension->id === 'core' && $widget['id'] === 'assistant' && ! Assistant\Model::installed()) {
+                    continue;
+                }
                 $widgets[] = [
                     'key' => $extension->id.'.'.$widget['id'],
                     'extension' => $extension->id,

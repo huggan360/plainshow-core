@@ -14,6 +14,7 @@ class AssistantController extends Controller
 {
     public function page(Request $request): Response
     {
+        abort_unless(Model::installed(), 404);
         return Inertia::render('Assistant', [
             // A request handed over from the Assistant widget, done as the page opens.
             'ask' => mb_substr((string) $request->query('q', ''), 0, 500),
@@ -31,6 +32,7 @@ class AssistantController extends Controller
 
     public function ask(Request $request): JsonResponse
     {
+        abort_unless(Model::installed(), 404);
         $valid = $request->validate([
             'text' => ['required', 'string', 'max:500'],
             // Made by the page each time it opens: "it" and open questions last as long as the page.

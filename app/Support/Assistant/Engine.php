@@ -396,6 +396,18 @@ class Engine
         }
     }
 
+    /** One day's forecast for a place: the day in short, and its hours as far as the forecast reaches. */
+    private function forecast(array $place, string $day, ?array $forecast): void
+    {
+        $summary = collect($forecast['days'] ?? [])->firstWhere('date', $day);
+        if (! $summary) {
+            throw new RuntimeException(__('The forecast only reaches a week ahead.'));
+        }
+        $hours = array_values(array_filter($forecast['hours'] ?? [], fn ($hour) => substr((string) $hour['time'], 0, 10) === $day));
+        $this->out['cards'][] = ['type' => 'forecast', 'place' => $place, 'date' => $day, 'day' => $summary, 'hours' => array_values(array_filter($hours, fn ($hour, $index) => $index % 3 === 0, ARRAY_FILTER_USE_BOTH))];
+        $this->done[] = sprintf('Forecast shown for %s on %s: %s° to %s°, %s, %s mm, wind up to %s m/s.', $place['name'], (new DateTimeImmutable($day))->format('l Y-m-d'), $summary['min'], $summary['max'], $summary['condition'], $summary['precip'], $summary['wind']);
+    }
+
     /** A day's events as a timeline: today unless another day is said. */
     private function schedule(array $action): void
     {
@@ -534,14 +546,25 @@ class Engine
     private function weather(array $action): void
     {
         $name = $this->text($action['place'] ?? '');
+        // "Och imorgon?" after the weather: the same place.
+        if ($name === '' && ($this->previous['do'] ?? null) === 'weather') {
+            $name = (string) $this->previous['place'];
+        }
         $place = $name === '' ? ($this->user->weather['home'] ?? null) : (Weather::places($name, app()->getLocale())[0] ?? null);
         if (! $place) {
             throw new RuntimeException($name === '' ? __('Choose a home place in Weather first.') : __('I could not find :place.', ['place' => $name]));
         }
-        $this->out['cards'][] = ['type' => 'weather', 'place' => $place];
         $this->memory['last'] = ['do' => 'weather', 'place' => $place['name']];
-        // The numbers behind the card, so the reply can sum them up.
         $forecast = Weather::forecast((float) $place['lat'], (float) $place['lon']);
+        // Another day than today: that day's forecast.
+        $day = $this->when->day($action['day'] ?? null) ?? $this->when->day($this->request);
+        if ($day !== null && $day !== $this->when->today()) {
+            $this->forecast($place, $day, $forecast);
+
+            return;
+        }
+        $this->out['cards'][] = ['type' => 'weather', 'place' => $place];
+        // The numbers behind the card, so the reply can sum them up.
         if ($forecast) {
             $now = $forecast['current'];
             $days = array_map(fn ($day) => sprintf('%s %s° to %s°, %s, %s mm', (new DateTimeImmutable($day['date']))->format('l'), $day['min'], $day['max'], $day['condition'], $day['precip']), array_slice($forecast['days'], 0, 2));

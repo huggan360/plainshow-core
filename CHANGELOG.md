@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.20.0
+
+- Ask the Assistant about the weather on another day ("Hur blir vädret imorgon i Lund?", "weather on friday") and it shows that day's forecast: the day in short and its hours as far as the forecast reaches. "Och imorgon?" right after the weather keeps the same place.
+- The Assistant appears only on servers where it is installed (the installer marks it in the platform file).
+
 ## v1.19.2
 
 - Fixed: the Assistant's working dots stopped on their very first frame (since v1.18.0), so they never showed and answers waited for the safety net. They work again from the start.

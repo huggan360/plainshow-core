@@ -23,6 +23,12 @@ class Model
 {
     public const DOES = ['calendar.create', 'schedule', 'calendar.add', 'calendar.change', 'calendar.remove', 'task.add', 'weather', 'news', 'latex', 'open', 'share', 'files', 'ask', 'say'];
 
+    /** Whether this server runs the model: the installer sets system.assistant in the platform file. */
+    public static function installed(): bool
+    {
+        return \PlainShow\Kit\Platform::system('assistant') === 'on';
+    }
+
     public const KINDS = ['any', 'audio', 'image', 'video', 'document'];
 
     public const TOPICS = ['', 'sweden', 'world', 'business', 'sport', 'culture', 'science', 'tech', 'local'];
@@ -174,7 +180,7 @@ Actions ("do" and its fields):
 - calendar.change: change the event just made: title, day, start, end, place
 - calendar.remove: remove the event just made
 - task.add: title, day (if said), start (if said)
-- weather: place (empty for the home place)
+- weather: place (empty for the home place), day (the words for the day, if one is said)
 - news: topic (sweden, world, business, sport, culture, science, tech, local) and/or query; go true to open the news page
 - latex: query (the document's name)
 - open: app (dashboard, news, weather, cloud, files, photos, calendar, latex, blog, split, design, theme, account)
@@ -218,6 +224,8 @@ Request: Remind me to buy milk tomorrow
 {"actions":[{"do":"task.add","title":"Buy milk","day":"tomorrow"}]}
 Request: Hur blir vädret i Lund?
 {"actions":[{"do":"weather","place":"Lund"}]}
+Request: Hur blir vädret imorgon i Lund?
+{"actions":[{"do":"weather","place":"Lund","day":"imorgon"}]}
 Request: What's the weather like?
 {"actions":[{"do":"weather","place":""}]}
 Request: Vad har hänt i världen?
