@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.15.3
+
+- The Assistant's icon is a chevron in a square.
+
 ## v1.15.2
 
 - The Assistant wakes its model as the page opens, so the first answer after a quiet while comes as fast as the rest.

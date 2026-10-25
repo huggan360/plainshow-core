@@ -699,7 +699,7 @@
         {
             "id": "assistant",
             "title": "Assistant",
-            "icon": "bx-bot",
+            "icon": "bx-chevron-right-square",
             "sizes": [
                 "m",
                 "l",

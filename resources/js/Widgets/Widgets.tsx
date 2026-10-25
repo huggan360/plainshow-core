@@ -630,7 +630,7 @@ function AssistantWidget({ definition }: { definition: WidgetDefinition }) {
         <WidgetFrame definition={definition} className="widget-assistant" expand={tiny ? '/assistant' : undefined}>
             <div ref={box}>
                 <form onSubmit={(event) => { event.preventDefault(); open(text); }}>
-                    <i className="bx bx-bot" aria-hidden="true" />
+                    <i className="bx bx-chevron-right-square" aria-hidden="true" />
                     <input value={text} onChange={(event) => setText(event.target.value)} placeholder={t('Tell PlainShow what to do…')} aria-label={t('What should we do?')} maxLength={500} />
                     <button type="submit" aria-label={t('Send')}><i className="bx bx-up-arrow-alt" /></button>
                 </form>

@@ -124,7 +124,7 @@ export default function Assistant({ ask }: { ask: string }) {
 
                 <form ref={prompt} className="assistant__prompt" onSubmit={submit}>
                     <div className="assistant__prompt-ring">
-                        <i className="bx bx-bot assistant__prompt-icon" aria-hidden="true" />
+                        <i className="bx bx-chevron-right-square assistant__prompt-icon" aria-hidden="true" />
                         <textarea ref={field} className="assistant__field" rows={1} value={text} autoFocus maxLength={500}
                             placeholder={started ? t('Something else?') : t('Tell PlainShow what to do…')} aria-label={t('What should we do?')}
                             onChange={(event) => setText(event.target.value)} onKeyDown={keys} />
