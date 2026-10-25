@@ -1527,9 +1527,8 @@ a:hover > .nwa-picture img, a:hover .nwa-picture img { transform: scale(1.04); }
 
 /* The Assistant widget: the Assistant's prompt box on the dashboard, nothing more. */
 .widget-assistant > .ps-frame__panel { display: flex; padding: 8px; }
-.widget-assistant__box { position: relative; display: flex; flex: 1; flex-direction: column; justify-content: center; gap: 6px; min-height: 0; padding: 8px 8px 8px 18px; border-radius: calc(var(--ps-frame-radius) - var(--ps-frame-pad) - 8px); background: color-mix(in srgb, var(--ps-panel) 82%, transparent); }
-.widget-assistant__box::before { content: ''; position: absolute; inset: 0; padding: 3px; border-radius: inherit; pointer-events: none; background: var(--ps-gradient-ring); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
-.widget-assistant__box:focus-within::after { content: ''; position: absolute; inset: -8px; z-index: -1; border-radius: inherit; background: var(--ps-gradient-ring); filter: blur(18px); opacity: .25; }
+.widget-assistant__box { position: relative; display: flex; flex: 1; flex-direction: column; justify-content: center; gap: 6px; min-height: 0; padding: 8px 8px 8px 18px; border-radius: calc(var(--ps-frame-radius) - var(--ps-frame-pad) - 8px); background: var(--ps-raised); box-shadow: inset 0 0 0 1px var(--ps-shell-border); transition: box-shadow .15s ease; }
+.widget-assistant__box:focus-within { box-shadow: inset 0 0 0 1px var(--ps-accent); }
 .widget-assistant__name { display: inline-flex; align-items: center; gap: 6px; color: var(--ps-text-muted); font: 600 var(--ps-text-xs) var(--ps-font-ui); letter-spacing: .04em; text-transform: uppercase; }
 .widget-assistant__name i { color: var(--ps-accent-text); font-size: 1rem; }
 .widget-assistant__row { display: flex; align-items: center; gap: 8px; }

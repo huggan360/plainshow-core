@@ -630,9 +630,10 @@ function AssistantWidget({ definition }: { definition: WidgetDefinition }) {
     const box = useRef<HTMLElement>(null);
     const [text, setText] = useState('');
     const { h } = useSize(definition);
+    const border = useBorder(definition.border);
     const open = (words: string) => expandWidget(box.current, words.trim() ? `/assistant?q=${encodeURIComponent(words.trim())}` : '/assistant');
     return (
-        <section ref={box} className={`ps-frame ps-widget widget-assistant${h <= 1 ? ' is-one-row' : ''}`} aria-label={definition.title}>
+        <section ref={box} className={`ps-frame ps-widget widget-assistant${h <= 1 ? ' is-one-row' : ''}`} data-border={border} aria-label={definition.title}>
             <div className="ps-frame__panel">
                 <form className="widget-assistant__box" onSubmit={(event) => { event.preventDefault(); open(text); }}>
                     {h > 1 && <span className="widget-assistant__name"><i className="bx bx-chevron-right-square" aria-hidden="true" />{definition.title}</span>}

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.16.3
+
+- The Assistant widget is a plain input box without its own gradient ring. Like every widget, it gets a border only when you choose one in its settings.
+
 ## v1.16.2
 
 - The Assistant's dots and answers get the full height of the page.
