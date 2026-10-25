@@ -90,7 +90,10 @@ React and TypeScript (Vite).
   through the apps' APIs as the person (`App\Support\ServiceCall`, signed like
   the gateway; Cloud's write endpoints: calendars, events, tasks, shares) and
   answers with cards (a day's timeline, events, weather, news, files), the
-  reply under them, a question, or a page to open. Turns are kept seven days
+  reply under them, a question, or a page to open. `POST /assistant/ask`
+  streams lines of JSON: `{"stage": "plan"|"act"|"check", "detail": action}`
+  as each stage really starts (`Engine::handle(..., $progress)`), then
+  `{"answer": ...}`; the page shows the stage and the dots form its icon. Turns are kept seven days
   (`core_assistant_turns`); memory and the earlier lines the model reads stay
   within one opening of the page (`conversation`, made by the page). The check
   runs only after a change, for a question, small talk or a summary; other

@@ -44,6 +44,62 @@ const IDEAS: string[] = [];
 
 const calm = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/** A stage the server reports while it works: reading the request, doing an action, checking it. */
+type Stage = { stage: 'plan' | 'act' | 'check'; detail?: string | null };
+
+/** What each stage says under the dots, and the icon the dots form for it. */
+function describe(stage: Stage | null): [string, string] {
+    if (!stage || stage.stage === 'plan') return [t('Reading what you asked'), 'bx-chevron-right-square'];
+    if (stage.stage === 'check') return [t('Checking what was done'), 'bx-chevron-right-square'];
+    switch (stage.detail) {
+        case 'calendar.create': return [t('Making the calendar'), 'bx-calendar'];
+        case 'calendar.add': return [t('Adding it to your calendar'), 'bx-calendar'];
+        case 'calendar.change': return [t('Changing the event'), 'bx-calendar'];
+        case 'calendar.remove': return [t('Removing the event'), 'bx-calendar'];
+        case 'schedule': return [t('Looking at your calendar'), 'bx-calendar'];
+        case 'task.add': return [t('Adding the task'), 'bx-file'];
+        case 'weather': return [t('Getting the weather'), 'bx-cloud-light-rain'];
+        case 'news': return [t('Reading the news'), 'bx-news'];
+        case 'files': case 'share': return [t('Looking in your files'), 'bx-folder'];
+        default: return [t('Talking to your apps'), 'bx-file'];
+    }
+}
+
+function xsrf(): string {
+    const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : '';
+}
+
+/** Asks, reading the stages as they come (one JSON object a line), then the answer. */
+async function stream(body: { text: string; conversation: string }, onStage: (stage: Stage) => void): Promise<Answer> {
+    const response = await fetch('/assistant/ask', {
+        method: 'POST', credentials: 'same-origin', body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json', Accept: 'application/x-ndjson, application/json', 'X-XSRF-TOKEN': xsrf() },
+    });
+    if (!response.ok || !response.body) throw new Error(String(response.status));
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let answer: Answer | null = null;
+    const read = (line: string) => {
+        if (!line.trim()) return;
+        const data = JSON.parse(line) as { answer?: Answer } & Partial<Stage>;
+        if (data.answer) answer = data.answer;
+        else if (data.stage) onStage({ stage: data.stage, detail: data.detail });
+    };
+    for (;;) {
+        const { done, value } = await reader.read();
+        buffer += decoder.decode(value, { stream: !done });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        lines.forEach(read);
+        if (done) break;
+    }
+    read(buffer);
+    if (!answer) throw new Error('incomplete');
+    return answer;
+}
+
 /** Names this opening of the page: what "it" means, and open questions, last only as long as it does. */
 const conversation = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), (byte) => byte.toString(16).padStart(2, '0')).join('');
 
@@ -54,6 +110,7 @@ export default function Assistant({ ask }: { ask: string }) {
     const [answer, setAnswer] = useState<(Answer & { id: number }) | null>(null);
     const [shown, setShown] = useState(false);
     const [working, setWorking] = useState(false);
+    const [progress, setProgress] = useState<Stage | null>(null);
     const [leaving, setLeaving] = useState<string | null>(null);
     const field = useRef<HTMLTextAreaElement>(null);
     const prompt = useRef<HTMLFormElement>(null);
@@ -105,7 +162,8 @@ export default function Assistant({ ask }: { ask: string }) {
         setShown(false);
         setLeaving(null);
         setWorking(true);
-        send<Answer>('POST', '/assistant/ask', { text: words, conversation: talk.current })
+        setProgress(null);
+        stream({ text: words, conversation: talk.current }, setProgress)
             .then((result) => {
                 setAnswer({ ...result, id: Date.now() });
                 if (result.redirect) {
@@ -146,9 +204,9 @@ export default function Assistant({ ask }: { ask: string }) {
 
                 {started && (
                     <div ref={stage} className="assistant__stage">
-                        {sent && (working || (answer && !shown)) && <Swarm key={sent.id} ref={swarm} className="assistant__swarm" />}
+                        {sent && (working || (answer && !shown)) && <Swarm key={sent.id} ref={swarm} className="assistant__swarm" icon={describe(progress)[1]} />}
                         <div className="assistant__scroll" aria-live="polite">
-                            {working && <Status key={sent?.id} />}
+                            {working && <Status text={describe(progress)[0]} />}
                             {answer && (
                                 <div ref={answerBox} key={answer.id} className={`assistant-answer${shown ? ' is-shown' : ''}`}>
                                     <AnswerView answer={answer} leaving={leaving} onChoose={go} />
@@ -183,15 +241,9 @@ export default function Assistant({ ask }: { ask: string }) {
     );
 }
 
-/** What the Assistant is doing, under the swarm. */
-function Status() {
-    const steps = [t('Reading what you asked'), t('Working it out'), t('Talking to your apps'), t('Checking what was done'), t('Almost there')];
-    const [step, setStep] = useState(0);
-    useEffect(() => {
-        const timer = window.setInterval(() => setStep((current) => Math.min(current + 1, steps.length - 1)), 2600);
-        return () => window.clearInterval(timer);
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
-    return <p key={step} className="assistant-status">{steps[step]}</p>;
+/** What the Assistant is doing right now, as the server reports it, under the swarm. */
+function Status({ text }: { text: string }) {
+    return <p key={text} className="assistant-status">{text}</p>;
 }
 
 /** The cards, with events and tasks gathered into one widget each: a schedule, a task list. */

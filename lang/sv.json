@@ -930,5 +930,14 @@
     "New calendar": "Ny kalender",
     "Checking what was done": "Kollar vad som blev gjort",
     "Nothing planned": "Inget inplanerat",
-    "The forecast only reaches a week ahead.": "Prognosen räcker bara en vecka framåt."
+    "The forecast only reaches a week ahead.": "Prognosen räcker bara en vecka framåt.",
+    "Making the calendar": "Skapar kalendern",
+    "Adding it to your calendar": "Lägger in det i din kalender",
+    "Changing the event": "Ändrar händelsen",
+    "Removing the event": "Tar bort händelsen",
+    "Looking at your calendar": "Tittar i din kalender",
+    "Adding the task": "Lägger till uppgiften",
+    "Getting the weather": "Hämtar vädret",
+    "Reading the news": "Läser nyheterna",
+    "Looking in your files": "Letar i dina filer"
 }

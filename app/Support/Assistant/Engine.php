@@ -66,6 +66,9 @@ class Engine
     /** What the last answer on this page showed ("news", "weather"), for follow-ups. */
     private ?array $previous = null;
 
+    /** Told each stage as it starts ("plan", "act" with the action, "check"), for the page to show. */
+    private ?\Closure $progress = null;
+
     /** Whether this turn added or changed an event, so the check may fix it. */
     private bool $madeEvent = false;
 
@@ -81,9 +84,10 @@ class Engine
     }
 
     /** @return array{cards: list<array>, message: ?string, question: ?array, redirect: ?string, ms: int} */
-    public function handle(string $request, ?string $conversation = null): array
+    public function handle(string $request, ?string $conversation = null, ?callable $progress = null): array
     {
         $started = microtime(true);
+        $this->progress = $progress !== null ? \Closure::fromCallable($progress) : null;
         $this->conversation = $conversation;
         $request = trim(mb_substr($request, 0, 500));
         $this->request = $request;
@@ -100,7 +104,11 @@ class Engine
                 return $this->finish($request, $started);
             }
             // A greeting or thanks needs no plan, only an answer: the check writes it.
-            $actions = preg_match(self::SMALL_TALK, News::fold($request)) ? [['do' => 'say']] : $this->model->actions($this->context($last), $request);
+            $talk = (bool) preg_match(self::SMALL_TALK, News::fold($request));
+            if (! $talk) {
+                $this->stage('plan');
+            }
+            $actions = $talk ? [['do' => 'say']] : $this->model->actions($this->context($last), $request);
             // "Sammanfatta min dag", "summarize my day": the day's plan, its weather and its news, always all three.
             if (preg_match('/(sammanfatta|summar|samenvat|overzicht|oversikt|briefing).{0,20}\b(dag|dagen|day|today|idag|vandaag)\b/u', News::fold($request))) {
                 $have = array_column($actions, 'do');
@@ -142,6 +150,7 @@ class Engine
             return;
         }
         $done = $this->facts();
+        $this->stage('check');
         try {
             // No earlier lines here: the model repeats them. It answers this request from what was done.
             $check = $this->model->review('', $this->request, $done, $this->language());
@@ -362,6 +371,9 @@ class Engine
     private function run(array $action): void
     {
         $action = $this->checked($action);
+        if (! in_array($action['do'], ['say', 'ask'], true)) {
+            $this->stage('act', $action['do']);
+        }
         try {
             match ($action['do']) {
                 'calendar.create' => $this->createCalendar($action),
@@ -385,6 +397,14 @@ class Engine
         } catch (Throwable $error) {
             report($error);
             $this->out['cards'][] = ['type' => 'error', 'text' => __('Something went wrong on the way.')];
+        }
+    }
+
+    /** Tells the page what is happening now. */
+    private function stage(string $stage, ?string $detail = null): void
+    {
+        if ($this->progress !== null) {
+            ($this->progress)($stage, $detail);
         }
     }
 
@@ -847,6 +867,7 @@ class Engine
             if ($name === '' || count(preg_split('/\s+/', $name)) > 4 || preg_match(self::SMALL_TALK, News::fold($request))) {
                 return false;
             }
+            $this->stage('act', 'calendar.create');
             $this->makeCalendar(mb_substr($name, 0, 100), ($pending['kind'] ?? 'events') === 'tasks' ? 'tasks' : 'events');
 
             return true;
@@ -858,6 +879,7 @@ class Engine
             if ($day === null && $start === null) {
                 return false;
             }
+            $this->stage('act', 'calendar.add');
             $this->addEvent($pending['action'] + ['date' => $day ?? $this->when->today(), 'startTime' => $start, 'endTime' => $this->when->time($times[1] ?? null)]);
 
             return true;
@@ -867,6 +889,7 @@ class Engine
             return false;
         }
         $action = $pending['action'];
+        $this->stage('act', $action['do']);
         $action['do'] === 'task.add' ? $this->addTask($action, $match['id']) : $this->addEvent($action, $match['id']);
 
         return true;

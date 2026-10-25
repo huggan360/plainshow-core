@@ -168,8 +168,11 @@ function sprite(colour: string): HTMLCanvasElement {
     return canvas;
 }
 
-export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Swarm({ className }, ref) {
+/** `icon`: what is being done now (a Boxicons name from ICONS); the dots form it. Without one they go through them all. */
+export const Swarm = forwardRef<SwarmHandle, { className?: string; icon?: string }>(function Swarm({ className, icon }, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const wanted = useRef(icon);
+    wanted.current = icon;
     const landing = useRef<{ shape: Shape; done: () => void; at: number; settled: number | null; called: boolean } | null>(null);
 
     useImperativeHandle(ref, () => ({
@@ -207,7 +210,7 @@ export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Sw
             delay: Math.random() * 0.35, size: 1.4 + Math.random() * 1.8, colour: index % 4, phase: Math.random() * Math.PI * 2,
         }));
         const icons: Point[][] = [];
-        document.fonts?.ready.then(() => ICONS.forEach((icon) => icons.push(glyph(icon, size()))));
+        document.fonts?.ready.then(() => ICONS.forEach((name) => icons.push(glyph(name, size()))));
 
         const started = performance.now();
         let fade = 1;
@@ -261,7 +264,8 @@ export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Sw
                         return [cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius];
                     });
                 } else {
-                    const shape = spread(icons[(step - 2) % icons.length] ?? [], count);
+                    const chosen = wanted.current ? ICONS.indexOf(wanted.current) : -1;
+                    const shape = spread(icons[chosen >= 0 && icons[chosen] ? chosen : (step - 2) % icons.length] ?? [], count);
                     targets = shape.map(([x, y]) => [cx + x, cy + y]);
                 }
             }

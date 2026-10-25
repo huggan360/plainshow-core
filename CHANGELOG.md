@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.21.0
+
+- The line under the Assistant's dots tells what it is really doing, as it happens: reading your request, then each thing it does ("Getting the weather", "Adding it to your calendar"), and "Checking what was done" only when it checks. The dots form the matching icon.
+
 ## v1.20.2
 
 - Fixed: opening the Assistant could make its next answer take 40 seconds longer. The warm-up loaded the model's saved instructions even when the model already held them, and when no saved copy existed yet, the failed load emptied the model, which then read everything again. Now only a freshly started model loads them.
