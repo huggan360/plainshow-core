@@ -50,7 +50,11 @@ export default function Assistant({ ask }: { ask: string }) {
     const before = useRef<DOMRect | null>(null);
     const started = sent !== null;
 
-    useEffect(() => { settleExpand(); }, []);
+    useEffect(() => {
+        settleExpand();
+        // Wake the model now, so it is ready when the request is sent.
+        if (!ask) send('POST', '/assistant/warm').catch(() => undefined);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // The prompt glides from the middle of the page to its place at the bottom.
     useLayoutEffect(() => {

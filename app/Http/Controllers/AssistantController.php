@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\Assistant\Engine;
+use App\Support\Assistant\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,6 +18,15 @@ class AssistantController extends Controller
             // A request handed over from the Assistant widget, done as the page opens.
             'ask' => mb_substr((string) $request->query('q', ''), 0, 500),
         ]);
+    }
+
+    /** The page opened: wake the model while the person types. */
+    public function warm(): JsonResponse
+    {
+        set_time_limit(90);
+        (new Model)->warm();
+
+        return response()->json(['ok' => true]);
     }
 
     public function ask(Request $request): JsonResponse

@@ -1445,6 +1445,8 @@ a:hover > .nwa-picture img, a:hover .nwa-picture img { transform: scale(1.04); }
 .assistant.is-started { justify-content: flex-end; gap: 14px; }
 /* Once something is asked, the backdrop goes soft behind the work. */
 .assistant__veil { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; background: color-mix(in srgb, var(--ps-bg) 38%, transparent); -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); transition: opacity .7s ease, backdrop-filter .7s ease, -webkit-backdrop-filter .7s ease; }
+/* The sidebar stays sharp; only the page behind the work goes soft. */
+@media (min-width: 992px) { .assistant__veil { left: var(--ps-sidebar); } }
 .assistant.is-started .assistant__veil { opacity: 1; -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); }
 .assistant > :not(.assistant__veil) { position: relative; z-index: 1; }
 

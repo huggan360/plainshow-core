@@ -57,13 +57,20 @@ class Model
         return array_values(array_filter($data['actions'], fn ($action) => is_array($action) && in_array($action['do'] ?? null, self::DOES, true)));
     }
 
-    /** Whether the model's server answers (starting it if it was asleep). */
-    public function ready(): bool
+    /**
+     * Wakes the model and has it read the instructions once, so they are in
+     * its cache before the first real request (the Assistant page asks this
+     * as it opens; typing takes longer than this does).
+     */
+    public function warm(): void
     {
         try {
-            return Http::timeout(60)->connectTimeout(30)->get(rtrim((string) config('plainshow.assistant_url'), '/').'/health')->successful();
+            Http::timeout(60)->connectTimeout(30)->post(rtrim((string) config('plainshow.assistant_url'), '/').'/v1/chat/completions', [
+                'messages' => [['role' => 'system', 'content' => self::instructions()], ['role' => 'user', 'content' => 'Request: hi']],
+                'chat_template_kwargs' => ['enable_thinking' => false], 'max_tokens' => 1, 'cache_prompt' => true,
+            ]);
         } catch (Throwable) {
-            return false;
+            // Asleep or busy: the real request will wake it.
         }
     }
 

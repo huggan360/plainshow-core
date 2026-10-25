@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.15.2
+
+- The Assistant wakes its model as the page opens, so the first answer after a quiet while comes as fast as the rest.
+- Only the page behind the Assistant goes soft; the sidebar stays sharp.
+
 ## v1.15.1
 
 - The Composer is now the Assistant, at /assistant (the old address belongs to Web), with a robot icon that shows everywhere.

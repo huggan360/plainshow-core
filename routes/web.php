@@ -30,6 +30,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/news/preferences', [App\Http\Controllers\NewsController::class, 'savePreferences']);
     Route::get('/news/image/{key}', [App\Http\Controllers\NewsController::class, 'image'])->where('key', '[a-f0-9]{32}');
     Route::get('/assistant', [App\Http\Controllers\AssistantController::class, 'page'])->middleware('can.do:core.assistant.use')->name('assistant');
+    Route::post('/assistant/warm', [App\Http\Controllers\AssistantController::class, 'warm'])->middleware(['can.do:core.assistant.use', 'throttle:10,1']);
     Route::post('/assistant/ask', [App\Http\Controllers\AssistantController::class, 'ask'])->middleware(['can.do:core.assistant.use', 'throttle:20,1']);
     Route::get('/weather', [App\Http\Controllers\WeatherController::class, 'app'])->middleware('can.do:core.dashboard.use')->name('weather');
     Route::put('/weather/home', [App\Http\Controllers\WeatherController::class, 'setHome']);
