@@ -23,8 +23,8 @@
         },
         {
             "name": "core.assistant.use",
-            "label": "Use the Composer",
-            "description": "Ask the Composer to do things: add events and tasks, share files, show weather and news, open apps.",
+            "label": "Use the Assistant",
+            "description": "Ask the Assistant to do things: add events and tasks, share files, show weather and news, open apps.",
             "tier": "user",
             "group": "Dashboard"
         },
@@ -697,9 +697,9 @@
             "height": "normal"
         },
         {
-            "id": "composer",
-            "title": "Composer",
-            "icon": "bx-sparkles",
+            "id": "assistant",
+            "title": "Assistant",
+            "icon": "bx-bot",
             "sizes": [
                 "m",
                 "l",
@@ -707,7 +707,7 @@
                 "full"
             ],
             "default": "l",
-            "description": "Ask the Composer to do something; it opens with the answer.",
+            "description": "Ask the Assistant to do something; it opens with the answer.",
             "settings": [],
             "height": "short",
             "min": [

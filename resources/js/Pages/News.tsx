@@ -27,7 +27,7 @@ type Reading = { kind: 'story'; story: Story } | { kind: 'alert'; alert: Alert }
 export default function News({ preferences: start, region: startRegion, catalogue }: Props) {
     const [preferences, setPreferences] = useState(start);
     const [region, setRegion] = useState(startRegion);
-    // The Composer and links can open a tab, a section, a search or a story: ?tab=local, ?topic=sweden, ?q=…, ?read=<id>.
+    // The Assistant and links can open a tab, a section, a search or a story: ?tab=local, ?topic=sweden, ?q=…, ?read=<id>.
     const [link] = useState(() => new URLSearchParams(window.location.search));
     const [tab, setTab] = useState<Tab>(() => (link.get('tab') === 'local' ? 'local' : 'top'));
     const [topic, setTopic] = useState<string | null>(() => (link.get('topic') && catalogue.topics.some((item) => item.id === link.get('topic')) ? link.get('topic') : null));

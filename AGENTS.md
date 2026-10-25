@@ -76,7 +76,8 @@ React and TypeScript (Vite).
   installed apps and takes folders, the web user and service names from it;
   `ops/deploy.sh` does the same. Front ends get `platform` (app => address) as a
   shared prop. Never write an app's address into code.
-- Composer (`/composer`, `Pages/Composer.tsx`, widget `core.composer`): say what
+- Assistant (`/assistant`, `Pages/Assistant.tsx`, widget `core.assistant`; not
+  `/composer`, which Apache sends to Web): say what
   to do, get cards back. `App\Support\Assistant\Model` asks a local model
   (Qwen3-0.6B Q4_K_M in llama.cpp, `/opt/plainshow-ai`, units `plainshow-ai*`,
   socket-activated on `127.0.0.1:18090` and stopped after 30 idle minutes) for

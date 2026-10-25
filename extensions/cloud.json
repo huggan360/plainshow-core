@@ -35,14 +35,14 @@
         {
             "name": "cloud.calendar.edit",
             "label": "Add to the calendar",
-            "description": "Let the Composer add, change and remove events and tasks.",
+            "description": "Let the Assistant add, change and remove events and tasks.",
             "tier": "user",
             "group": "Calendar"
         },
         {
             "name": "cloud.files.share",
             "label": "Share files",
-            "description": "Let the Composer share files with other people.",
+            "description": "Let the Assistant share files with other people.",
             "tier": "user",
             "group": "Files"
         }

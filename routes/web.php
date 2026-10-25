@@ -29,8 +29,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/news/article/{id}', [App\Http\Controllers\NewsController::class, 'article'])->where('id', '[a-f0-9]{16}')->middleware('throttle:60,1');
     Route::put('/news/preferences', [App\Http\Controllers\NewsController::class, 'savePreferences']);
     Route::get('/news/image/{key}', [App\Http\Controllers\NewsController::class, 'image'])->where('key', '[a-f0-9]{32}');
-    Route::get('/composer', [App\Http\Controllers\ComposerController::class, 'page'])->middleware('can.do:core.assistant.use')->name('composer');
-    Route::post('/composer/ask', [App\Http\Controllers\ComposerController::class, 'ask'])->middleware(['can.do:core.assistant.use', 'throttle:20,1']);
+    Route::get('/assistant', [App\Http\Controllers\AssistantController::class, 'page'])->middleware('can.do:core.assistant.use')->name('assistant');
+    Route::post('/assistant/ask', [App\Http\Controllers\AssistantController::class, 'ask'])->middleware(['can.do:core.assistant.use', 'throttle:20,1']);
     Route::get('/weather', [App\Http\Controllers\WeatherController::class, 'app'])->middleware('can.do:core.dashboard.use')->name('weather');
     Route::put('/weather/home', [App\Http\Controllers\WeatherController::class, 'setHome']);
     Route::delete('/weather/home', [App\Http\Controllers\WeatherController::class, 'clearHome']);

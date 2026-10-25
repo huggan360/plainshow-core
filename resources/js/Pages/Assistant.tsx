@@ -10,7 +10,7 @@ import { WeatherWidget } from '@/Widgets/Weather';
 import { send, Place } from '@/Widgets/weatherKit';
 
 /*
- * The Composer: say what to do and it gets done. Not a chat: there is no
+ * The Assistant: say what to do and it gets done. Not a chat: there is no
  * history to scroll. What you sent sits above the prompt, the work happens
  * above it, and the answer arrives as cards (an event, a task, the weather,
  * news, a file), now and then with a few words, a question or a page to go
@@ -38,7 +38,7 @@ const IDEAS = [
     t('Share my latest song with Andreas'),
 ];
 
-export default function Composer({ ask }: { ask: string }) {
+export default function Assistant({ ask }: { ask: string }) {
     const { props } = usePage<SharedProps>();
     const [text, setText] = useState('');
     const [sent, setSent] = useState<{ id: number; text: string } | null>(null);
@@ -70,7 +70,7 @@ export default function Composer({ ask }: { ask: string }) {
         setText('');
         setAnswer(null);
         setWorking(true);
-        send<Answer>('POST', '/composer/ask', { text: words })
+        send<Answer>('POST', '/assistant/ask', { text: words })
             .then((result) => {
                 setAnswer({ ...result, id: Date.now() });
                 if (result.redirect) {
@@ -79,14 +79,14 @@ export default function Composer({ ask }: { ask: string }) {
                     window.setTimeout(() => (target.startsWith('/') ? router.visit(target) : window.location.assign(target)), 1600);
                 }
             })
-            .catch((error: Error) => setAnswer({ id: Date.now(), cards: [], message: error.message === '429' ? t('That was a lot at once. Wait a moment and try again.') : t('The Composer did not answer. Try again in a moment.'), question: null, redirect: null, ms: 0 }))
+            .catch((error: Error) => setAnswer({ id: Date.now(), cards: [], message: error.message === '429' ? t('That was a lot at once. Wait a moment and try again.') : t('The Assistant did not answer. Try again in a moment.'), question: null, redirect: null, ms: 0 }))
             .finally(() => { setWorking(false); field.current?.focus(); });
     };
 
-    // A request from the Composer widget is done as the page opens.
+    // A request from the Assistant widget is done as the page opens.
     useEffect(() => {
         if (ask) {
-            window.history.replaceState(window.history.state, '', '/composer');
+            window.history.replaceState(window.history.state, '', '/assistant');
             go(ask);
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -98,40 +98,40 @@ export default function Composer({ ask }: { ask: string }) {
     const name = props.auth.user?.firstName || props.auth.user?.name || '';
 
     return (
-        <AppShell title={t('Composer')} wide heading={false}>
-            <div className={`composer${started ? ' is-started' : ''}${working ? ' is-working' : ''}`}>
-                <div className="composer__veil" aria-hidden="true" />
+        <AppShell title={t('Assistant')} wide heading={false}>
+            <div className={`assistant${started ? ' is-started' : ''}${working ? ' is-working' : ''}`}>
+                <div className="assistant__veil" aria-hidden="true" />
 
                 {!started && (
-                    <div className="composer__hello">
-                        <img className="composer__logo" src="/ui/brand/plainshow-logo.webp" alt="PlainShow" />
-                        <h1 className="composer__headline">{name ? t('What should we do, {name}?', { name }) : t('What should we do?')}</h1>
-                        <p className="composer__lead">{t('Add to your calendar, share a file, check the weather or the news, or open any app. Just say it.')}</p>
+                    <div className="assistant__hello">
+                        <img className="assistant__logo" src="/ui/brand/plainshow-logo.webp" alt="PlainShow" />
+                        <h1 className="assistant__headline">{name ? t('What should we do, {name}?', { name }) : t('What should we do?')}</h1>
+                        <p className="assistant__lead">{t('Add to your calendar, share a file, check the weather or the news, or open any app. Just say it.')}</p>
                     </div>
                 )}
 
                 {started && (
-                    <section className="composer__stage" aria-live="polite">
+                    <section className="assistant__stage" aria-live="polite">
                         {working ? <Working key={sent?.id} /> : answer && <AnswerView key={answer.id} answer={answer} leaving={leaving} onChoose={go} />}
                     </section>
                 )}
 
-                {sent && <div key={sent.id} className="composer__said"><span>{sent.text}</span></div>}
+                {sent && <div key={sent.id} className="assistant__said"><span>{sent.text}</span></div>}
 
-                <form ref={prompt} className="composer__prompt" onSubmit={submit}>
-                    <div className="composer__prompt-ring">
-                        <i className="bx bx-sparkles composer__prompt-icon" aria-hidden="true" />
-                        <textarea ref={field} className="composer__field" rows={1} value={text} autoFocus maxLength={500}
+                <form ref={prompt} className="assistant__prompt" onSubmit={submit}>
+                    <div className="assistant__prompt-ring">
+                        <i className="bx bx-bot assistant__prompt-icon" aria-hidden="true" />
+                        <textarea ref={field} className="assistant__field" rows={1} value={text} autoFocus maxLength={500}
                             placeholder={started ? t('Something else?') : t('Tell PlainShow what to do…')} aria-label={t('What should we do?')}
                             onChange={(event) => setText(event.target.value)} onKeyDown={keys} />
-                        <button type="submit" className="composer__send" disabled={!text.trim() || working} aria-label={t('Send')}>
+                        <button type="submit" className="assistant__send" disabled={!text.trim() || working} aria-label={t('Send')}>
                             <i className={`bx ${working ? 'bx-loader-alt bx-spin' : 'bx-up-arrow-alt'}`} />
                         </button>
                     </div>
                 </form>
 
                 {!started && (
-                    <div className="composer__ideas">
+                    <div className="assistant__ideas">
                         {IDEAS.map((idea, index) => (
                             <button key={idea} type="button" style={{ '--i': index } as CSSProperties} onClick={() => go(idea)}>{idea}</button>
                         ))}
@@ -142,7 +142,7 @@ export default function Composer({ ask }: { ask: string }) {
     );
 }
 
-/** While the Composer works: an orb of the theme colour and what it is doing. */
+/** While the Assistant works: an orb of the theme colour and what it is doing. */
 function Working() {
     const steps = [t('Reading what you asked'), t('Working it out'), t('Talking to your apps'), t('Almost there')];
     const [step, setStep] = useState(0);
@@ -151,33 +151,33 @@ function Working() {
         return () => window.clearInterval(timer);
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
     return (
-        <div className="composer-working">
-            <div className="composer-orb" aria-hidden="true">
-                <span className="composer-orb__glow" />
-                <span className="composer-orb__ring" />
-                <span className="composer-orb__ring composer-orb__ring--2" />
-                <span className="composer-orb__core" />
-                {Array.from({ length: 6 }, (_, index) => <i key={index} className="composer-orb__spark" style={{ '--i': index } as CSSProperties} />)}
+        <div className="assistant-working">
+            <div className="assistant-orb" aria-hidden="true">
+                <span className="assistant-orb__glow" />
+                <span className="assistant-orb__ring" />
+                <span className="assistant-orb__ring assistant-orb__ring--2" />
+                <span className="assistant-orb__core" />
+                {Array.from({ length: 6 }, (_, index) => <i key={index} className="assistant-orb__spark" style={{ '--i': index } as CSSProperties} />)}
             </div>
-            <p key={step} className="composer-working__step">{steps[step]}</p>
+            <p key={step} className="assistant-working__step">{steps[step]}</p>
         </div>
     );
 }
 
 function AnswerView({ answer, leaving, onChoose }: { answer: Answer; leaving: string | null; onChoose: (text: string) => void }) {
     return (
-        <div className="composer-answer">
+        <div className="assistant-answer">
             {answer.cards.map((card, index) => (
-                <div key={index} className="composer-answer__card" style={{ '--i': index } as CSSProperties}>
+                <div key={index} className="assistant-answer__card" style={{ '--i': index } as CSSProperties}>
                     <CardView card={card} leaving={leaving} />
                 </div>
             ))}
             {answer.message && <Words text={answer.message} delay={answer.cards.length} />}
             {answer.question && (
-                <div className="composer-question" style={{ '--i': answer.cards.length } as CSSProperties}>
+                <div className="assistant-question" style={{ '--i': answer.cards.length } as CSSProperties}>
                     <Words text={answer.question.text} delay={answer.cards.length} />
                     {answer.question.choices.length > 0 && (
-                        <div className="composer-question__choices">
+                        <div className="assistant-question__choices">
                             {answer.question.choices.map((choice, index) => <button key={choice} type="button" style={{ '--i': index } as CSSProperties} onClick={() => onChoose(choice)}>{choice}</button>)}
                         </div>
                     )}
@@ -190,7 +190,7 @@ function AnswerView({ answer, leaving, onChoose }: { answer: Answer; leaving: st
 /** A short message, its words arriving one after another. */
 function Words({ text, delay }: { text: string; delay: number }) {
     return (
-        <p className="composer-words" style={{ '--i': delay } as CSSProperties}>
+        <p className="assistant-words" style={{ '--i': delay } as CSSProperties}>
             {text.split(/(\s+)/).map((word, index) => (/\s+/.test(word) ? word : <span key={index} style={{ '--w': index } as CSSProperties}>{word}</span>))}
         </p>
     );
@@ -205,20 +205,20 @@ function CardView({ card, leaving }: { card: Card; leaving: string | null }) {
         case 'file': return <FileCard file={card.file} sharedWith={card.sharedWith} />;
         case 'files': return <Shell icon="bx-folder" title={t('Files')}>{card.files.map((file) => <FileRow key={file.id} file={file} />)}</Shell>;
         case 'link': return <LinkCard icon={card.icon} title={card.title} text={card.text} url={card.url} going={leaving === card.url} />;
-        case 'error': return <div className="ps-frame ps-frame--compact composer-card composer-card--error"><div className="ps-frame__panel"><i className="bx bx-error-circle" aria-hidden="true" /><span>{card.text}</span></div></div>;
+        case 'error': return <div className="ps-frame ps-frame--compact assistant-card assistant-card--error"><div className="ps-frame__panel"><i className="bx bx-error-circle" aria-hidden="true" /><span>{card.text}</span></div></div>;
     }
 }
 
 /** The box every card sits in: the glass frame with the theme gradient ring. */
 function Shell({ icon, title, badge, action, children }: { icon: string; title: string; badge?: ReactNode; action?: ReactNode; children: ReactNode }) {
     return (
-        <section className="ps-frame ps-frame--gradient composer-card">
+        <section className="ps-frame ps-frame--gradient assistant-card">
             <div className="ps-frame__panel">
-                <header className="composer-card__head">
-                    <span className="composer-card__icon"><i className={`bx ${icon}`} aria-hidden="true" /></span>
-                    <h2 className="composer-card__title">{title}</h2>
+                <header className="assistant-card__head">
+                    <span className="assistant-card__icon"><i className={`bx ${icon}`} aria-hidden="true" /></span>
+                    <h2 className="assistant-card__title">{title}</h2>
                     {badge}
-                    {action && <span className="composer-card__action">{action}</span>}
+                    {action && <span className="assistant-card__action">{action}</span>}
                 </header>
                 {children}
             </div>
@@ -233,17 +233,17 @@ function EventCard({ event, state }: { event: CalendarEvent; state: 'added' | 'c
     const start = new Date(event.start);
     const label = { added: t('Added'), changed: t('Changed'), removed: t('Removed') }[state];
     return (
-        <Shell icon="bx-calendar-plus" title={t('Calendar')} badge={<span className={`composer-badge is-${state}`}>{label}</span>}
+        <Shell icon="bx-calendar-plus" title={t('Calendar')} badge={<span className={`assistant-badge is-${state}`}>{label}</span>}
             action={state !== 'removed' && <a className="ps-btn ps-btn--sm ps-btn--ghost" href={event.url}>{t('Open')}<i className="bx bx-right-top-arrow-circle" /></a>}>
-            <div className={`composer-event${state === 'removed' ? ' is-removed' : ''}`}>
-                <div className="composer-event__date" style={{ '--tone': event.color ?? 'var(--ps-accent)' } as CSSProperties}>
+            <div className={`assistant-event${state === 'removed' ? ' is-removed' : ''}`}>
+                <div className="assistant-event__date" style={{ '--tone': event.color ?? 'var(--ps-accent)' } as CSSProperties}>
                     <span>{start.toLocaleDateString(locale, { month: 'short' })}</span>
                     <strong>{start.getDate()}</strong>
                 </div>
-                <div className="composer-event__text">
+                <div className="assistant-event__text">
                     <strong>{event.title}</strong>
                     <span>{dayFormat(event.start)}{event.allDay ? `, ${t('all day')}` : `, ${timeFormat(event.start)}–${timeFormat(event.end)}`}</span>
-                    <span className="composer-event__calendar"><i style={{ background: event.color ?? 'var(--ps-accent)' }} />{event.calendar}{event.place && `, ${event.place}`}</span>
+                    <span className="assistant-event__calendar"><i style={{ background: event.color ?? 'var(--ps-accent)' }} />{event.calendar}{event.place && `, ${event.place}`}</span>
                 </div>
             </div>
         </Shell>
@@ -253,11 +253,11 @@ function EventCard({ event, state }: { event: CalendarEvent; state: 'added' | 'c
 function TaskCard({ task }: { task: Task }) {
     const due = task.due ? (task.due.length === 10 ? dayFormat(`${task.due}T12:00:00`) : `${dayFormat(task.due)}, ${timeFormat(task.due)}`) : null;
     return (
-        <Shell icon="bx-task" title={t('Task')} badge={<span className="composer-badge is-added">{t('Added')}</span>}
+        <Shell icon="bx-task" title={t('Task')} badge={<span className="assistant-badge is-added">{t('Added')}</span>}
             action={<a className="ps-btn ps-btn--sm ps-btn--ghost" href={task.url}>{t('Open')}<i className="bx bx-right-top-arrow-circle" /></a>}>
-            <div className="composer-task">
-                <span className="composer-task__box" aria-hidden="true" />
-                <div><strong>{task.title}</strong>{due && <span>{t('Due {when}', { when: due })}</span>}<span className="composer-event__calendar"><i style={{ background: task.color ?? 'var(--ps-accent)' }} />{task.calendar}</span></div>
+            <div className="assistant-task">
+                <span className="assistant-task__box" aria-hidden="true" />
+                <div><strong>{task.title}</strong>{due && <span>{t('Due {when}', { when: due })}</span>}<span className="assistant-event__calendar"><i style={{ background: task.color ?? 'var(--ps-accent)' }} />{task.calendar}</span></div>
             </div>
         </Shell>
     );
@@ -270,7 +270,7 @@ function WeatherCard({ place }: { place: Place }) {
         admin: false, border: 'orange', min: [4, 3], w: 6, h: 4,
     };
     return (
-        <div className="composer-weather">
+        <div className="assistant-weather">
             <WidgetItem.Provider value={{ key: 'core.weather', w: 6, h: 4, settings: { place } }}>
                 <WeatherWidget definition={definition} />
             </WidgetItem.Provider>
@@ -281,11 +281,11 @@ function WeatherCard({ place }: { place: Place }) {
 function NewsCard({ title, stories, url }: { title: string; stories: Story[]; url: string }) {
     return (
         <Shell icon="bx-news" title={title} action={<a className="ps-btn ps-btn--sm ps-btn--ghost" href={url}>{t('All news')}<i className="bx bx-right-arrow-alt" /></a>}>
-            <div className="composer-news">
+            <div className="assistant-news">
                 {stories.map((story, index) => (
-                    <a key={story.id} className={`composer-news__story${index === 0 ? ' is-lead' : ''}`} href={`/news?read=${story.id}&q=${encodeURIComponent(story.title)}`}>
+                    <a key={story.id} className={`assistant-news__story${index === 0 ? ' is-lead' : ''}`} href={`/news?read=${story.id}&q=${encodeURIComponent(story.title)}`}>
                         {story.image && <img src={story.image} alt="" loading="lazy" />}
-                        <span className="composer-news__text">
+                        <span className="assistant-news__text">
                             <strong>{story.title}</strong>
                             <small>{story.sourceName}, {new Date(story.time).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</small>
                         </span>
@@ -307,20 +307,20 @@ const size = (bytes: number) => (bytes > 1e6 ? `${(bytes / 1e6).toFixed(1)} MB` 
 
 function FileRow({ file }: { file: CloudFile }) {
     return (
-        <a className="composer-file" href={file.url}>
-            <span className="composer-file__icon"><i className={`bx ${fileIcon(file.type)}`} aria-hidden="true" /></span>
-            <span className="composer-file__text"><strong>{file.name}</strong><small>{[file.folder, size(file.size), new Date(file.changed).toLocaleDateString(locale)].filter(Boolean).join(', ')}</small></span>
+        <a className="assistant-file" href={file.url}>
+            <span className="assistant-file__icon"><i className={`bx ${fileIcon(file.type)}`} aria-hidden="true" /></span>
+            <span className="assistant-file__text"><strong>{file.name}</strong><small>{[file.folder, size(file.size), new Date(file.changed).toLocaleDateString(locale)].filter(Boolean).join(', ')}</small></span>
         </a>
     );
 }
 
 function FileCard({ file, sharedWith }: { file: CloudFile; sharedWith?: { name: string; avatar: string | null } }) {
     return (
-        <Shell icon={sharedWith ? 'bx-share-alt' : 'bx-file'} title={sharedWith ? t('Shared') : t('File')} badge={sharedWith && <span className="composer-badge is-added">{t('Done')}</span>}>
+        <Shell icon={sharedWith ? 'bx-share-alt' : 'bx-file'} title={sharedWith ? t('Shared') : t('File')} badge={sharedWith && <span className="assistant-badge is-added">{t('Done')}</span>}>
             <FileRow file={file} />
             {sharedWith && (
-                <div className="composer-shared">
-                    <span className="composer-shared__line" aria-hidden="true" />
+                <div className="assistant-shared">
+                    <span className="assistant-shared__line" aria-hidden="true" />
                     <Avatar src={sharedWith.avatar} initials={sharedWith.name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()} size="sm" />
                     <span>{t('Shared with {name}', { name: sharedWith.name })}</span>
                 </div>
@@ -331,12 +331,12 @@ function FileCard({ file, sharedWith }: { file: CloudFile; sharedWith?: { name: 
 
 function LinkCard({ icon, title, text, url, going }: { icon: string; title: string; text: string; url: string; going: boolean }) {
     return (
-        <a className={`ps-frame ps-frame--gradient composer-card composer-link${going ? ' is-going' : ''}`} href={url}>
+        <a className={`ps-frame ps-frame--gradient assistant-card assistant-link${going ? ' is-going' : ''}`} href={url}>
             <div className="ps-frame__panel">
-                <span className="composer-card__icon composer-link__icon"><i className={`bx ${icon}`} aria-hidden="true" /></span>
-                <span className="composer-link__text"><strong>{title}</strong><small>{text}</small></span>
-                <i className="bx bx-right-arrow-alt composer-link__arrow" aria-hidden="true" />
-                {going && <span className="composer-link__progress" aria-hidden="true" />}
+                <span className="assistant-card__icon assistant-link__icon"><i className={`bx ${icon}`} aria-hidden="true" /></span>
+                <span className="assistant-link__text"><strong>{title}</strong><small>{text}</small></span>
+                <i className="bx bx-right-arrow-alt assistant-link__arrow" aria-hidden="true" />
+                {going && <span className="assistant-link__progress" aria-hidden="true" />}
             </div>
         </a>
     );

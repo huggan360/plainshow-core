@@ -620,28 +620,28 @@ export function ExtensionWidget({ definition }: { definition: WidgetDefinition }
     );
 }
 
-/* ---------- Composer: say what to do; the Composer opens with the answer ---------- */
-function ComposerWidget({ definition }: { definition: WidgetDefinition }) {
+/* ---------- Assistant: say what to do; the Assistant opens with the answer ---------- */
+function AssistantWidget({ definition }: { definition: WidgetDefinition }) {
     const box = useRef<HTMLDivElement>(null);
     const [text, setText] = useState('');
     const { tiny } = useSize(definition);
-    const open = (words: string) => expandWidget(box.current?.closest('.ps-widget') ?? null, words.trim() ? `/composer?q=${encodeURIComponent(words.trim())}` : '/composer');
+    const open = (words: string) => expandWidget(box.current?.closest('.ps-widget') ?? null, words.trim() ? `/assistant?q=${encodeURIComponent(words.trim())}` : '/assistant');
     return (
-        <WidgetFrame definition={definition} className="widget-composer" expand={tiny ? '/composer' : undefined}>
+        <WidgetFrame definition={definition} className="widget-assistant" expand={tiny ? '/assistant' : undefined}>
             <div ref={box}>
                 <form onSubmit={(event) => { event.preventDefault(); open(text); }}>
-                    <i className="bx bx-sparkles" aria-hidden="true" />
+                    <i className="bx bx-bot" aria-hidden="true" />
                     <input value={text} onChange={(event) => setText(event.target.value)} placeholder={t('Tell PlainShow what to do…')} aria-label={t('What should we do?')} maxLength={500} />
                     <button type="submit" aria-label={t('Send')}><i className="bx bx-up-arrow-alt" /></button>
                 </form>
-                {!tiny && <p className="widget-composer__hint">{t('Add events, share files, check the weather or the news.')}</p>}
+                {!tiny && <p className="widget-assistant__hint">{t('Add events, share files, check the weather or the news.')}</p>}
             </div>
         </WidgetFrame>
     );
 }
 
 export const WIDGETS: Record<string, (props: { definition: WidgetDefinition }) => ReactNode> = {
-    'core.composer': ComposerWidget,
+    'core.assistant': AssistantWidget,
     'core.greeting': GreetingWidget,
     'core.pi-health': PiHealthWidget,
     'core.news': NewsWidget,

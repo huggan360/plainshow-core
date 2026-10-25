@@ -8,13 +8,13 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/** The Composer: say what to do, get it done (App\Support\Assistant). */
-class ComposerController extends Controller
+/** The Assistant: say what to do, get it done (App\Support\Assistant). */
+class AssistantController extends Controller
 {
     public function page(Request $request): Response
     {
-        return Inertia::render('Composer', [
-            // A request handed over from the Composer widget, done as the page opens.
+        return Inertia::render('Assistant', [
+            // A request handed over from the Assistant widget, done as the page opens.
             'ask' => mb_substr((string) $request->query('q', ''), 0, 500),
         ]);
     }

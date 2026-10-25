@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.15.1
+
+- The Composer is now the Assistant, at /assistant (the old address belongs to Web), with a robot icon that shows everywhere.
+
 ## v1.15.0
 
 - The Composer: tell PlainShow what to do, in English, Swedish or Dutch, and it does it: add, move and remove calendar events, add tasks, share a file with someone, show the weather for a place, show or open the news, open a LaTeX document or any app. It answers with cards (an event, a task, the weather widget, news, a file), now and then a few words or a question, and takes you to a page when you asked to go somewhere. Not a chat: the newest answer replaces the last.

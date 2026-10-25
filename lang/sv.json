@@ -871,8 +871,8 @@
     "Show me the latest sports news": "Visa de senaste sportnyheterna",
     "Share my latest song with Andreas": "Dela min senaste låt med Andreas",
     "That was a lot at once. Wait a moment and try again.": "Det var mycket på en gång. Vänta en stund och försök igen.",
-    "The Composer did not answer. Try again in a moment.": "Composer svarade inte. Försök igen om en stund.",
-    "Composer": "Composer",
+    "The Assistant did not answer. Try again in a moment.": "Assistent svarade inte. Försök igen om en stund.",
+    "Assistant": "Assistent",
     "What should we do, {name}?": "Vad ska vi göra, {name}?",
     "Add to your calendar, share a file, check the weather or the news, or open any app. Just say it.": "Lägg till i kalendern, dela en fil, kolla vädret eller nyheterna, eller öppna en app. Säg det bara.",
     "Something else?": "Något mer?",
@@ -918,11 +918,11 @@
     "You have no calendar in Cloud.": "Du har ingen kalender i Cloud.",
     "The assistant is not running.": "Assistenten är inte igång.",
     "The assistant did not understand that.": "Det förstod inte assistenten.",
-    "Use the Composer": "Använd Composer",
-    "Ask the Composer to do things: add events and tasks, share files, show weather and news, open apps.": "Be Composer göra saker: lägga till händelser och uppgifter, dela filer, visa väder och nyheter, öppna appar.",
-    "Ask the Composer to do something; it opens with the answer.": "Be Composer om något; den öppnas med svaret.",
+    "Use the Assistant": "Använd Assistent",
+    "Ask the Assistant to do things: add events and tasks, share files, show weather and news, open apps.": "Be Assistent göra saker: lägga till händelser och uppgifter, dela filer, visa väder och nyheter, öppna appar.",
+    "Ask the Assistant to do something; it opens with the answer.": "Be Assistent om något; den öppnas med svaret.",
     "Add to the calendar": "Lägga till i kalendern",
-    "Let the Composer add, change and remove events and tasks.": "Låt Composer lägga till, ändra och ta bort händelser och uppgifter.",
+    "Let the Assistant add, change and remove events and tasks.": "Låt Assistent lägga till, ändra och ta bort händelser och uppgifter.",
     "Share files": "Dela filer",
-    "Let the Composer share files with other people.": "Låt Composer dela filer med andra."
+    "Let the Assistant share files with other people.": "Låt Assistent dela filer med andra."
 }

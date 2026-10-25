@@ -15,7 +15,7 @@ use RuntimeException;
 use Throwable;
 
 /**
- * The assistant behind the Composer: one request in, an answer out. The
+ * The assistant behind the Assistant: one request in, an answer out. The
  * model turns the words into actions (Model); this does them through the
  * apps' APIs, as the person, and answers with cards (an event, a task, the
  * weather, news, a file) and now and then a short message, a question or a

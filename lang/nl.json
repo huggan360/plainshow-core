@@ -879,8 +879,8 @@
     "Show me the latest sports news": "Laat het laatste sportnieuws zien",
     "Share my latest song with Andreas": "Deel mijn nieuwste nummer met Andreas",
     "That was a lot at once. Wait a moment and try again.": "Dat was veel tegelijk. Wacht even en probeer het opnieuw.",
-    "The Composer did not answer. Try again in a moment.": "De Composer antwoordde niet. Probeer het zo opnieuw.",
-    "Composer": "Composer",
+    "The Assistant did not answer. Try again in a moment.": "De Assistent antwoordde niet. Probeer het zo opnieuw.",
+    "Assistant": "Assistent",
     "What should we do, {name}?": "Wat gaan we doen, {name}?",
     "Add to your calendar, share a file, check the weather or the news, or open any app. Just say it.": "Zet iets in je agenda, deel een bestand, bekijk het weer of het nieuws, of open een app. Zeg het maar.",
     "Something else?": "Nog iets?",
@@ -926,11 +926,11 @@
     "You have no calendar in Cloud.": "Je hebt geen agenda in Cloud.",
     "The assistant is not running.": "De assistent draait niet.",
     "The assistant did not understand that.": "Dat begreep de assistent niet.",
-    "Use the Composer": "De Composer gebruiken",
-    "Ask the Composer to do things: add events and tasks, share files, show weather and news, open apps.": "Laat de Composer dingen doen: afspraken en taken toevoegen, bestanden delen, weer en nieuws tonen, apps openen.",
-    "Ask the Composer to do something; it opens with the answer.": "Vraag de Composer iets; hij opent met het antwoord.",
+    "Use the Assistant": "De Assistent gebruiken",
+    "Ask the Assistant to do things: add events and tasks, share files, show weather and news, open apps.": "Laat de Assistent dingen doen: afspraken en taken toevoegen, bestanden delen, weer en nieuws tonen, apps openen.",
+    "Ask the Assistant to do something; it opens with the answer.": "Vraag de Assistent iets; hij opent met het antwoord.",
     "Add to the calendar": "Aan de agenda toevoegen",
-    "Let the Composer add, change and remove events and tasks.": "Laat de Composer afspraken en taken toevoegen, wijzigen en verwijderen.",
+    "Let the Assistant add, change and remove events and tasks.": "Laat de Assistent afspraken en taken toevoegen, wijzigen en verwijderen.",
     "Share files": "Bestanden delen",
-    "Let the Composer share files with other people.": "Laat de Composer bestanden met anderen delen."
+    "Let the Assistant share files with other people.": "Laat de Assistent bestanden met anderen delen."
 }
