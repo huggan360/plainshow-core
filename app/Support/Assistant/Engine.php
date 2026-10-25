@@ -161,7 +161,7 @@ class Engine
         $words = preg_split('/[^\p{L}]+/u', mb_strtolower($this->request), -1, PREG_SPLIT_NO_EMPTY);
         $swedish = ['jag', 'och', 'har', 'det', 'är', 'vad', 'hur', 'min', 'mitt', 'mina', 'en', 'ett', 'på', 'till', 'idag', 'imorgon', 'tack', 'hej', 'tjena', 'tjenare', 'hejsan', 'visa', 'lägg', 'skapa', 'vädret', 'nyheter', 'då', 'kan', 'du', 'dag', 'sammanfatta', 'kalender', 'ny', 'nya', 'inte', 'som', 'heter', 'vill', 'mig', 'öppna'];
         $dutch = ['ik', 'het', 'een', 'wat', 'hoe', 'mijn', 'van', 'naar', 'vandaag', 'morgen', 'dank', 'hallo', 'hoi', 'toon', 'zet', 'maak', 'weer', 'nieuws', 'agenda', 'is', 'er', 'je', 'jij', 'niet', 'wil', 'graag', 'open', 'gaat'];
-        $english = ['i', 'the', 'what', 'how', 'my', 'is', 'a', 'an', 'to', 'today', 'tomorrow', 'thanks', 'thank', 'hello', 'hi', 'show', 'add', 'make', 'weather', 'news', 'calendar', 'and', 'you', 'can', 'me', 'open', 'please', 'new', 'day'];
+        $english = ['i', 'the', 'what', 'how', 'my', 'is', 'a', 'an', 'to', 'today', 'tomorrow', 'thanks', 'thank', 'hello', 'hi', 'show', 'add', 'make', 'weather', 'news', 'calendar', 'and', 'you', 'can', 'me', 'open', 'please', 'new', 'day', 'good', 'morning', 'evening', 'afternoon', 'night', 'great', 'cheers', 'hey', 'whats', 'happened', 'world', 'schedule'];
         $scores = ['Swedish' => 0, 'Dutch' => 0, 'English' => 0];
         foreach ($words as $word) {
             $scores['Swedish'] += in_array($word, $swedish, true) || preg_match('/[åäö]/u', $word) ? 1 : 0;

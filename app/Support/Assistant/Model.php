@@ -52,7 +52,7 @@ class Model
     public function review(string $earlier, string $request, array $done, string $language = 'English'): array
     {
         $lines = array_map(fn ($line) => '- '.$line, $done ?: ['Nothing was done; this is small talk or a question to answer.']);
-        $data = $this->ask("Task: check\n".$earlier."\nRequest: ".$request."\nDone:\n".implode("\n", $lines)."\nReply in $language.", self::checkSchema(), 200, 0.3);
+        $data = $this->ask("Task: check\n".$earlier."\nRequest: ".$request."\nDone:\n".implode("\n", $lines)."\nReply in $language.", self::checkSchema(), 200, 0.2);
 
         return [
             'ok' => (bool) ($data['ok'] ?? true),

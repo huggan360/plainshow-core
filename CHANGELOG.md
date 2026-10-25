@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.17.6
+
+- "Good morning!" and other English greetings get an English answer, and replies stay closer to what was shown.
+
 ## v1.17.5
 
 - The Assistant keeps its replies to one or two sentences, and answers greetings and thanks more naturally.
