@@ -131,4 +131,13 @@ class AssistantEngineTest extends TestCase
         $answer = (new Engine($this->user, $this->model([['do' => 'say', 'text' => 'Vad kan du göra för mig idag?']])))->handle('Vad kan du göra för mig idag?', 'page-one-aaaa');
         $this->assertNotSame('Vad kan du göra för mig idag?', $answer['message']);
     }
+
+    public function test_thanks_is_never_the_name_of_a_calendar(): void
+    {
+        (new Engine($this->user, $this->model([['do' => 'calendar.create', 'title' => '']])))->handle('Make a new calendar', 'page-one-aaaa');
+        $model = $this->model([['do' => 'say']], ['ok' => true, 'fix' => [], 'reply' => 'You are welcome!']);
+        $answer = (new Engine($this->user, $model))->handle('Tack!', 'page-one-aaaa');
+        $this->assertSame([], $answer['cards']);
+        $this->assertSame('You are welcome!', $answer['message']);
+    }
 }

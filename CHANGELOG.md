@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.17.3
+
+- A thank-you or greeting is never taken as the name of a new calendar.
+- Asking about the news shows the stories here; the news page opens only when you ask to open it.
+
 ## v1.17.2
 
 - The Assistant's replies use only what was really done this time: no example sentences copied, no weather or news carried over from earlier messages, and no stray Chinese characters.

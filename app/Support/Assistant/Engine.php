@@ -657,6 +657,10 @@ class Engine
         }
         $said = News::fold($this->request);
         $previous = $this->previous['do'] ?? null;
+        // The news page opens only when asked to ("öppna", "open", "gå till"); otherwise the stories come here.
+        if ($action['do'] === 'news' && ! empty($action['go']) && ! preg_match('/\b(open|oppna|go to|ga till|ga naar|openen|take me|ta mig)\b/', $said)) {
+            unset($action['go']);
+        }
         // Weather only when the words are about weather, or follow on from it: after the news, "i Sverige då?" is more news.
         if ($action['do'] === 'weather' && $previous === 'news' && empty($action['summary']) && ! preg_match(self::WEATHER_WORD, $said)) {
             return ['do' => 'news', 'topic' => $this->section($said) ?? ($this->previous['topic'] ?? ''), 'query' => ''];
@@ -793,7 +797,8 @@ class Engine
         if (($pending['need'] ?? null) === 'name') {
             // "Gym", "Call it Gym", "Den ska heta Gym": a short answer is the name; anything longer is a new request.
             $name = trim((string) preg_replace('/^(call it|name it|it is called|kalla den|den ska heta|döp den till|noem hem|noem het|het heet)\s+/iu', '', $this->text($request)), " \t\"'“”.!");
-            if ($name === '' || count(preg_split('/\s+/', $name)) > 4) {
+            // "Tack!" or "hej" is not a name; it is something new to answer.
+            if ($name === '' || count(preg_split('/\s+/', $name)) > 4 || preg_match(self::SMALL_TALK, News::fold($request))) {
                 return false;
             }
             $this->makeCalendar(mb_substr($name, 0, 100), ($pending['kind'] ?? 'events') === 'tasks' ? 'tasks' : 'events');
