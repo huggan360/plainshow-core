@@ -31,12 +31,8 @@ type Card =
     | { type: 'error'; text: string };
 type Answer = { cards: Card[]; message: string | null; question: { text: string; choices: string[] } | null; redirect: string | null; ms: number };
 
-const IDEAS = [
-    t('Add a study session on Saturday between 14 and 16'),
-    t('What is the weather like in Stockholm?'),
-    t('Show me the latest sports news'),
-    t('Share my latest song with Andreas'),
-];
+/** Suggestions to tap under the prompt. None for now; the chips appear again when this has some. */
+const IDEAS: string[] = [];
 
 export default function Assistant({ ask }: { ask: string }) {
     const { props } = usePage<SharedProps>();
@@ -133,7 +129,7 @@ export default function Assistant({ ask }: { ask: string }) {
                     </div>
                 </form>
 
-                {!started && (
+                {!started && IDEAS.length > 0 && (
                     <div className="assistant__ideas">
                         {IDEAS.map((idea, index) => (
                             <button key={idea} type="button" style={{ '--i': index } as CSSProperties} onClick={() => go(idea)}>{idea}</button>

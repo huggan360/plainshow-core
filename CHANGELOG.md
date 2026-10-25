@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.15.5
+
+- No suggestions under the Assistant's prompt for now.
+
 ## v1.15.4
 
 - The Assistant's start page has just the logo, the greeting and the prompt.
