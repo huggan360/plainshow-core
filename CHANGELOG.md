@@ -1,8 +1,12 @@
 # Changelog
 
+## v1.16.2
+
+- The Assistant's dots and answers get the full height of the page.
+
 ## v1.16.1
 
-- The Assistant fills the width of the page again while it works and answers.
+- The Assistant fills the page again while it works and answers, so the dots and the answer have their space.
 
 ## v1.16.0
 
