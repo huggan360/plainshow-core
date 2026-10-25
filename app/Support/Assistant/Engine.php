@@ -36,7 +36,7 @@ class Engine
     private const SMALL_TALK = '/^\s*(hej|hejsan|halla|tja|tjena|tjenare|tjabba|morsning|god (morgon|kvall|dag)|tack( sa mycket| sa hemskt mycket)?|hi|hey|hello|good (morning|evening|afternoon)|thanks?( you)?( so much)?|cheers|hoi|hallo|goedemorgen|goedenavond|dank( je| u)?( wel)?|bedankt)[\s!.,?]*(\p{L}+)?[\s!.,?]*$/u';
 
     /** Words that make a request about the weather, folded. */
-    private const WEATHER_WORD = '/vader|weather|weer|regn|rain|regen|sol|sun|zon|sno|snow|varm|warm|kall|cold|koud|temperatur|grader|degrees|graden|blas|wind|vind|paraply|umbrella|paraplu|forecast|prognos|storm|moln|cloud|wolk/';
+    private const WEATHER_WORD = '/vader|vadr|weather|weer|regn|rain|regen|sol|sun|zon|sno|snow|varm|warm|kall|cold|koud|temperatur|grader|degrees|graden|blas|wind|vind|paraply|umbrella|paraplu|forecast|prognos|storm|moln|cloud|wolk/';
 
     /** Words for a calendar or a list, folded (no accents), on their own: never a name. */
     private const CALENDAR_WORD = '/^(a |en |ett |een |de |the |my |min |mijn )?(new |ny |nytt |nya |nieuwe? )?(calendar|calender|kalender|kalendern|agenda|list|lista|listan|lijst|takenlijst|task list|todo list|to-do list|uppgiftslista|tasks)$/';
@@ -135,7 +135,8 @@ class Engine
     {
         $done = $this->facts();
         try {
-            $check = $this->model->review($this->earlier(1, 'Earlier (background only, do not repeat it):'), $this->request, $done, $this->language());
+            // No earlier lines here: the model repeats them. It answers this request from what was done.
+            $check = $this->model->review('', $this->request, $done, $this->language());
         } catch (RuntimeException) {
             return;
         }
@@ -252,17 +253,17 @@ class Engine
     }
 
     /** What was said before on this page, oldest first: the person, and the answer. */
-    private function earlier(int $turns = self::EARLIER, string $heading = 'Earlier:'): string
+    private function earlier(): string
     {
         if ($this->conversation === null) {
             return '';
         }
         $turns = DB::table('core_assistant_turns')->where('user_id', $this->user->id)->where('conversation', $this->conversation)
-            ->where('created_at', '>=', now()->subMinutes(self::MEMORY_MINUTES))->orderByDesc('id')->limit($turns)->get(['request', 'result']);
+            ->where('created_at', '>=', now()->subMinutes(self::MEMORY_MINUTES))->orderByDesc('id')->limit(self::EARLIER)->get(['request', 'result']);
         if ($turns->isEmpty()) {
             return '';
         }
-        $lines = [$heading];
+        $lines = ['Earlier:'];
         foreach ($turns->reverse() as $turn) {
             $result = json_decode((string) $turn->result, true) ?: [];
             $said = $result['question']['text'] ?? $result['message'] ?? implode(', ', array_map(fn ($card) => $card['type'], $result['cards'] ?? []));

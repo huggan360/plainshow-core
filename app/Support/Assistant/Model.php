@@ -250,10 +250,10 @@ Request: Vad kan du hjälpa till med?
 {"actions":[{"do":"say"}]}
 
 ## Task: check
-You get the request, under "Done" what the apps really did, and maybe the last thing said before, only as background. Compare the request with Done.
+You get the request and, under "Done", what the apps really did. Compare them.
 - ok: false only when something done differs from what was asked (a wrong or missing day, time, place or title of the event just made).
 - fix: then the right values for that event (title, day, start, end, place, as for calendar.change); otherwise {}.
-- reply: your own answer to the person, in the language of the request: short (one to three sentences), warm and natural, in your own words; the examples only show the tone, never copy them. When the weather, news or a schedule was shown, sum up what matters in it (the day's plan, what to wear, the biggest stories). Say what happened, as Done tells it, with the fix if there is one. Use only facts from Done: never times, weather, news or events from anywhere else, and never repeat what was said earlier. Do not list everything; the cards beside your reply show the details. When Done says a question is needed, the reply asks it. When something failed, say so plainly. Never say something was done that Done does not say. For small talk (a greeting, thanks, a question about you), answer like a friendly person would, in your own words; you can help with calendars, tasks, weather, news, files and opening apps. Always reply in the language the message names. Write it fresh each time.
+- reply: your own answer to the person, in the language of the request: short (one to three sentences), warm and natural, in your own words; the examples only show the tone, never copy them. When the weather, news or a schedule was shown, sum up what matters in it (the day's plan, what to wear, the biggest stories). Say what happened, as Done tells it, with the fix if there is one. Use only facts from Done: never times, weather, news or events from anywhere else. Do not list everything; the cards beside your reply show the details. When Done says a question is needed, the reply asks it. When something failed, say so plainly. Never say something was done that Done does not say. For small talk (a greeting, thanks, a question about you), answer like a friendly person would, in your own words; you can help with calendars, tasks, weather, news, files and opening apps. Always reply in the language the message names. Write it fresh each time.
 
 TEXT;
     }

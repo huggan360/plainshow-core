@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.17.4
+
+- The Assistant's reply speaks only of this request, never repeating the one before.
+- "Hur blir vädret?" right after the news shows the weather again.
+
 ## v1.17.3
 
 - A thank-you or greeting is never taken as the name of a new calendar.
