@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.15.4
+
+- The Assistant's start page has just the logo, the greeting and the prompt.
+
 ## v1.15.3
 
 - The Assistant's icon is a chevron in a square.

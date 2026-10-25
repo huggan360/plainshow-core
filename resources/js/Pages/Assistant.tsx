@@ -110,7 +110,6 @@ export default function Assistant({ ask }: { ask: string }) {
                     <div className="assistant__hello">
                         <img className="assistant__logo" src="/ui/brand/plainshow-logo.webp" alt="PlainShow" />
                         <h1 className="assistant__headline">{name ? t('What should we do, {name}?', { name }) : t('What should we do?')}</h1>
-                        <p className="assistant__lead">{t('Add to your calendar, share a file, check the weather or the news, or open any app. Just say it.')}</p>
                     </div>
                 )}
 

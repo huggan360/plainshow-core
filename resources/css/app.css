@@ -1453,7 +1453,6 @@ a:hover > .nwa-picture img, a:hover .nwa-picture img { transform: scale(1.04); }
 .assistant__hello { display: grid; justify-items: center; gap: 10px; max-width: 640px; text-align: center; animation: assistant-rise .7s cubic-bezier(.2, .8, .2, 1) both; }
 .assistant__logo { height: 46px; width: auto; margin-bottom: 8px; }
 .assistant__headline { margin: 0; font: 400 clamp(28px, 4vw, 40px)/1.15 var(--ps-font-title); color: var(--ps-text-strong); letter-spacing: -.01em; }
-.assistant__lead { margin: 0; color: var(--ps-text-soft); font-size: var(--ps-text-md); }
 
 /* The prompt: the glass frame, the theme gradient as its ring, glowing while it works. */
 .assistant__prompt { width: min(100%, 720px); padding: var(--ps-frame-pad); border: 1px solid var(--ps-shell-border); border-radius: 30px; background: color-mix(in srgb, var(--ps-shell) 40%, transparent); -webkit-backdrop-filter: blur(9px) saturate(1.3); backdrop-filter: blur(9px) saturate(1.3); }
