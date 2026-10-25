@@ -23,7 +23,11 @@ type CalendarEvent = { uid: string; title: string; place: string; start: string;
 type Task = { uid: string; title: string; due: string | null; calendar: string; color: string | null; url: string };
 type Story = { id: string; title: string; summary: string; url: string; image: string | null; time: string; sourceName: string; topicName: string };
 type CloudFile = { id: number; name: string; folder: string | null; type: string; size: number; changed: string; url: string };
+type NewCalendar = { id: number; name: string; color: string | null; events: boolean; tasks: boolean; url: string };
+type DayEvent = { title: string; place: string; start: string; end: string; allDay: boolean; calendar: string; color: string | null };
 type Card =
+    | { type: 'day'; date: string; events: DayEvent[]; url: string }
+    | { type: 'calendar'; calendar: NewCalendar; state: 'added' | 'exists' }
     | { type: 'event'; event: CalendarEvent; state: 'added' | 'changed' | 'removed' }
     | { type: 'task'; task: Task }
     | { type: 'weather'; place: Place }
@@ -39,6 +43,9 @@ const IDEAS: string[] = [];
 
 const calm = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/** Names this opening of the page: what "it" means, and open questions, last only as long as it does. */
+const conversation = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), (byte) => byte.toString(16).padStart(2, '0')).join('');
+
 export default function Assistant({ ask }: { ask: string }) {
     const { props } = usePage<SharedProps>();
     const [text, setText] = useState('');
@@ -53,6 +60,7 @@ export default function Assistant({ ask }: { ask: string }) {
     const answerBox = useRef<HTMLDivElement>(null);
     const swarm = useRef<SwarmHandle>(null);
     const before = useRef<DOMRect | null>(null);
+    const talk = useRef(conversation());
     const started = sent !== null;
 
     useEffect(() => {
@@ -71,13 +79,11 @@ export default function Assistant({ ask }: { ask: string }) {
         element.animate([{ transform: `translate(${from.left - to.left}px, ${from.top - to.top}px)` }, { transform: 'none' }], { duration: 650, easing: 'cubic-bezier(.2, .8, .2, 1)' });
     }, [started]);
 
-    // The answer is laid out unseen; the swarm flies into its shape, then it shows.
+    // The answer is laid out unseen; the swarm flies into its shape (outlines, letters), then it shows.
     useLayoutEffect(() => {
         if (!answer || shown) return;
-        const box = answerBox.current?.getBoundingClientRect();
-        const area = stage.current?.getBoundingClientRect();
-        if (!box || !area || !swarm.current || calm()) { setShown(true); return; }
-        swarm.current.land({ x: box.left - area.left, y: box.top - area.top, width: box.width, height: box.height }, () => setShown(true));
+        if (!answerBox.current || !swarm.current || calm()) { setShown(true); return; }
+        swarm.current.land(answerBox.current, () => setShown(true));
     }, [answer, shown]);
 
     const go = (request: string) => {
@@ -90,7 +96,7 @@ export default function Assistant({ ask }: { ask: string }) {
         setShown(false);
         setLeaving(null);
         setWorking(true);
-        send<Answer>('POST', '/assistant/ask', { text: words })
+        send<Answer>('POST', '/assistant/ask', { text: words, conversation: talk.current })
             .then((result) => {
                 setAnswer({ ...result, id: Date.now() });
                 if (result.redirect) {
@@ -170,10 +176,10 @@ export default function Assistant({ ask }: { ask: string }) {
 
 /** What the Assistant is doing, under the swarm. */
 function Status() {
-    const steps = [t('Reading what you asked'), t('Working it out'), t('Talking to your apps'), t('Almost there')];
+    const steps = [t('Reading what you asked'), t('Working it out'), t('Talking to your apps'), t('Checking what was done'), t('Almost there')];
     const [step, setStep] = useState(0);
     useEffect(() => {
-        const timer = window.setInterval(() => setStep((current) => Math.min(current + 1, steps.length - 1)), 1700);
+        const timer = window.setInterval(() => setStep((current) => Math.min(current + 1, steps.length - 1)), 2600);
         return () => window.clearInterval(timer);
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
     return <p key={step} className="assistant-status">{steps[step]}</p>;
@@ -199,10 +205,10 @@ function AnswerView({ answer, leaving, onChoose }: { answer: Answer; leaving: st
     return (
         <>
             {blocks.map((block, index) => <div key={index} className="assistant-answer__block" style={{ '--i': index } as CSSProperties}>{block}</div>)}
-            {answer.message && <Words text={answer.message} delay={blocks.length} />}
+            {answer.message && <Words text={answer.message} big={!blocks.length} />}
             {answer.question && (
                 <div className="assistant-question">
-                    <Words text={answer.question.text} delay={blocks.length} />
+                    <Words text={answer.question.text} big={!blocks.length} />
                     {answer.question.choices.length > 0 && (
                         <div className="assistant-question__choices">
                             {answer.question.choices.map((choice, index) => <button key={choice} type="button" style={{ '--i': index } as CSSProperties} onClick={() => onChoose(choice)}>{choice}</button>)}
@@ -214,13 +220,9 @@ function AnswerView({ answer, leaving, onChoose }: { answer: Answer; leaving: st
     );
 }
 
-/** A short message, its words arriving one after another. */
-function Words({ text, delay }: { text: string; delay: number }) {
-    return (
-        <p className="assistant-words" style={{ '--i': delay } as CSSProperties}>
-            {text.split(/(\s+)/).map((word, index) => (/\s+/.test(word) ? word : <span key={index} style={{ '--w': index } as CSSProperties}>{word}</span>))}
-        </p>
-    );
+/** A short message; the swarm writes it in dots first. On its own it is set larger, in the middle. */
+function Words({ text, big }: { text: string; big: boolean }) {
+    return <p className={`assistant-words${big ? ' is-big' : ''}`}>{text}</p>;
 }
 
 /* ---------- Widgets: the dashboard's own frame, head and rows ---------- */
@@ -291,6 +293,34 @@ function Tasks({ items }: { items: Task[] }) {
     );
 }
 
+/** A day's events as a timeline: times down the side, each event's calendar colour, now marked. */
+function Timeline({ date, events, url }: { date: string; events: DayEvent[]; url: string }) {
+    const day = new Date(`${date}T12:00:00`);
+    const today = new Date().toDateString() === day.toDateString();
+    const title = today ? t('Today') : day.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+    const now = Date.now();
+    const sorted = [...events].sort((a, b) => Number(b.allDay) - Number(a.allDay) || a.start.localeCompare(b.start));
+    return (
+        <Widget title={title} action={more(url, t('Calendar'))}>
+            {!sorted.length && <Row first last lead={<span className="assistant-tile"><i className="bx bx-coffee" aria-hidden="true" /></span>} title={t('Nothing planned')} />}
+            {sorted.map((event, index) => {
+                const past = today && !event.allDay && new Date(event.end).getTime() < now;
+                const current = today && !event.allDay && new Date(event.start).getTime() <= now && !past;
+                return (
+                    <Row key={event.start + event.title + index} first={index === 0} last={index === sorted.length - 1}
+                        className={`assistant-slot${past ? ' is-past' : ''}${current ? ' is-now' : ''}`}
+                        lead={<span className="assistant-slot__time" style={event.color ? { '--slot': event.color } as CSSProperties : undefined}>
+                            {event.allDay ? <strong>{t('All day')}</strong> : <><strong>{time(event.start)}</strong><span>{time(event.end)}</span></>}
+                        </span>}
+                        title={event.title}
+                        meta={[event.place, event.calendar].filter(Boolean).join(', ')}
+                        trail={current ? <span className="assistant-state is-now">{t('Now')}</span> : undefined} />
+                );
+            })}
+        </Widget>
+    );
+}
+
 /** The weather widget itself, for the place asked about. */
 function WeatherCard({ place }: { place: Place }) {
     const definition: WidgetDefinition = {
@@ -320,6 +350,18 @@ const fileMeta = (file: CloudFile) => [file.folder, size(file.size), new Date(fi
 function CardView({ card, leaving }: { card: Card; leaving: string | null }) {
     switch (card.type) {
         case 'weather': return <WeatherCard place={card.place} />;
+        case 'day': return <Timeline date={card.date} events={card.events} url={card.url} />;
+        case 'calendar': {
+            const { calendar } = card;
+            return (
+                <Widget title={calendar.tasks ? t('Task list') : t('Calendar')} action={more(calendar.url, t('Calendar'))}>
+                    <Row first last href={calendar.url} title={calendar.name}
+                        lead={<span className="assistant-tile assistant-swatch" style={calendar.color ? { '--swatch': calendar.color } as CSSProperties : undefined}><i className={`bx ${calendar.tasks ? 'bx-list-check' : 'bx-calendar'}`} aria-hidden="true" /></span>}
+                        meta={card.state === 'exists' ? t('You already have it') : calendar.tasks ? t('New task list') : t('New calendar')}
+                        trail={card.state === 'added' ? <State state="added" /> : undefined} />
+                </Widget>
+            );
+        }
         case 'news':
             return (
                 <Widget title={card.title} action={more(card.url, t('All news'))}>

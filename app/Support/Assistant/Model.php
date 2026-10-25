@@ -7,11 +7,13 @@ use RuntimeException;
 use Throwable;
 
 /**
- * The small language model that reads a request (Qwen3-0.6B, 4-bit, run by
- * llama.cpp on this server). It never writes prose: a JSON schema holds its
- * answer to a list of actions, and the engine does the rest. The long
- * instructions come first and never change, so llama.cpp keeps them in its
- * cache and each request only reads the new words.
+ * The language model behind the Assistant (Qwen3-1.7B, 4-bit, run by
+ * llama.cpp on this server). It works twice on each request: first it plans
+ * (the request becomes actions, under a JSON schema), then, once the engine
+ * has done them, it checks what was really done against what was asked,
+ * asks for a fix when they differ and writes the reply in its own words.
+ * Both tasks share one long instruction text that never changes, so
+ * llama.cpp keeps it in its cache and each call only reads the new words.
  *
  * The server starts when the first request arrives and stops after half an
  * hour without one (systemd socket activation), so the first answer after a
@@ -19,7 +21,7 @@ use Throwable;
  */
 class Model
 {
-    public const DOES = ['calendar.add', 'calendar.change', 'calendar.remove', 'task.add', 'weather', 'news', 'latex', 'open', 'share', 'files', 'ask', 'say'];
+    public const DOES = ['calendar.create', 'schedule', 'calendar.add', 'calendar.change', 'calendar.remove', 'task.add', 'weather', 'news', 'latex', 'open', 'share', 'files', 'ask', 'say'];
 
     public const KINDS = ['any', 'audio', 'image', 'video', 'document'];
 
@@ -31,30 +33,60 @@ class Model
      */
     public function actions(string $context, string $request): array
     {
+        $data = $this->ask("Task: plan\n".$context."\nRequest: ".$request, self::schema(), 400, 0.1);
+        if (! is_array($data['actions'] ?? null)) {
+            throw new RuntimeException(__('The assistant did not understand that.'));
+        }
+
+        return array_values(array_filter($data['actions'], fn ($action) => is_array($action) && in_array($action['do'] ?? null, self::DOES, true)));
+    }
+
+    /**
+     * The check after the work: what was asked, what was said before, what was
+     * really done. Whether it matches, a fix for the event just made when it
+     * does not, and the reply, in the model's own words.
+     *
+     * @param list<string> $done what the apps report, one line each
+     * @return array{ok: bool, fix: array<string, string>, reply: string}
+     */
+    public function review(string $earlier, string $request, array $done, string $language = 'English'): array
+    {
+        $lines = array_map(fn ($line) => '- '.$line, $done ?: ['Nothing was done; this is small talk or a question to answer.']);
+        $data = $this->ask("Task: check\n".$earlier."\nRequest: ".$request."\nDone:\n".implode("\n", $lines)."\nReply in $language.", self::checkSchema(), 320, 0.5);
+
+        return [
+            'ok' => (bool) ($data['ok'] ?? true),
+            'fix' => array_filter(array_map(fn ($value) => trim(mb_substr((string) $value, 0, 120)), is_array($data['fix'] ?? null) ? $data['fix'] : []), fn ($value) => $value !== ''),
+            'reply' => trim(mb_substr(strip_tags((string) ($data['reply'] ?? '')), 0, 450)),
+        ];
+    }
+
+    /** One call to the model, its answer held to a JSON schema. */
+    private function ask(string $message, array $schema, int $tokens, float $temperature): array
+    {
         $url = rtrim((string) config('plainshow.assistant_url'), '/').'/v1/chat/completions';
         try {
-            $response = Http::timeout(90)->connectTimeout(30)->post($url, [
+            $response = Http::timeout(120)->connectTimeout(30)->post($url, [
                 'messages' => [
                     ['role' => 'system', 'content' => self::instructions()],
-                    ['role' => 'user', 'content' => $context."\nRequest: ".$request],
+                    ['role' => 'user', 'content' => $message],
                 ],
-                'response_format' => ['type' => 'json_schema', 'json_schema' => ['name' => 'actions', 'schema' => self::schema()]],
+                'response_format' => ['type' => 'json_schema', 'json_schema' => ['name' => 'answer', 'schema' => $schema]],
                 'chat_template_kwargs' => ['enable_thinking' => false],
-                'temperature' => 0.1,
+                'temperature' => $temperature,
                 'top_p' => 0.9,
-                'max_tokens' => 400,
+                'max_tokens' => $tokens,
                 'cache_prompt' => true,
             ]);
         } catch (Throwable) {
             throw new RuntimeException(__('The assistant is not running.'));
         }
-        $content = (string) ($response->json('choices.0.message.content') ?? '');
-        $data = json_decode($content, true);
-        if (! $response->successful() || ! is_array($data) || ! is_array($data['actions'] ?? null)) {
+        $data = json_decode((string) ($response->json('choices.0.message.content') ?? ''), true);
+        if (! $response->successful() || ! is_array($data)) {
             throw new RuntimeException(__('The assistant did not understand that.'));
         }
 
-        return array_values(array_filter($data['actions'], fn ($action) => is_array($action) && in_array($action['do'] ?? null, self::DOES, true)));
+        return $data;
     }
 
     /**
@@ -66,7 +98,7 @@ class Model
     {
         try {
             Http::timeout(60)->connectTimeout(30)->post(rtrim((string) config('plainshow.assistant_url'), '/').'/v1/chat/completions', [
-                'messages' => [['role' => 'system', 'content' => self::instructions()], ['role' => 'user', 'content' => 'Request: hi']],
+                'messages' => [['role' => 'system', 'content' => self::instructions()], ['role' => 'user', 'content' => "Task: plan\nRequest: hi"]],
                 'chat_template_kwargs' => ['enable_thinking' => false], 'max_tokens' => 1, 'cache_prompt' => true,
             ]);
         } catch (Throwable) {
@@ -90,7 +122,7 @@ class Model
                             'title' => $string, 'day' => $string, 'start' => $string, 'end' => $string,
                             'calendar' => $string, 'place' => $string, 'query' => $string,
                             'topic' => ['type' => 'string', 'enum' => self::TOPICS],
-                            'go' => ['type' => 'boolean'],
+                            'go' => ['type' => 'boolean'], 'list' => ['type' => 'boolean'],
                             'app' => $string, 'kind' => ['type' => 'string', 'enum' => self::KINDS],
                             'person' => $string, 'text' => ['type' => 'string', 'maxLength' => 200],
                         ],
@@ -102,13 +134,33 @@ class Model
         ];
     }
 
+    public static function checkSchema(): array
+    {
+        $string = ['type' => 'string', 'maxLength' => 60];
+
+        return [
+            'type' => 'object',
+            'properties' => [
+                'ok' => ['type' => 'boolean'],
+                'fix' => ['type' => 'object', 'properties' => ['title' => $string, 'day' => $string, 'start' => $string, 'end' => $string, 'place' => $string]],
+                'reply' => ['type' => 'string', 'maxLength' => 420],
+            ],
+            'required' => ['ok', 'fix', 'reply'],
+        ];
+    }
+
     /** The instructions and examples: fixed text, so llama.cpp keeps them cached. */
     public static function instructions(): string
     {
         return <<<'TEXT'
-You turn a request into actions for PlainShow, a personal dashboard. Answer only with JSON: {"actions":[...]}. Requests are in English, Swedish or Dutch. Keep titles and texts in the language of the request. Never invent facts.
+You are the Assistant in PlainShow, a personal dashboard. People write in English, Swedish or Dutch. You have two tasks; each message starts with which one. Answer only with JSON. Never invent facts.
+
+## Task: plan
+Turn the request into actions: {"actions":[...]}. Keep titles in the language of the request.
 
 Actions ("do" and its fields):
+- calendar.create: make a new calendar: title (its name, as said, empty if none), list true for a task list
+- schedule: show a day's calendar as a timeline: day (the words for the day; empty for today)
 - calendar.add: title, day (the words for the day, as said), start, end (HH:MM, 24 hours), place (an address or place, if said), calendar (only if named)
 - calendar.change: change the event just made: title, day, start, end, place
 - calendar.remove: remove the event just made
@@ -119,9 +171,10 @@ Actions ("do" and its fields):
 - open: app (dashboard, news, weather, cloud, files, photos, calendar, latex, blog, split, design, theme, account)
 - share: query (which file), kind (audio, image, video, document, any), person
 - files: query, kind
-- ask: text (one short question, only when something needed is missing)
-- say: text (only when no other action fits)
+- ask: when the request is unclear (text: empty; you ask in the check)
+- say: small talk, greetings, thanks, questions about you, or when no other action fits (text: empty; you write the reply in the check)
 Several requests in one message give several actions.
+"Earlier" lines are what was said before in this window, and "Last: ..." what was shown just before; a short follow-up ("and in Lund?", "i Sverige då?", "move it to 15") continues them.
 
 Examples:
 Request: Add a study session between 14 and 16 on saturday
@@ -134,6 +187,20 @@ Request: Dinner with Emma on friday at 19 at Pizzeria Napoli
 {"actions":[{"do":"calendar.add","title":"Dinner with Emma","day":"friday","start":"19:00","place":"Pizzeria Napoli"}]}
 Request: Zet een vergadering op dinsdag om 10 uur in de agenda Werk
 {"actions":[{"do":"calendar.add","title":"Vergadering","day":"dinsdag","start":"10:00","calendar":"Werk"}]}
+Request: Make a new calendar called Gym
+{"actions":[{"do":"calendar.create","title":"Gym"}]}
+Request: Skapa en ny kalender
+{"actions":[{"do":"calendar.create","title":""}]}
+Request: Maak een takenlijst Boodschappen
+{"actions":[{"do":"calendar.create","title":"Boodschappen","list":true}]}
+Request: Skapa kalendern Fotboll och lägg in match på lördag kl 13
+{"actions":[{"do":"calendar.create","title":"Fotboll"},{"do":"calendar.add","title":"Match","day":"lördag","start":"13:00","calendar":"Fotboll"}]}
+Request: Vad har jag för schema idag?
+{"actions":[{"do":"schedule","day":"idag"}]}
+Request: What am I doing on friday?
+{"actions":[{"do":"schedule","day":"friday"}]}
+Request: Sammanfatta min dag
+{"actions":[{"do":"schedule","day":"idag"},{"do":"weather","place":""},{"do":"news","topic":""}]}
 Request: Move it to 15
 {"actions":[{"do":"calendar.change","start":"15:00"}]}
 Request: Ta bort den
@@ -144,6 +211,16 @@ Request: Hur blir vädret i Lund?
 {"actions":[{"do":"weather","place":"Lund"}]}
 Request: What's the weather like?
 {"actions":[{"do":"weather","place":""}]}
+Request: Vad har hänt i världen?
+{"actions":[{"do":"news","topic":"world"}]}
+Request: Vad händer i Sverige idag?
+{"actions":[{"do":"news","topic":"sweden"}]}
+Last: news, topic world.
+Request: I Sverige då?
+{"actions":[{"do":"news","topic":"sweden"}]}
+Last: weather in Lund.
+Request: Och i Malmö?
+{"actions":[{"do":"weather","place":"Malmö"}]}
 Request: Visa sportnyheter
 {"actions":[{"do":"news","topic":"sport"}]}
 Request: Open the Sweden news
@@ -165,9 +242,51 @@ Request: Deel de foto strand met Emma
 Request: Find my latest pdf
 {"actions":[{"do":"files","query":"","kind":"document"}]}
 Request: Add a meeting
-{"actions":[{"do":"ask","text":"When is the meeting?"}]}
-Request: Hej!
-{"actions":[{"do":"say","text":"Hej! Vad vill du göra?"}]}
+{"actions":[{"do":"calendar.add","title":"Meeting"}]}
+Request: Tjena!
+{"actions":[{"do":"say","text":""}]}
+Request: Vad kan du hjälpa till med?
+{"actions":[{"do":"say","text":""}]}
+
+## Task: check
+You get the request, what was said earlier in this window, and under "Done" what the apps really did. Compare them.
+- ok: false only when something done differs from what was asked (a wrong or missing day, time, place or title of the event just made).
+- fix: then the right values for that event (title, day, start, end, place, as for calendar.change); otherwise {}.
+- reply: your own answer to the person, in the language of the request: short (one to three sentences), warm and natural, in your own words; the examples only show the tone, never copy them. When the weather, news or a schedule was shown, sum up what matters in it (the day's plan, what to wear, the biggest stories). Say what happened, as Done tells it, with the fix if there is one. Do not list everything; the cards beside your reply show the details. When Done says a question is needed, the reply asks it. When something failed, say so plainly. Never say something was done that Done does not say. For small talk (a greeting, thanks, a question about you), answer like a friendly person would, in your own words; you can help with calendars, tasks, weather, news, files and opening apps. Always reply in the language the message names.
+
+Examples:
+Task: check
+Request: Lägg till tenta imorgon kl 14 på Bergsbrunnagatan 15
+Done:
+- Event added: "Tenta", Monday 2026-10-26, all day, place Bergsbrunnagatan 15, calendar Skola.
+Reply in Swedish.
+{"ok":false,"fix":{"start":"14:00"},"reply":"Tentan ligger i Skola imorgon kl 14, på Bergsbrunnagatan 15. Lycka till!"}
+Task: check
+Request: What's the weather in Lund?
+Done:
+- Weather shown for Lund: now 8°, light rain; today 6° to 10°.
+Reply in English.
+{"ok":true,"fix":{},"reply":"It's 8 degrees with a little rain in Lund right now, so bring an umbrella."}
+Task: check
+Request: Sammanfatta min dag
+Done:
+- Schedule for Monday 2026-10-26: 09:00-10:00 Föreläsning at Hus C; 18:00-19:00 Träning at Friskis.
+- Weather shown for Lund: now 7°, cloudy. Monday 5° to 9°, light rain, 2.1 mm.
+- News shown (top): Regeringen lägger fram budget: Satsningar på skolan | Storm väntas i norr: SMHI varnar.
+Reply in Swedish.
+{"ok":true,"fix":{},"reply":"Du har föreläsning kl 9 och träning kl 18. Det blir lätt regn och runt 9 grader, så ta med jacka. I nyheterna: regeringens budget och en storm på väg i norr."}
+Task: check
+Request: Skapa en ny kalender
+Done:
+- Question needed: the name of the new calendar.
+Reply in Swedish.
+{"ok":true,"fix":{},"reply":"Visst! Vad ska kalendern heta?"}
+Task: check
+Request: Add a meeting
+Done:
+- Question needed: When is “Meeting”?
+Reply in English.
+{"ok":true,"fix":{},"reply":"Sure, when is the meeting?"}
 TEXT;
     }
 }

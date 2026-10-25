@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.17.0
+
+- The Assistant answers in its own words. After doing what you asked, it checks what was really saved against what you said, fixes a missed time on the spot, and replies under the cards, in the language you wrote in. It now runs a larger model (Qwen3-1.7B), so answers take a little longer and read much better.
+- It can sum up: the weather, the news, or your whole day ("Sammanfatta min dag" gives your schedule, the weather and the news with a short summary).
+- "What do I have today?" shows the day as a timeline widget, with the event going on now marked.
+- It can make a new calendar or task list ("Make a new calendar called Gym"), and asks for the name when none is given.
+- It follows on from what you said before in the same window ("i Sverige då?" after the news), and a reloaded page starts afresh, so an old question no longer catches a new request.
+- When it writes a message, the glowing dots form the actual letters before the text appears.
+- "Tjenare" and other requests no longer hit "That was a lot at once": each kind of request now has its own limit, instead of the weather, news and Assistant pages sharing one.
+
 ## v1.16.3
 
 - The Assistant widget is a plain input box without its own gradient ring. Like every widget, it gets a border only when you choose one in its settings.

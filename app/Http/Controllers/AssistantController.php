@@ -31,9 +31,13 @@ class AssistantController extends Controller
 
     public function ask(Request $request): JsonResponse
     {
-        $text = $request->validate(['text' => ['required', 'string', 'max:500']])['text'];
+        $valid = $request->validate([
+            'text' => ['required', 'string', 'max:500'],
+            // Made by the page each time it opens: "it" and open questions last as long as the page.
+            'conversation' => ['nullable', 'string', 'regex:/^[A-Za-z0-9-]{8,40}$/'],
+        ]);
         set_time_limit(120);
 
-        return response()->json((new Engine($request->user()))->handle($text));
+        return response()->json((new Engine($request->user()))->handle($valid['text'], $valid['conversation'] ?? null));
     }
 }

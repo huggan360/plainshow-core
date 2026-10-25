@@ -4,16 +4,19 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
  * The Assistant at work, as a drone show: glowing dots in the theme colour
  * rise from the prompt into a grid, wheel round in a ring and rearrange
  * into icons (a calendar, a cloud, news, a folder, a file) while they work.
- * When the answer is ready, land() flies them into the exact outline of what
- * is about to appear (a widget, a card, a message) and they fade as it fades
- * in. Drawn on one canvas, additively, with a pre-rendered glow per colour.
+ * When the answer is ready, land() flies them into the exact shape of what is
+ * about to appear: the outline of each widget, and the very letters of any
+ * words, read from the page's own font where the text will stand. More dots
+ * split off when the shape needs them. They fade as the answer fades in.
+ * Drawn on one canvas, additively, with a pre-rendered glow per colour.
  */
 export type SwarmHandle = {
-    /** Fly into this box (relative to the swarm's own box), then call done. */
-    land: (box: { x: number; y: number; width: number; height: number }, done: () => void) => void;
+    /** Fly into the shape of this (laid out, still unseen) element, then call done. */
+    land: (element: HTMLElement, done: () => void) => void;
 };
 
 type Dot = { x: number; y: number; tx: number; ty: number; delay: number; size: number; colour: number; phase: number };
+type Shape = { points: Point[]; fine: boolean[] };
 type Point = [number, number];
 
 const ICONS = ['bx-calendar', 'bx-cloud-light-rain', 'bx-news', 'bx-folder', 'bx-file', 'bx-chevron-right-square'];
@@ -80,6 +83,69 @@ function boxShape(width: number, height: number, n: number): Point[] {
     return points;
 }
 
+/** The most dots a landing may use; past this, text is sampled more sparsely. */
+const MOST = 900;
+
+/** Points on the letters of an element's text, where they stand on the page, relative to origin. */
+function letters(element: HTMLElement, originX: number, originY: number): Point[] {
+    const box = element.getBoundingClientRect();
+    const width = Math.ceil(box.width), height = Math.ceil(box.height);
+    if (!width || !height) return [];
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) return [];
+    const style = getComputedStyle(element);
+    context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    context.textBaseline = 'middle';
+    // Each character where the browser put it, wrapped lines and all.
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    const range = document.createRange();
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const text = node.textContent ?? '';
+        for (let index = 0; index < text.length; index++) {
+            if (/\s/.test(text[index])) continue;
+            const wide = text.codePointAt(index)! > 0xffff ? 2 : 1;
+            range.setStart(node, index); range.setEnd(node, index + wide);
+            const rect = range.getClientRects()[0];
+            if (rect) context.fillText(text.slice(index, index + wide), rect.left - box.left, rect.top - box.top + rect.height / 2);
+            index += wide - 1;
+        }
+    }
+    const data = context.getImageData(0, 0, width, height).data;
+    const points: Point[] = [];
+    const step = Math.max(2, Math.round(parseFloat(style.fontSize) / 12));
+    for (let y = 0; y < height; y += step) {
+        for (let x = (y / step) % 2 ? step / 2 : 0; x < width; x += step) {
+            if (data[(y * width + Math.floor(x)) * 4 + 3] > 110) points.push([box.left - originX + x, box.top - originY + y]);
+        }
+    }
+    return points;
+}
+
+/** Every widget's outline and every word's letters inside an answer, relative to origin. */
+function shapeOf(element: HTMLElement, originX: number, originY: number, fallback: number): Shape {
+    const shape: Shape = { points: [], fine: [] };
+    const add = (points: Point[], fine: boolean) => points.forEach((point) => { shape.points.push(point); shape.fine.push(fine); });
+    const outline = (target: Element, fine: boolean, density: number) => {
+        const rect = target.getBoundingClientRect();
+        const n = Math.round(Math.min(200, Math.max(24, (2 * (rect.width + rect.height)) / density)));
+        add(boxShape(rect.width, rect.height, n).map(([x, y]) => [rect.left - originX + x, rect.top - originY + y]), fine);
+    };
+    element.querySelectorAll('.assistant-answer__block').forEach((block) => outline(block, false, 9));
+    element.querySelectorAll('.assistant-question__choices button').forEach((button) => outline(button, true, 6));
+    const text: Point[] = [];
+    element.querySelectorAll<HTMLElement>('.assistant-words').forEach((words) => text.push(...letters(words, originX, originY)));
+    // Too many points for the dots there are: keep an even share of them.
+    const room = Math.max(120, MOST - shape.points.length);
+    add(text.length > room ? text.filter((_, index) => Math.floor((index * room) / text.length) !== Math.floor(((index + 1) * room) / text.length)) : text, true);
+    if (!shape.points.length) {
+        const rect = element.getBoundingClientRect();
+        add(boxShape(rect.width, rect.height, fallback).map(([x, y]) => [rect.left - originX + x, rect.top - originY + y]), false);
+    }
+    return shape;
+}
+
 /** A theme colour (#rrggbb, as the kit defines them) with an alpha. */
 function rgba(colour: string, alpha: number): string {
     const hex = colour.replace('#', '');
@@ -103,10 +169,14 @@ function sprite(colour: string): HTMLCanvasElement {
 
 export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Swarm({ className }, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const landing = useRef<{ box: { x: number; y: number; width: number; height: number }; done: () => void; at: number; called: boolean } | null>(null);
+    const landing = useRef<{ shape: Shape; done: () => void; at: number; settled: number | null; called: boolean } | null>(null);
 
     useImperativeHandle(ref, () => ({
-        land: (box, done) => { landing.current = { box, done, at: performance.now(), called: false }; },
+        land: (element, done) => {
+            const origin = canvasRef.current?.getBoundingClientRect();
+            if (!origin) { done(); return; }
+            landing.current = { shape: shapeOf(element, origin.left, origin.top, 150), done, at: performance.now(), settled: null, called: false };
+        },
     }), []);
 
     useEffect(() => {
@@ -151,18 +221,26 @@ export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Sw
             const s = size();
             const land = landing.current;
             let targets: Point[];
+            let fine: boolean[] = [];
             if (land) {
-                targets = spread(boxShape(land.box.width, land.box.height, count), count).map(([x, y]) => [land.box.x + x, land.box.y + y]);
+                // The shape needs more dots than there are: split some off where they fly.
+                while (dots.length < land.shape.points.length) {
+                    const parent = dots[Math.floor(Math.random() * count)];
+                    dots.push({ ...parent, delay: 0, size: 1.4 + Math.random() * 1.8, colour: dots.length % 4, phase: Math.random() * Math.PI * 2 });
+                }
+                // Fewer points than dots: the rest double up on the same shape.
+                targets = dots.map((_, index) => land.shape.points[index % land.shape.points.length]);
+                fine = dots.map((_, index) => land.shape.fine[index % land.shape.fine.length]);
             } else {
                 const step = Math.floor((now - started) / HOLD);
                 // grid, ring, icon, ring, icon, ...
                 const kind = step === 0 ? 'grid' : shapes[1 + ((step - 1) % 2)];
                 if (kind === 'grid') {
                     const columns = Math.ceil(Math.sqrt(count));
-                    targets = dots.map((_, index) => [cx - s / 2 + ((index % columns) + 0.5) * (s / columns), cy - s / 2 + (Math.floor(index / columns) + 0.5) * (s / columns)]);
+                    targets = dots.map((_, index): Point => [cx - s / 2 + ((index % columns) + 0.5) * (s / columns), cy - s / 2 + (Math.floor(index / columns) + 0.5) * (s / columns)]);
                 } else if (kind === 'ring' || !icons.length) {
                     const turn = (now - started) / 1000 * 1.4;
-                    targets = dots.map((_, index) => {
+                    targets = dots.map((_, index): Point => {
                         const angle = (index / count) * Math.PI * 2 + turn;
                         const radius = s / 2 * (index % 3 === 0 ? 0.72 : 1);
                         return [cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius];
@@ -187,19 +265,23 @@ export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Sw
                 if (Math.hypot(dot.tx - dot.x, dot.ty - dot.y) < 3) settled++;
             });
 
-            if (land && !land.called && (settled > count * 0.85 || now - land.at > 1100)) {
+            // Formed: hold the shape a moment, so the letters can be read, then hand over.
+            if (land && land.settled === null && (settled > dots.length * 0.9 || now - land.at > 1300)) land.settled = now;
+            if (land && !land.called && land.settled !== null && now - land.settled > 280) {
                 land.called = true;
                 land.done();
             }
-            if (land?.called) fade = Math.max(0, fade - dt * 2.4);
+            if (land?.called) fade = Math.max(0, fade - dt * 1.8);
 
             context.clearRect(0, 0, width, height);
             context.globalCompositeOperation = 'lighter';
-            dots.forEach((dot) => {
-                const twinkle = 0.65 + 0.35 * Math.sin(age * 4 + dot.phase);
+            dots.forEach((dot, index) => {
+                const small = fine[index] ?? false;
+                const twinkle = small ? 0.9 + 0.1 * Math.sin(age * 4 + dot.phase) : 0.65 + 0.35 * Math.sin(age * 4 + dot.phase);
                 const boost = land ? 1.25 : 1;
                 context.globalAlpha = Math.min(1, twinkle * boost) * fade;
-                const r = dot.size * 4.2 * (land ? 1.15 : 1);
+                // On letters the dots shrink to the size of a stroke, so the words can be read.
+                const r = small ? 2.2 + dot.size * 0.35 : dot.size * 4.2 * (land ? 1.15 : 1);
                 context.drawImage(sprites[dot.colour], dot.x - r, dot.y - r, r * 2, r * 2);
             });
             context.globalAlpha = 1;

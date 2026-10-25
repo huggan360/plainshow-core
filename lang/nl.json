@@ -929,5 +929,13 @@
     "Let the Assistant share files with other people.": "Laat de Assistent bestanden met anderen delen.",
     "Your schedule": "Je planning",
     "Tasks": "Taken",
-    "Not done": "Niet gelukt"
+    "Not done": "Niet gelukt",
+    "What should the new list be called?": "Hoe moet de nieuwe lijst heten?",
+    "What should the new calendar be called?": "Hoe moet de nieuwe agenda heten?",
+    "Task list": "Takenlijst",
+    "You already have it": "Die heb je al",
+    "New task list": "Nieuwe takenlijst",
+    "New calendar": "Nieuwe agenda",
+    "Checking what was done": "Controleren wat er gedaan is",
+    "Nothing planned": "Niets gepland"
 }

@@ -79,14 +79,21 @@ React and TypeScript (Vite).
 - Assistant (`/assistant`, `Pages/Assistant.tsx`, widget `core.assistant`; not
   `/composer`, which Apache sends to Web): say what
   to do, get cards back. `App\Support\Assistant\Model` asks a local model
-  (Qwen3-0.6B Q4_K_M in llama.cpp, `/opt/plainshow-ai`, units `plainshow-ai*`,
-  socket-activated on `127.0.0.1:18090` and stopped after 30 idle minutes) for
-  JSON actions under a schema; `Engine` checks them against the request, works
-  out days and times (`When`, en/sv/nl), does them through the apps' APIs as the
-  person (`App\Support\ServiceCall`, signed like the gateway; Cloud's write
-  endpoints) and answers with cards, a rare message or question, or a page to
-  open. Turns are kept seven days (`core_assistant_turns`); the last one is
-  memory for "move it" and for answers to questions. Capability `core.assistant.use`.
+  (Qwen3-1.7B Q4_K_M in llama.cpp, `/opt/plainshow-ai`, units `plainshow-ai*`,
+  socket-activated on `127.0.0.1:18090` and stopped after 30 idle minutes) twice
+  per request, with one shared instruction text (so llama.cpp's cache holds it):
+  **plan** (JSON actions under a schema), then, after `Engine` has done them,
+  **check** (what the apps really did, as plain lines, against the request: it
+  may fix the event just made, and writes the reply in its own words, in the
+  request's language). `Engine` also checks the plan against the request
+  itself, works out days and times (`When`, en/sv/nl), does the actions
+  through the apps' APIs as the person (`App\Support\ServiceCall`, signed like
+  the gateway; Cloud's write endpoints: calendars, events, tasks, shares) and
+  answers with cards (a day's timeline, events, weather, news, files), the
+  reply under them, a question, or a page to open. Turns are kept seven days
+  (`core_assistant_turns`); memory and the earlier lines the model reads stay
+  within one opening of the page (`conversation`, made by the page). Without
+  the model's check, the engine's own short texts are shown. Capability `core.assistant.use`.
   News opens from links: `/news?topic=sweden`, `?tab=local`, `?q=…`, `?read=<id>`.
 - `php artisan plainshow:admin <username>` (password on standard input) makes
   an administrator; the installer uses it for the first one.

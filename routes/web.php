@@ -20,24 +20,24 @@ Route::match(['get', 'post'], '/auth/logout', [SsoController::class, 'logout'])-
 Route::get('/avatars/{user}', AvatarController::class)->whereNumber('user');
 
 // Public radar images (SMHI's own, only passed through and kept for a few hours).
-Route::get('/weather/radar/smhi/{name}.png', [App\Http\Controllers\WeatherController::class, 'radarImage'])->where('name', 'radar_[0-9]{10}')->middleware('throttle:240,1');
+Route::get('/weather/radar/smhi/{name}.png', [App\Http\Controllers\WeatherController::class, 'radarImage'])->where('name', 'radar_[0-9]{10}')->middleware('throttle:240,1,radar-image');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'show'])->name('dashboard');
     Route::get('/news', [App\Http\Controllers\NewsController::class, 'app'])->middleware('can.do:core.dashboard.use')->name('news');
-    Route::get('/news/stories', [App\Http\Controllers\NewsController::class, 'stories'])->middleware('throttle:60,1');
-    Route::get('/news/article/{id}', [App\Http\Controllers\NewsController::class, 'article'])->where('id', '[a-f0-9]{16}')->middleware('throttle:60,1');
+    Route::get('/news/stories', [App\Http\Controllers\NewsController::class, 'stories'])->middleware('throttle:60,1,news-stories');
+    Route::get('/news/article/{id}', [App\Http\Controllers\NewsController::class, 'article'])->where('id', '[a-f0-9]{16}')->middleware('throttle:60,1,news-article');
     Route::put('/news/preferences', [App\Http\Controllers\NewsController::class, 'savePreferences']);
     Route::get('/news/image/{key}', [App\Http\Controllers\NewsController::class, 'image'])->where('key', '[a-f0-9]{32}');
     Route::get('/assistant', [App\Http\Controllers\AssistantController::class, 'page'])->middleware('can.do:core.assistant.use')->name('assistant');
-    Route::post('/assistant/warm', [App\Http\Controllers\AssistantController::class, 'warm'])->middleware(['can.do:core.assistant.use', 'throttle:10,1']);
-    Route::post('/assistant/ask', [App\Http\Controllers\AssistantController::class, 'ask'])->middleware(['can.do:core.assistant.use', 'throttle:20,1']);
+    Route::post('/assistant/warm', [App\Http\Controllers\AssistantController::class, 'warm'])->middleware(['can.do:core.assistant.use', 'throttle:10,1,assistant-warm']);
+    Route::post('/assistant/ask', [App\Http\Controllers\AssistantController::class, 'ask'])->middleware(['can.do:core.assistant.use', 'throttle:20,1,assistant-ask']);
     Route::get('/weather', [App\Http\Controllers\WeatherController::class, 'app'])->middleware('can.do:core.dashboard.use')->name('weather');
     Route::put('/weather/home', [App\Http\Controllers\WeatherController::class, 'setHome']);
     Route::delete('/weather/home', [App\Http\Controllers\WeatherController::class, 'clearHome']);
     Route::post('/weather/saved', [App\Http\Controllers\WeatherController::class, 'save']);
     Route::delete('/weather/saved', [App\Http\Controllers\WeatherController::class, 'forget']);
-    Route::middleware('throttle:60,1')->group(function () {
+    Route::middleware('throttle:60,1,weather')->group(function () {
         Route::get('/weather/places', [App\Http\Controllers\WeatherController::class, 'places']);
         Route::get('/weather/forecast', [App\Http\Controllers\WeatherController::class, 'forecast']);
         Route::get('/weather/radar', [App\Http\Controllers\WeatherController::class, 'radar']);
@@ -62,7 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/account/profile', [AccountController::class, 'updateProfile']);
     Route::post('/account/avatar', [AccountController::class, 'updateAvatar']);
     Route::delete('/account/avatar', [AccountController::class, 'removeAvatar']);
-    Route::middleware('throttle:10,1')->group(function () {
+    Route::middleware('throttle:10,1,account-security')->group(function () {
         Route::put('/account/password', [AccountController::class, 'updatePassword']);
         Route::post('/account/two-factor', [AccountController::class, 'startTwoFactor']);
         Route::post('/account/two-factor/confirm', [AccountController::class, 'confirmTwoFactor']);
@@ -105,7 +105,7 @@ Route::middleware('auth')->group(function () {
         });
         Route::middleware('can.do:core.updates.apply')->group(function () {
             Route::get('/updates', [UpdatesController::class, 'index'])->name('admin.updates');
-            Route::post('/updates', [UpdatesController::class, 'store'])->middleware('throttle:20,1');
+            Route::post('/updates', [UpdatesController::class, 'store'])->middleware('throttle:20,1,updates');
         });
         Route::get('/audit', [AuditController::class, 'index'])->middleware('can.do:core.audit.view')->name('admin.audit');
     });

@@ -106,7 +106,7 @@ Route::get('/directory/for-cloud-account', function (Request $request) use ($pla
     return response()->json($platformDirectory($user, 'cloud'))->header('Cache-Control', 'no-store');
 });
 
-Route::middleware([AuthenticateBearer::class.':core', 'throttle:120,1'])->group(function () {
+Route::middleware([AuthenticateBearer::class.':core', 'throttle:120,1,api'])->group(function () {
     Route::get('/me', function (Request $request) {
         $user = $request->user();
 

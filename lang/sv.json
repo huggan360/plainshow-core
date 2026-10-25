@@ -921,5 +921,13 @@
     "Let the Assistant share files with other people.": "Låt Assistent dela filer med andra.",
     "Your schedule": "Ditt schema",
     "Tasks": "Uppgifter",
-    "Not done": "Inte gjort"
+    "Not done": "Inte gjort",
+    "What should the new list be called?": "Vad ska den nya listan heta?",
+    "What should the new calendar be called?": "Vad ska den nya kalendern heta?",
+    "Task list": "Uppgiftslista",
+    "You already have it": "Den har du redan",
+    "New task list": "Ny uppgiftslista",
+    "New calendar": "Ny kalender",
+    "Checking what was done": "Kollar vad som blev gjort",
+    "Nothing planned": "Inget inplanerat"
 }
