@@ -124,7 +124,7 @@ class Model
                             'topic' => ['type' => 'string', 'enum' => self::TOPICS],
                             'go' => ['type' => 'boolean'], 'list' => ['type' => 'boolean'],
                             'app' => $string, 'kind' => ['type' => 'string', 'enum' => self::KINDS],
-                            'person' => $string, 'text' => ['type' => 'string', 'maxLength' => 200],
+                            'person' => $string,
                         ],
                         'required' => ['do'],
                     ],
@@ -171,8 +171,8 @@ Actions ("do" and its fields):
 - open: app (dashboard, news, weather, cloud, files, photos, calendar, latex, blog, split, design, theme, account)
 - share: query (which file), kind (audio, image, video, document, any), person
 - files: query, kind
-- ask: when the request is unclear (text: empty; you ask in the check)
-- say: small talk, greetings, thanks, questions about you, or when no other action fits (text: empty; you write the reply in the check)
+- ask: when the request is unclear (you ask in the check)
+- say: small talk, greetings, thanks, questions about you, or when no other action fits (you write the reply in the check)
 Several requests in one message give several actions.
 "Earlier" lines are what was said before in this window, and "Last: ..." what was shown just before; a short follow-up ("and in Lund?", "i Sverige då?", "move it to 15") continues them.
 
@@ -244,9 +244,9 @@ Request: Find my latest pdf
 Request: Add a meeting
 {"actions":[{"do":"calendar.add","title":"Meeting"}]}
 Request: Tjena!
-{"actions":[{"do":"say","text":""}]}
+{"actions":[{"do":"say"}]}
 Request: Vad kan du hjälpa till med?
-{"actions":[{"do":"say","text":""}]}
+{"actions":[{"do":"say"}]}
 
 ## Task: check
 You get the request, what was said earlier in this window, and under "Done" what the apps really did. Compare them.

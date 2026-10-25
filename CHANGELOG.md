@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.17.1
+
+- The Assistant answers faster: it reads shorter notes from earlier in the window and only the headlines of the news, and no longer writes text it throws away.
+- "Sammanfatta min dag" always brings the weather too, also right after the news.
+
 ## v1.17.0
 
 - The Assistant answers in its own words. After doing what you asked, it checks what was really saved against what you said, fixes a missed time on the spot, and replies under the cards, in the language you wrote in. It now runs a larger model (Qwen3-1.7B), so answers take a little longer and read much better.

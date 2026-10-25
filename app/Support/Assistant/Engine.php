@@ -70,7 +70,7 @@ class Engine
     private array $done = [];
 
     /** How many earlier turns of this page the model reads. */
-    private const EARLIER = 4;
+    private const EARLIER = 3;
 
     public function __construct(private readonly User $user, private readonly Model $model = new Model)
     {
@@ -105,6 +105,7 @@ class Engine
                         $actions[] = $part;
                     }
                 }
+                $actions = array_map(fn ($action) => $action + ['summary' => true], $actions);
             }
             $this->single = count(array_filter($actions, fn ($action) => in_array($action['do'], ['calendar.add', 'calendar.change', 'task.add'], true))) === 1;
             foreach ($actions as $action) {
@@ -261,8 +262,8 @@ class Engine
         foreach ($turns->reverse() as $turn) {
             $result = json_decode((string) $turn->result, true) ?: [];
             $said = $result['question']['text'] ?? $result['message'] ?? implode(', ', array_map(fn ($card) => $card['type'], $result['cards'] ?? []));
-            $lines[] = 'Person: '.mb_substr((string) $turn->request, 0, 160);
-            $lines[] = 'You: '.mb_substr((string) $said, 0, 200);
+            $lines[] = 'Person: '.mb_substr((string) $turn->request, 0, 120);
+            $lines[] = 'You: '.mb_substr((string) $said, 0, 110);
         }
 
         return implode("\n", $lines);
@@ -522,7 +523,7 @@ class Engine
         $forecast = Weather::forecast((float) $place['lat'], (float) $place['lon']);
         if ($forecast) {
             $now = $forecast['current'];
-            $days = array_map(fn ($day) => sprintf('%s %s° to %s°, %s, %s mm', (new DateTimeImmutable($day['date']))->format('l'), $day['min'], $day['max'], $day['condition'], $day['precip']), array_slice($forecast['days'], 0, 3));
+            $days = array_map(fn ($day) => sprintf('%s %s° to %s°, %s, %s mm', (new DateTimeImmutable($day['date']))->format('l'), $day['min'], $day['max'], $day['condition'], $day['precip']), array_slice($forecast['days'], 0, 2));
             $this->done[] = sprintf('Weather shown for %s: now %s° (feels %s°), %s, wind %s m/s. %s.', $place['name'], $now['temp'], $now['feels'], $now['condition'], $now['wind'], implode('; ', $days));
         }
     }
@@ -545,7 +546,8 @@ class Engine
             throw new RuntimeException($query !== '' ? __('No news about :query right now.', ['query' => $query]) : __('No news right now.'));
         }
         $this->out['cards'][] = ['type' => 'news', 'title' => $topic !== '' ? News::topicName($topic) : ($query !== '' ? $query : __('Top news')), 'stories' => array_slice($stories, 0, 4), 'url' => $url];
-        $this->done[] = 'News shown ('.($topic ?: ($query ?: 'top')).'): '.implode(' | ', array_map(fn ($story) => $story['title'].(trim((string) ($story['summary'] ?? '')) !== '' ? ': '.mb_substr(trim((string) $story['summary']), 0, 140) : ''), array_slice($stories, 0, 4))).'.';
+        // Headlines only: every word here is read by the model before it answers.
+        $this->done[] = 'News shown ('.($topic ?: ($query ?: 'top')).'): '.implode(' | ', array_map(fn ($story) => mb_substr((string) $story['title'], 0, 110), array_slice($stories, 0, 4))).'.';
     }
 
     private function latex(array $action): void
@@ -652,7 +654,7 @@ class Engine
         $said = News::fold($this->request);
         $previous = $this->previous['do'] ?? null;
         // Weather only when the words are about weather, or follow on from it: after the news, "i Sverige då?" is more news.
-        if ($action['do'] === 'weather' && $previous === 'news' && ! preg_match(self::WEATHER_WORD, $said)) {
+        if ($action['do'] === 'weather' && $previous === 'news' && empty($action['summary']) && ! preg_match(self::WEATHER_WORD, $said)) {
             return ['do' => 'news', 'topic' => $this->section($said) ?? ($this->previous['topic'] ?? ''), 'query' => ''];
         }
         // A reply that only says the request back did not understand it: news words get the news.
