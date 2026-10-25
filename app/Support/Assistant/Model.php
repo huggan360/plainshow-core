@@ -226,6 +226,8 @@ Request: Hur blir vädret i Lund?
 {"actions":[{"do":"weather","place":"Lund"}]}
 Request: Hur blir vädret imorgon i Lund?
 {"actions":[{"do":"weather","place":"Lund","day":"imorgon"}]}
+Request: Weather tomorrow
+{"actions":[{"do":"weather","place":"","day":"tomorrow"}]}
 Request: What's the weather like?
 {"actions":[{"do":"weather","place":""}]}
 Request: Vad har hänt i världen?

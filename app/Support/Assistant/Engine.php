@@ -545,7 +545,13 @@ class Engine
 
     private function weather(array $action): void
     {
-        $name = $this->text($action['place'] ?? '');
+        // The model now and then puts the day in the place ("tomorrow", "Lund imorgon"): days are not places.
+        $words = preg_split('/\s+/u', $this->text($action['place'] ?? ''), -1, PREG_SPLIT_NO_EMPTY);
+        $kept = array_filter($words, fn ($word) => $this->when->day($word) === null && ! in_array(mb_strtolower($word), ['i', 'in', 'on', 'på', 'op', 'the', 'next', 'nästa', 'volgende'], true));
+        if (count($kept) < count($words)) {
+            $action['day'] = ($action['day'] ?? '') !== '' ? $action['day'] : implode(' ', $words);
+        }
+        $name = implode(' ', $kept);
         // "Och imorgon?" after the weather: the same place.
         if ($name === '' && ($this->previous['do'] ?? null) === 'weather') {
             $name = (string) $this->previous['place'];

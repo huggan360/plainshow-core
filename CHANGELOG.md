@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.20.1
+
+- "Weather tomorrow", "Vädret imorgon" and the like show tomorrow's forecast for your home place, instead of looking for a place called "tomorrow".
+
 ## v1.20.0
 
 - Ask the Assistant about the weather on another day ("Hur blir vädret imorgon i Lund?", "weather on friday") and it shows that day's forecast: the day in short and its hours as far as the forecast reaches. "Och imorgon?" right after the weather keeps the same place.
