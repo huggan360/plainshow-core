@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.19.2
+
+- Fixed: the Assistant's working dots stopped on their very first frame (since v1.18.0), so they never showed and answers waited for the safety net. They work again from the start.
+
 ## v1.19.1
 
 - The Assistant always shows its answer, within moments, even when the working dots fail; a fault while drawing them can no longer leave the page waiting.

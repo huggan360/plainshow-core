@@ -246,7 +246,8 @@ export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Sw
                 targets = dots.map((_, index) => land.shape.points[index % land.shape.points.length]);
                 fine = dots.map((_, index) => land.shape.fine[index % land.shape.fine.length]);
             } else {
-                const step = Math.floor((now - started) / HOLD);
+                // The first frame's time can be a moment before the start: never a step below zero.
+                const step = Math.max(0, Math.floor((now - started) / HOLD));
                 // grid, ring, then icon after icon
                 const kind = step === 0 ? 'grid' : step === 1 ? 'ring' : 'icon';
                 if (kind === 'grid') {
@@ -260,7 +261,7 @@ export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Sw
                         return [cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius];
                     });
                 } else {
-                    const shape = spread(icons[(step - 2) % icons.length], count);
+                    const shape = spread(icons[(step - 2) % icons.length] ?? [], count);
                     targets = shape.map(([x, y]) => [cx + x, cy + y]);
                 }
             }
