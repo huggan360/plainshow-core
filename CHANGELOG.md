@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.14.1
+
+- The backdrop's light is as gentle in every theme colour as in orange (kit 1.13.1).
+
 ## v1.14.0
 
 - Theme colours: the Design studio has a Theme section to choose PlainShow's colour (orange, teal, indigo, red or yellow) and light or dark, with a preview. The colour is kept on the account and set for every PlainShow site; buttons, links, rings, gradients, the logo and the backdrop follow it (kit 1.13).
