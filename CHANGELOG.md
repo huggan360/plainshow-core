@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.18.1
+
+- The Assistant widget one row high has its text and send button on one centred line.
+
 ## v1.18.0
 
 - The Assistant is a task manager first: widgets answer most requests on their own, quicker, and it only writes when words help (after it changes something, to ask, for small talk, or when you ask it to sum up). A reply naming a number that is not in what was shown is dropped.

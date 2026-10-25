@@ -1542,3 +1542,6 @@ a:hover > .nwa-picture img, a:hover .nwa-picture img { transform: scale(1.04); }
 .widget-assistant textarea::placeholder { color: var(--ps-text-faint); }
 .widget-assistant button { position: absolute; right: 10px; bottom: 10px; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 13px; background: var(--ps-accent); color: var(--ps-accent-fg); font-size: 1.35rem; cursor: pointer; transition: background-color .15s ease, transform .15s ease; }
 .widget-assistant button:hover { background: var(--ps-accent-hover); transform: translateY(-1px); }
+.widget-assistant.is-one-row .widget-assistant__form { align-items: center; }
+.widget-assistant.is-one-row textarea { height: 40px; padding-top: 8px; padding-bottom: 8px; overflow: hidden; white-space: nowrap; }
+.widget-assistant.is-one-row button { top: 50%; bottom: auto; margin-top: -20px; }

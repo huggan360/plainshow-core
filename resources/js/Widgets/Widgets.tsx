@@ -630,10 +630,11 @@ function AssistantWidget({ definition }: { definition: WidgetDefinition }) {
     const box = useRef<HTMLElement>(null);
     const [text, setText] = useState('');
     const border = useBorder(definition.border);
+    const { h } = useSize(definition);
     const open = (words: string) => expandWidget(box.current, words.trim() ? `/assistant?q=${encodeURIComponent(words.trim())}` : '/assistant');
-    // Just a field to write in, the whole widget, with the send button in its corner.
+    // Just a field to write in, the whole widget, with the send button in its corner (beside the text when one row high).
     return (
-        <section ref={box} className="ps-frame ps-widget widget-assistant" data-border={border} aria-label={definition.title}>
+        <section ref={box} className={`ps-frame ps-widget widget-assistant${h <= 1 ? ' is-one-row' : ''}`} data-border={border} aria-label={definition.title}>
             <div className="ps-frame__panel">
                 <form className="widget-assistant__form" onSubmit={(event) => { event.preventDefault(); open(text); }}>
                     <textarea value={text} onChange={(event) => setText(event.target.value)} placeholder={t('Tell PlainShow what to do…')} aria-label={t('What should we do?')} maxLength={500} rows={1}
