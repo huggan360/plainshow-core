@@ -20,6 +20,9 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $permissions = $user ? Permissions::for($user) : ['services' => [], 'capabilities' => []];
+        if ($user) {
+            \App\Support\AccentCookie::sync($user->accent);
+        }
 
         return [
             ...parent::share($request),
@@ -37,6 +40,8 @@ class HandleInertiaRequests extends Middleware
             // Apps inside the dashboard (sidebar, widget expand), and the person's home for the weather widgets.
             // Every installed app's address (kit Platform), for links into the apps.
             'platform' => \PlainShow\Kit\Platform::urls(),
+            // The theme colour (kit Theme): the account's, else this browser's.
+            'accent' => $user?->accent ?? \PlainShow\Kit\Theme::accent(),
             'coreApps' => $user ? fn () => \App\Support\CoreApps::for($user) : [],
             'adminAreas' => $user ? fn () => \App\Support\AdminAreas::for($user) : [],
             'weatherHome' => $user ? fn () => $user->weather['home'] ?? null : null,

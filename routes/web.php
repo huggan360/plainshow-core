@@ -72,6 +72,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/design', [DashboardController::class, 'studio'])->name('design');
+    Route::put('/design/theme', [\App\Http\Controllers\ThemeController::class, 'update'])->name('design.theme');
     Route::put('/dashboard/layout/roles/{role}', [DashboardController::class, 'saveRoleLayout'])->middleware('can.do:core.permissions.manage');
     Route::delete('/dashboard/layout/roles/{role}', [DashboardController::class, 'resetRoleLayout'])->middleware('can.do:core.permissions.manage');
 

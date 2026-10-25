@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.14.0
+
+- Theme colours: the Design studio has a Theme section to choose PlainShow's colour (orange, teal, indigo, red or yellow) and light or dark, with a preview. The colour is kept on the account and set for every PlainShow site; buttons, links, rings, gradients, the logo and the backdrop follow it (kit 1.13).
+- Bree Serif for titles, and dark grey text in the light theme instead of black.
+- The design tokens show the real gradient frame, the five text greys and Bree Serif. A widget's "Theme colour" border follows the chosen colour.
+
 ## v1.13.0
 
 - PlainShow runs on any domain: every address comes from the platform file the installer writes (kit 1.12). Only the apps installed on this server are registered and listed in Updates.

@@ -1,6 +1,6 @@
 @php($uiVersion = \Composer\InstalledVersions::getReference('plainshow/kit') ? substr(\Composer\InstalledVersions::getReference('plainshow/kit'), 0, 8) : 'dev')
 <!doctype html>
-<html lang="{{ app()->getLocale() }}" data-theme="dark">
+<html lang="{{ app()->getLocale() }}" data-theme="dark"{!! \PlainShow\Kit\Theme::attributes(auth()->user()?->accent ?? \PlainShow\Kit\Theme::accent()) !!}>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -10,7 +10,7 @@
     <link rel="icon" href="/ui/brand/favicon.ico?v={{ $uiVersion }}" sizes="any">
     <link rel="icon" href="/ui/brand/plainshow-icon.webp?v={{ $uiVersion }}" type="image/webp">
     <link rel="apple-touch-icon" href="/ui/brand/apple-touch-icon.png?v={{ $uiVersion }}">
-    <link rel="preload" href="/ui/fonts/source-serif-4-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/ui/fonts/bree-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/ui/fonts/outfit-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/ui/css/boxicons.css?v={{ $uiVersion }}">
     <link rel="stylesheet" href="/ui/css/plainshow.css?v={{ $uiVersion }}">

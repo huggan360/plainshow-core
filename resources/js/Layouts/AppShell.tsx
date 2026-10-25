@@ -8,6 +8,12 @@ type Toast = { id: number; kind: 'success' | 'error'; message: string };
 
 function useTheme(): [string, () => void] {
     const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') ?? 'dark');
+    // The Design studio's Theme can change it too.
+    useEffect(() => {
+        const observer = new MutationObserver(() => setTheme(document.documentElement.getAttribute('data-theme') ?? 'dark'));
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        return () => observer.disconnect();
+    }, []);
     const toggle = () => {
         const next = theme === 'light' ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', next);

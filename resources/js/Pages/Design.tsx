@@ -39,23 +39,29 @@ const DESKTOP_HANDLES: ResizeHandleAxis[] = ['n', 'e', 's', 'w'];
 const PHONE_HANDLES: ResizeHandleAxis[] = ['n', 's'];
 
 const BORDERS: { value: Border | undefined; label: string }[] = [
-    { value: undefined, label: t('Default') }, { value: 'none', label: t('None') }, { value: 'orange', label: t('Orange') }, { value: 'sunset', label: t('Sunset') },
+    { value: undefined, label: t('Default') }, { value: 'none', label: t('None') }, { value: 'orange', label: t('Theme colour') }, { value: 'sunset', label: t('Sunset') },
     { value: 'ocean', label: t('Ocean') }, { value: 'forest', label: t('Forest') }, { value: 'violet', label: t('Violet') }, { value: 'mono', label: t('Grey') },
 ];
+
+type View = 'dashboard' | 'theme' | 'tokens';
 
 export default function Design(props: Props) {
     const { props: shared } = usePage<SharedProps>();
     const tokens = can(shared.auth.capabilities, 'core.design.tokens');
-    const [view, setView] = useState<'dashboard' | 'tokens'>(() => (tokens && window.location.hash === '#tokens' ? 'tokens' : 'dashboard'));
-    const choose = (next: 'dashboard' | 'tokens') => {
+    const [view, setView] = useState<View>(() => {
+        const hash = window.location.hash;
+        return hash === '#theme' ? 'theme' : tokens && hash === '#tokens' ? 'tokens' : 'dashboard';
+    });
+    const choose = (next: View) => {
         setView(next);
-        window.history.replaceState(null, '', next === 'tokens' ? '#tokens' : window.location.pathname);
+        window.history.replaceState(null, '', next === 'dashboard' ? window.location.pathname : `#${next}`);
     };
+    const back = <div className="studio-toolbar"><Button size="sm" variant="ghost" icon="bx-arrow-back" onClick={() => choose('dashboard')}>{t('Dashboard')}</Button></div>;
     return (
         <AppShell title={t('Design')} wide heading={false}>
-            {view === 'tokens'
-                ? <><div className="studio-toolbar"><Button size="sm" variant="ghost" icon="bx-arrow-back" onClick={() => choose('dashboard')}>{t('Dashboard')}</Button></div><Tokens /></>
-                : <Studio {...props} onTokens={tokens ? () => choose('tokens') : undefined} />}
+            {view === 'tokens' ? <>{back}<Tokens /></>
+                : view === 'theme' ? <>{back}<ThemeView /></>
+                    : <Studio {...props} onTheme={() => choose('theme')} onTokens={tokens ? () => choose('tokens') : undefined} />}
         </AppShell>
     );
 }
@@ -94,7 +100,7 @@ function category(widget: WidgetDefinition): string {
 
 /* ---------- The studio ---------- */
 
-function Studio({ layout, phone, phoneCustom, catalogue, customised, roles, onTokens }: Props & { onTokens?: () => void }) {
+function Studio({ layout, phone, phoneCustom, catalogue, customised, roles, onTheme, onTokens }: Props & { onTheme: () => void; onTokens?: () => void }) {
     const [target, setTarget] = useState<Target>('me');
     const source = target === 'me' ? { layout, phone, phoneCustom, catalogue, saved: customised } : roles![target];
     const [desktop, setDesktop] = useState<LayoutItem[]>(source.layout);
@@ -177,6 +183,7 @@ function Studio({ layout, phone, phoneCustom, catalogue, customised, roles, onTo
                     if (dirty && !window.confirm(t('Leave without saving your changes?'))) return;
                     setTarget(next);
                 }} />}
+                <button type="button" className="studio-chip" onClick={onTheme} title={t('Theme colour, light or dark')}><i className="bx bx-brush" aria-hidden="true" />{t('Theme')}</button>
                 {onTokens && <button type="button" className="studio-icon" onClick={onTokens} aria-label={t('Design tokens')} title={t('Design tokens')}><i className="bx bx-palette" /></button>}
                 {dirty
                     ? <Button size="sm" variant="ghost" icon="bx-undo" onClick={undo}>{t('Undo')}</Button>
@@ -545,9 +552,90 @@ const SCALE: [string, string, string][] = [
     ['3xl', '36 px', t('Greeting and hero titles')], ['2xl', '28 px', t('Page titles')], ['xl', '22 px', t('Section titles')],
     ['lg', '17.5 px', t('Lead text and reading')], ['md', '15.5 px', t('Body')], ['sm', '13.5 px', t('Secondary text, tables')], ['xs', '12 px', t('Captions and meta')],
 ];
+/* ---------- Theme: the colour and light or dark, for every PlainShow app ---------- */
+const ACCENTS: { id: string; name: string }[] = [
+    { id: 'orange', name: t('Orange') }, { id: 'teal', name: t('Teal') }, { id: 'indigo', name: t('Indigo') }, { id: 'red', name: t('Red') }, { id: 'yellow', name: t('Yellow') },
+];
+
+function ThemeView() {
+    const { props } = usePage<SharedProps>();
+    const [accent, setAccent] = useState(props.accent || 'orange');
+    const [mode, setMode] = useState(() => document.documentElement.getAttribute('data-theme') ?? 'dark');
+    const [saving, setSaving] = useState(false);
+
+    // The colour shows at once; the account and every PlainShow site follow when it is saved.
+    const chooseAccent = (next: string) => {
+        if (next === accent) return;
+        setAccent(next);
+        if (next === 'orange') document.documentElement.removeAttribute('data-accent');
+        else document.documentElement.setAttribute('data-accent', next);
+        setSaving(true);
+        router.put('/design/theme', { accent: next }, { preserveScroll: true, preserveState: true, onFinish: () => setSaving(false) });
+    };
+    const chooseMode = (next: string) => {
+        setMode(next);
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('plainshow-theme', next); } catch { /* private mode */ }
+    };
+
+    return (
+        <div className="theme-studio">
+            <div className="ps-page-head ps-page-head--gradient">
+                <div>
+                    <h1 className="ps-page-head__title">{t('Theme')}</h1>
+                    <p className="ps-page-head__text">{t('Your colour on every PlainShow app: buttons, links, rings, gradients, the logo and the light behind the page. It follows your account to your other computers and phones.')}</p>
+                </div>
+            </div>
+
+            <section className="design-section">
+                <h2 className="ps-heading design-section__title">{t('Colour')}{saving && <i className="bx bx-loader-alt bx-spin theme-studio__saving" aria-label={t('Saving')} />}</h2>
+                <div className="theme-choices" role="radiogroup" aria-label={t('Colour')}>
+                    {ACCENTS.map((item) => (
+                        <button key={item.id} type="button" role="radio" aria-checked={accent === item.id} data-accent={item.id} data-theme={mode}
+                            className={`theme-choice${accent === item.id ? ' is-active' : ''}`} onClick={() => chooseAccent(item.id)}>
+                            <span className="theme-choice__panel">
+                                <img src="/ui/brand/plainshow-logo.webp" alt="" className="theme-choice__logo" />
+                                <span className="theme-choice__swatches" aria-hidden="true"><span /><span /><span /><span /></span>
+                                <span className="ps-btn ps-btn--primary ps-btn--sm" aria-hidden="true">{t('Save')}</span>
+                            </span>
+                            <span className="theme-choice__name">{accent === item.id && <i className="bx bx-check" aria-hidden="true" />}{item.name}</span>
+                        </button>
+                    ))}
+                </div>
+            </section>
+
+            <section className="design-section">
+                <h2 className="ps-heading design-section__title">{t('Light or dark')}</h2>
+                <div className="studio-modes theme-modes" role="radiogroup" aria-label={t('Light or dark')}>
+                    <button type="button" role="radio" aria-checked={mode === 'light'} className={mode === 'light' ? 'is-active' : undefined} onClick={() => chooseMode('light')}><i className="bx bx-sun" aria-hidden="true" /><span>{t('Light')}</span></button>
+                    <button type="button" role="radio" aria-checked={mode === 'dark'} className={mode === 'dark' ? 'is-active' : undefined} onClick={() => chooseMode('dark')}><i className="bx bx-moon" aria-hidden="true" /><span>{t('Dark')}</span></button>
+                </div>
+                <p className="ps-muted design-section__text">{t('Light or dark is kept on each device.')}</p>
+            </section>
+
+            <section className="design-section">
+                <h2 className="ps-heading design-section__title">{t('Preview')}</h2>
+                <div className="ps-frames">
+                    <Frame variant="gradient">
+                        <FrameHead title={t('A frame with the gradient')} text={t('For emphasis only: an update, an alert, the active item.')} />
+                        <div className="ps-stack ps-frame__body">
+                            <div className="ps-inline"><Button variant="primary">{t('Primary')}</Button><Button>{t('Secondary')}</Button><a className="theme-studio__link" href="#theme">{t('A link')}</a></div>
+                            <Meter value={64} label={t('Example')} />
+                        </div>
+                    </Frame>
+                    <Frame glow="accent">
+                        <FrameHead title={t('Your picture')} text={t('The ring around profile pictures takes the colour too.')} />
+                        <div className="ps-inline ps-frame__body"><Avatar src={props.auth.user?.avatar} initials={props.auth.user?.initials ?? "?"} size="xl" /><span className="ps-gradient-text theme-studio__word">{t('PlainShow')}</span></div>
+                    </Frame>
+                </div>
+            </section>
+        </div>
+    );
+}
+
 const COLOURS: [string, string][] = [
-    ['--ps-accent', t('Orange')], ['--ps-bg', t('Page')], ['--ps-shell', t('Shell')], ['--ps-panel', t('Panel')], ['--ps-raised', t('Raised')],
-    ['--ps-text', t('Text')], ['--ps-text-muted', t('Muted')], ['--ps-green', t('Green')], ['--ps-amber', t('Amber')], ['--ps-red', t('Red')], ['--ps-blue', t('Blue')], ['--ps-violet', t('Violet')],
+    ['--ps-accent', t('Theme colour')], ['--ps-bg', t('Page')], ['--ps-shell', t('Shell')], ['--ps-panel', t('Panel')], ['--ps-raised', t('Raised')],
+    ['--ps-text-strong', t('Titles')], ['--ps-text', t('Text')], ['--ps-text-soft', t('Soft')], ['--ps-text-muted', t('Muted')], ['--ps-text-faint', t('Faint')], ['--ps-green', t('Green')], ['--ps-amber', t('Amber')], ['--ps-red', t('Red')], ['--ps-blue', t('Blue')], ['--ps-violet', t('Violet')],
 ];
 
 function Tokens() {
@@ -572,7 +660,7 @@ function Tokens() {
                     <Frame glow="warm">
                         <div className="design-type" style={{ fontFamily: 'var(--ps-font-title)' }}>
                             <span className="ps-eyebrow">{t('Titles and reading')}</span>
-                            <p className="design-type__name">{t('Source Serif 4')}</p>
+                            <p className="design-type__name">{t('Bree Serif')}</p>
                             <p className="design-type__display">{t('Do more with PlainShow, everywhere you work')}</p>
                             <p className="design-type__body ps-reading">{t('En vecka på Bali började med regn och slutade med solnedgångar över Uluwatu. Blog posts read in this face.')}</p>
                         </div>

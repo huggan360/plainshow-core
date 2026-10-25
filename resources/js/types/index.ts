@@ -31,6 +31,8 @@ export type SharedProps = {
     uiVersion: string;
     /** Every installed app's address, by app id (core, login, cloud, ...). */
     platform: Record<string, string>;
+    /** The theme colour: orange, teal, indigo, red or yellow (kit Theme). */
+    accent: string;
 };
 
 export function can(capabilities: string[], capability: string): boolean {
