@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.17.5
+
+- The Assistant keeps its replies to one or two sentences, and answers greetings and thanks more naturally.
+
 ## v1.17.4
 
 - The Assistant's reply speaks only of this request, never repeating the one before.
