@@ -83,7 +83,15 @@ export default function Assistant({ ask }: { ask: string }) {
     useLayoutEffect(() => {
         if (!answer || shown) return;
         if (!answerBox.current || !swarm.current || calm()) { setShown(true); return; }
-        swarm.current.land(answerBox.current, () => setShown(true));
+        // Whatever happens to the dots, the answer is shown.
+        const late = window.setTimeout(() => setShown(true), 2500);
+        try {
+            swarm.current.land(answerBox.current, () => { window.clearTimeout(late); setShown(true); });
+        } catch (error) {
+            console.error(error);
+            setShown(true);
+        }
+        return () => window.clearTimeout(late);
     }, [answer, shown]);
 
     const go = (request: string) => {

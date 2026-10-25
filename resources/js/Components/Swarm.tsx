@@ -160,8 +160,8 @@ function sprite(colour: string): HTMLCanvasElement {
     const context = canvas.getContext('2d')!;
     const glow = context.createRadialGradient(16, 16, 0, 16, 16, 16);
     glow.addColorStop(0, rgba(colour, 1));
-    glow.addColorStop(0.22, rgba(colour, 0.85));
-    glow.addColorStop(0.4, rgba(colour, 0.12));
+    glow.addColorStop(0.3, rgba(colour, 1));
+    glow.addColorStop(0.5, rgba(colour, 0.22));
     glow.addColorStop(1, rgba(colour, 0));
     context.fillStyle = glow;
     context.fillRect(0, 0, 32, 32);
@@ -215,6 +215,20 @@ export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Sw
         let last = started;
 
         const draw = (now: number) => {
+            try {
+                paint(now);
+            } catch (error) {
+                // Never stuck: hand the answer over, and stop drawing.
+                console.error(error);
+                const land = landing.current;
+                if (land && !land.called) { land.called = true; land.done(); }
+                context.clearRect(0, 0, width, height);
+                return;
+            }
+            if (fade > 0) frame = requestAnimationFrame(draw);
+        };
+
+        const paint = (now: number) => {
             const dt = Math.min(0.05, (now - last) / 1000);
             last = now;
             const [cx, cy] = centre();
@@ -281,12 +295,11 @@ export const Swarm = forwardRef<SwarmHandle, { className?: string }>(function Sw
                 const boost = land ? 1.1 : 1;
                 context.globalAlpha = Math.min(1, twinkle * boost) * fade;
                 // On letters the dots shrink to the size of a stroke, so the words can be read.
-                const r = small ? 2.2 + dot.size * 0.35 : dot.size * 3 * (land ? 1.1 : 1);
+                const r = small ? 2.2 + dot.size * 0.35 : dot.size * 3.2 * (land ? 1.1 : 1);
                 context.drawImage(sprites[dot.colour], dot.x - r, dot.y - r, r * 2, r * 2);
             });
             context.globalAlpha = 1;
             context.globalCompositeOperation = 'source-over';
-            if (fade > 0) frame = requestAnimationFrame(draw);
         };
         frame = requestAnimationFrame(draw);
         return () => { cancelAnimationFrame(frame); observer.disconnect(); };

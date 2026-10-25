@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.19.1
+
+- The Assistant always shows its answer, within moments, even when the working dots fail; a fault while drawing them can no longer leave the page waiting.
+- The working dots are clearly visible again: a solid core with a soft glow.
+
 ## v1.19.0
 
 - Design studio: widgets stay exactly where you put them, empty rows above them included; nothing is pulled up any more. While you move or resize one, the widgets in its way step down, and go back to their places when the way is free again. Resizing can push the widgets below down too, instead of stopping at them.
