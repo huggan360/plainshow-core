@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.16.1
+
+- The Assistant fills the width of the page again while it works and answers.
+
 ## v1.16.0
 
 - The Assistant works as a drone show: glowing dots in the theme colour gather into a grid, wheel round and form icons, then fly into the exact shape of the answer, which takes their place.
