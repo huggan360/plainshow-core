@@ -100,14 +100,20 @@ class Model
      * the Pi a minute at full speed, so once read they are kept on disk
      * (llama.cpp's slot file, `--slot-save-path`) and a fresh start loads
      * them back instead. When the instructions change, the first warm-up
-     * reads them again and keeps the new ones.
+     * reads them again and keeps the new ones. A model already holding them is
+     * left alone.
      */
     public function warm(): void
     {
         $base = rtrim((string) config('plainshow.assistant_url'), '/');
         $file = 'instructions-'.substr(sha1(self::instructions()), 0, 12).'.bin';
         try {
-            Http::timeout(60)->connectTimeout(30)->post("$base/slots/0?action=restore", ['filename' => $file]);
+            // Only a model that has just started loads the saved file: loading it into a warm model
+            // (or failing to, when there is no file yet) throws away what it holds, and costs a minute.
+            $held = (int) (Http::timeout(120)->connectTimeout(30)->get("$base/slots")->json('0.n_prompt_tokens') ?? 0);
+            if ($held < 500) {
+                Http::timeout(60)->connectTimeout(30)->post("$base/slots/0?action=restore", ['filename' => $file]);
+            }
             $response = Http::timeout(120)->connectTimeout(30)->post("$base/v1/chat/completions", [
                 'messages' => [['role' => 'system', 'content' => self::instructions()], ['role' => 'user', 'content' => "Task: plan\nRequest: hi"]],
                 'chat_template_kwargs' => ['enable_thinking' => false], 'max_tokens' => 1, 'cache_prompt' => true,

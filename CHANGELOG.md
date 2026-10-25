@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.20.2
+
+- Fixed: opening the Assistant could make its next answer take 40 seconds longer. The warm-up loaded the model's saved instructions even when the model already held them, and when no saved copy existed yet, the failed load emptied the model, which then read everything again. Now only a freshly started model loads them.
+
 ## v1.20.1
 
 - "Weather tomorrow", "Vädret imorgon" and the like show tomorrow's forecast for your home place, instead of looking for a place called "tomorrow".
